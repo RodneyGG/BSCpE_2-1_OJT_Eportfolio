@@ -1,0 +1,67 @@
+# =====================================================
+# Root
+# =====================================================
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+*.swp
+*.swo
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# IDEs
+.vscode/
+.idea/
+
+# =====================================================
+# Next.js (frontend)
+# =====================================================
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/.turbo/
+frontend/coverage/
+frontend/.vercel/
+
+# Package manager
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/pnpm-debug.log*
+
+# =====================================================
+# Laravel (backend)
+# =====================================================
+backend/vendor/
+backend/node_modules/
+
+backend/storage/*.key
+backend/storage/logs/*
+backend/storage/framework/cache/*
+backend/storage/framework/sessions/*
+backend/storage/framework/testing/*
+backend/storage/framework/views/*
+
+backend/bootstrap/cache/*.php
+
+# Ignore generated public storage symlink
+backend/public/storage
+
+# PHPUnit
+backend/.phpunit.result.cache
+
+# =====================================================
+# Docker
+# =====================================================
+docker-compose.override.yml
+
+# =====================================================
+# Temporary files
+# =====================================================
+*.bak
+*.orig
+*.cache
