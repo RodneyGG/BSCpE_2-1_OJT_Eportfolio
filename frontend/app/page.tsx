@@ -397,12 +397,22 @@ export default function Home() {
               </a>
               <div style={{ width: 1, height: 20, backgroundColor: "rgba(255,255,255,0.12)" }} />
               {/* User pill */}
-              <div style={{
+              <a href="/profile" style={{
                 display: "flex", alignItems: "center", gap: "0.5rem",
                 background: "rgba(255,255,255,0.1)",
                 border: "1px solid rgba(255,255,255,0.15)",
                 borderRadius: "9999px",
                 padding: "0.28rem 0.85rem 0.28rem 0.35rem",
+                textDecoration: "none",
+                transition: "background 0.2s ease, transform 0.2s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "rgba(255,255,255,0.15)";
+                e.currentTarget.style.transform = "translateY(-1px)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "rgba(255,255,255,0.1)";
+                e.currentTarget.style.transform = "translateY(0)";
               }}>
                 <div style={{
                   width: 26, height: 26, borderRadius: "50%",
@@ -413,7 +423,7 @@ export default function Home() {
                 <span style={{ fontSize: "0.7rem", fontWeight: 700, color: "white",
                   letterSpacing: "0.05em", textTransform: "uppercase",
                   whiteSpace: "nowrap" }}>JUAN DELA CRUZ</span>
-              </div>
+              </a>
             </div>
           </div>
         </nav>
