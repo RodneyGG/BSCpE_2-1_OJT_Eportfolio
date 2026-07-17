@@ -16,12 +16,17 @@ services:
 
   # Next.js Frontend App
   frontend:
-    image: next-js:1.0
+    build:
+      context: ./frontend
+      target: development
     container_name: nextjs_frontend
     ports:
       - "3000:3000"
     environment:
-      - NODE_ENV=production
+      - NODE_ENV=development
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
     networks:
       - app-network
 
