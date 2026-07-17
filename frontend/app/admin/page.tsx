@@ -77,10 +77,10 @@ function IconCheck() {
     </svg>
   );
 }
-function IconEye() {
+function IconX() {
   return (
-    <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+    <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M18 6L6 18M6 6l12 12"/>
     </svg>
   );
 }
@@ -89,11 +89,11 @@ function IconEye() {
 export default function AdminDashboard() {
   // Mock Data
   const [students] = useState([
-    { id: 1, name: "Juan Dela Cruz", program: "BSCpE 2-1", company: "TechCore Solutions Inc.", hours: 118, totalHours: 300, status: "Active" },
-    { id: 2, name: "Maria Clara", program: "BSCpE 2-1", company: "Innovatech Labs", hours: 250, totalHours: 300, status: "Active" },
-    { id: 3, name: "Crisostomo Ibarra", program: "BSCpE 2-1", company: "DataSync Systems", hours: 300, totalHours: 300, status: "Completed" },
-    { id: 4, name: "Sisa Reyes", program: "BSCpE 2-1", company: "Unassigned", hours: 0, totalHours: 300, status: "Pending Placement" },
-    { id: 5, name: "Elias Torres", program: "BSCpE 2-1", company: "NextGen Tech", hours: 45, totalHours: 300, status: "Warning" },
+    { id: 1, name: "Juan Dela Cruz", program: "BSCpE 2-1", company: "TechCore Solutions Inc.", hours: 118, totalHours: 300, status: "Active", email: "jdelacruz@student.edu.ph" },
+    { id: 2, name: "Maria Clara", program: "BSCpE 2-1", company: "Innovatech Labs", hours: 250, totalHours: 300, status: "Active", email: "mclara@student.edu.ph" },
+    { id: 3, name: "Crisostomo Ibarra", program: "BSCpE 2-1", company: "DataSync Systems", hours: 300, totalHours: 300, status: "Completed", email: "cibarra@student.edu.ph" },
+    { id: 4, name: "Sisa Reyes", program: "BSCpE 2-1", company: "Unassigned", hours: 0, totalHours: 300, status: "Pending Placement", email: "sreyes@student.edu.ph" },
+    { id: 5, name: "Elias Torres", program: "BSCpE 2-1", company: "NextGen Tech", hours: 45, totalHours: 300, status: "Warning", email: "etorres@student.edu.ph" },
   ]);
 
   const [recentDocs, setRecentDocs] = useState([
@@ -103,6 +103,7 @@ export default function AdminDashboard() {
   ]);
 
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedStudent, setSelectedStudent] = useState<typeof students[0] | null>(null);
 
   const filteredStudents = students.filter(s => 
     s.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -113,14 +114,25 @@ export default function AdminDashboard() {
     setRecentDocs(docs => docs.map(d => d.id === id ? { ...d, status: "Approved" } : d));
   };
 
+  const getStatusColor = (status: string) => {
+    if (status === "Active") return { color: "#1d4ed8", bg: "#dbeafe" };
+    if (status === "Completed") return { color: "#166534", bg: "#dcfce7" };
+    if (status === "Warning") return { color: "#b45309", bg: "#fef3c7" };
+    return { color: "#475569", bg: "#f1f5f9" };
+  };
+
   return (
     <div style={{
       minHeight: "100vh",
-      background: "#f1f5f9", // Slight gray/blue background for admin
+      background: "#f1f5f9",
       fontFamily: "var(--font-geist-sans, system-ui, sans-serif)",
       display: "flex", flexDirection: "column",
     }}>
       <style>{`
+        @keyframes fadeInScale {
+          from { opacity: 0; transform: scale(0.95); }
+          to { opacity: 1; transform: scale(1); }
+        }
         .admin-card {
           background: white; border-radius: 1.25rem; padding: 1.5rem; 
           box-shadow: 0 4px 15px rgba(0,0,0,0.03); border: 1px solid #e2e8f0;
@@ -131,7 +143,7 @@ export default function AdminDashboard() {
         }
         .student-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; text-align: left; }
         .student-table th { padding: 1.25rem 1rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid #e2e8f0; }
-        .student-table td { padding: 1.25rem 1rem; color: #0f172a; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+        .student-table td { padding: 1rem; color: #0f172a; border-bottom: 1px solid #f1f5f9; vertical-align: middle; cursor: pointer; transition: background 0.2s; }
         .student-table tr:hover td { background: #f8fafc; }
         .btn-action {
           background: white; border: 1px solid #cbd5e1; border-radius: 0.5rem;
@@ -143,6 +155,12 @@ export default function AdminDashboard() {
           background: #dcfce7; border: 1px solid #bbf7d0; color: #166534;
         }
         .btn-approve:hover { background: #bbf7d0; border-color: #86efac; }
+        .avatar-img {
+          width: 40px; height: 40px; border-radius: 50%; object-fit: cover;
+          box-shadow: 0 2px 5px rgba(0,0,0,0.1); border: 2px solid white;
+          transition: transform 0.2s;
+        }
+        .student-table tr:hover .avatar-img { transform: scale(1.05); }
       `}</style>
 
       {/* ══ TOP NAV ══ */}
@@ -188,7 +206,6 @@ export default function AdminDashboard() {
 
         {/* ── STATS ROW ── */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "1.5rem", marginBottom: "2.5rem" }}>
-          
           <RevealBox delay={0.1}>
             <div className="admin-card">
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1rem" }}>
@@ -199,7 +216,6 @@ export default function AdminDashboard() {
               <p style={{ fontSize: "0.85rem", color: "#64748b", margin: 0, fontWeight: 600 }}>Total Students</p>
             </div>
           </RevealBox>
-
           <RevealBox delay={0.2}>
             <div className="admin-card">
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1rem" }}>
@@ -209,7 +225,6 @@ export default function AdminDashboard() {
               <p style={{ fontSize: "0.85rem", color: "#64748b", margin: 0, fontWeight: 600 }}>Total Hours Logged</p>
             </div>
           </RevealBox>
-
           <RevealBox delay={0.3}>
             <div className="admin-card">
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1rem" }}>
@@ -220,7 +235,6 @@ export default function AdminDashboard() {
               <p style={{ fontSize: "0.85rem", color: "#64748b", margin: 0, fontWeight: 600 }}>Pending Approvals</p>
             </div>
           </RevealBox>
-
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "2.5rem" }}>
@@ -252,47 +266,51 @@ export default function AdminDashboard() {
                       <th>Company</th>
                       <th style={{ width: "160px" }}>Progress</th>
                       <th>Status</th>
-                      <th>Action</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredStudents.map((s) => (
-                      <tr key={s.id}>
-                        <td>
-                          <div style={{ fontWeight: 700 }}>{s.name}</div>
-                          <div style={{ fontSize: "0.75rem", color: "#64748b", marginTop: "0.1rem" }}>{s.program}</div>
-                        </td>
-                        <td style={{ color: "#475569", fontWeight: 500 }}>{s.company}</td>
-                        <td>
-                          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.7rem", fontWeight: 700, marginBottom: "0.3rem", color: "#475569" }}>
-                            <span>{s.hours} / {s.totalHours}</span>
-                            <span>{Math.round((s.hours / s.totalHours) * 100)}%</span>
-                          </div>
-                          <div style={{ width: "100%", height: "6px", background: "#e2e8f0", borderRadius: "999px", overflow: "hidden" }}>
-                            <div style={{ width: `${(s.hours / s.totalHours) * 100}%`, height: "100%", background: s.hours >= 300 ? "#10b981" : "#3b82f6", borderRadius: "999px" }} />
-                          </div>
-                        </td>
-                        <td>
-                          <span style={{ 
-                            fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", padding: "0.3rem 0.75rem", borderRadius: "999px",
-                            color: s.status === "Active" ? "#1d4ed8" : s.status === "Completed" ? "#166534" : s.status === "Warning" ? "#b45309" : "#475569",
-                            background: s.status === "Active" ? "#dbeafe" : s.status === "Completed" ? "#dcfce7" : s.status === "Warning" ? "#fef3c7" : "#f1f5f9"
-                          }}>
-                            {s.status}
-                          </span>
-                        </td>
-                        <td>
-                          <Link href="/profile" style={{ textDecoration: "none" }}>
-                            <button className="btn-action">
-                              <IconEye /> View
-                            </button>
-                          </Link>
-                        </td>
-                      </tr>
-                    ))}
+                    {filteredStudents.map((s) => {
+                      const colors = getStatusColor(s.status);
+                      return (
+                        <tr key={s.id} onClick={() => setSelectedStudent(s)}>
+                          <td>
+                            <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img 
+                                src={`https://ui-avatars.com/api/?name=${encodeURIComponent(s.name)}&background=random&color=fff&rounded=true&bold=true`} 
+                                alt={s.name} 
+                                className="avatar-img"
+                              />
+                              <div>
+                                <div style={{ fontWeight: 700 }}>{s.name}</div>
+                                <div style={{ fontSize: "0.75rem", color: "#64748b", marginTop: "0.1rem" }}>{s.program}</div>
+                              </div>
+                            </div>
+                          </td>
+                          <td style={{ color: "#475569", fontWeight: 500 }}>{s.company}</td>
+                          <td>
+                            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.7rem", fontWeight: 700, marginBottom: "0.3rem", color: "#475569" }}>
+                              <span>{s.hours} / {s.totalHours}</span>
+                              <span>{Math.round((s.hours / s.totalHours) * 100)}%</span>
+                            </div>
+                            <div style={{ width: "100%", height: "6px", background: "#e2e8f0", borderRadius: "999px", overflow: "hidden" }}>
+                              <div style={{ width: `${(s.hours / s.totalHours) * 100}%`, height: "100%", background: s.hours >= 300 ? "#10b981" : "#3b82f6", borderRadius: "999px" }} />
+                            </div>
+                          </td>
+                          <td>
+                            <span style={{ 
+                              fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", padding: "0.3rem 0.75rem", borderRadius: "999px",
+                              color: colors.color, background: colors.bg
+                            }}>
+                              {s.status}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
                     {filteredStudents.length === 0 && (
                       <tr>
-                        <td colSpan={5} style={{ textAlign: "center", padding: "3rem", color: "#94a3b8" }}>No students found matching your search.</td>
+                        <td colSpan={4} style={{ textAlign: "center", padding: "3rem", color: "#94a3b8" }}>No students found matching your search.</td>
                       </tr>
                     )}
                   </tbody>
@@ -336,6 +354,91 @@ export default function AdminDashboard() {
 
         </div>
       </main>
+
+      {/* ══ STUDENT DETAILS MODAL ══ */}
+      {selectedStudent && (
+        <div style={{
+          position: "fixed", top: 0, left: 0, width: "100%", height: "100%",
+          background: "rgba(15, 23, 42, 0.6)", backdropFilter: "blur(4px)",
+          zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem"
+        }} onClick={() => setSelectedStudent(null)}>
+          <div style={{
+            background: "white", borderRadius: "1.5rem", width: "100%", maxWidth: "600px",
+            overflow: "hidden", animation: "fadeInScale 0.2s ease-out", boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)",
+            position: "relative"
+          }} onClick={e => e.stopPropagation()}>
+            
+            {/* Close Button */}
+            <button onClick={() => setSelectedStudent(null)} style={{
+              position: "absolute", top: "1rem", right: "1rem", background: "none", border: "none",
+              color: "#94a3b8", cursor: "pointer", padding: "0.5rem", borderRadius: "50%", transition: "background 0.2s"
+            }} onMouseEnter={(e) => e.currentTarget.style.background = "#f1f5f9"} onMouseLeave={(e) => e.currentTarget.style.background = "none"}>
+              <IconX />
+            </button>
+
+            {/* Modal Header */}
+            <div style={{ padding: "2rem", display: "flex", gap: "1.5rem", alignItems: "center", borderBottom: "1px solid #e2e8f0", background: "#f8fafc" }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img 
+                src={`https://ui-avatars.com/api/?name=${encodeURIComponent(selectedStudent.name)}&size=100&background=random&color=fff&bold=true`} 
+                alt={selectedStudent.name} 
+                style={{ width: 80, height: 80, borderRadius: "50%", border: "4px solid white", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1)" }} 
+              />
+              <div>
+                <h2 style={{ margin: 0, fontSize: "1.5rem", fontWeight: 800, color: "#0f172a", letterSpacing: "-0.02em" }}>{selectedStudent.name}</h2>
+                <p style={{ margin: "0.2rem 0 0", color: "#64748b", fontSize: "0.9rem", fontWeight: 500 }}>{selectedStudent.program} • {selectedStudent.email}</p>
+                <div style={{ marginTop: "0.75rem", display: "flex", gap: "0.5rem" }}>
+                  <span style={{ 
+                    padding: "0.2rem 0.75rem", borderRadius: "999px", fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase",
+                    color: getStatusColor(selectedStudent.status).color, background: getStatusColor(selectedStudent.status).bg
+                  }}>
+                    {selectedStudent.status}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div style={{ padding: "2rem" }}>
+              
+              <h3 style={{ fontSize: "0.85rem", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "1rem" }}>Deployment Details</h3>
+              <div style={{ display: "flex", flexDirection: "column", gap: "1rem", marginBottom: "2rem" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ color: "#475569", fontWeight: 600, fontSize: "0.95rem" }}>Company</span>
+                  <span style={{ color: "#0f172a", fontWeight: 700 }}>{selectedStudent.company}</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ color: "#475569", fontWeight: 600, fontSize: "0.95rem" }}>Supervisor</span>
+                  <span style={{ color: "#0f172a", fontWeight: 700 }}>Pending Review</span>
+                </div>
+              </div>
+
+              <h3 style={{ fontSize: "0.85rem", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "1rem" }}>OJT Progress</h3>
+              <div style={{ background: "#f8fafc", padding: "1.25rem", borderRadius: "1rem", border: "1px solid #e2e8f0" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "0.5rem" }}>
+                  <span style={{ fontSize: "2rem", fontWeight: 800, color: "#0f172a", lineHeight: 1 }}>{selectedStudent.hours} <span style={{ fontSize: "1rem", color: "#64748b", fontWeight: 600 }}>/ {selectedStudent.totalHours} hrs</span></span>
+                  <span style={{ fontSize: "1rem", fontWeight: 800, color: selectedStudent.hours >= 300 ? "#10b981" : "#3b82f6" }}>
+                    {Math.round((selectedStudent.hours / selectedStudent.totalHours) * 100)}%
+                  </span>
+                </div>
+                <div style={{ width: "100%", height: "8px", background: "#e2e8f0", borderRadius: "999px", overflow: "hidden", marginTop: "1rem" }}>
+                  <div style={{ width: `${(selectedStudent.hours / selectedStudent.totalHours) * 100}%`, height: "100%", background: selectedStudent.hours >= 300 ? "#10b981" : "#3b82f6", borderRadius: "999px" }} />
+                </div>
+              </div>
+
+            </div>
+            
+            {/* Modal Footer */}
+            <div style={{ padding: "1.5rem 2rem", background: "#f8fafc", borderTop: "1px solid #e2e8f0", display: "flex", justifyContent: "flex-end", gap: "1rem" }}>
+              <button onClick={() => setSelectedStudent(null)} style={{ padding: "0.6rem 1.25rem", borderRadius: "0.5rem", background: "white", border: "1px solid #cbd5e1", color: "#475569", fontWeight: 600, cursor: "pointer" }}>Close</button>
+              <button style={{ padding: "0.6rem 1.25rem", borderRadius: "0.5rem", background: "#0f172a", border: "none", color: "white", fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                <IconFileText /> View Full DTR
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
