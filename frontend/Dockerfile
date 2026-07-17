@@ -12,6 +12,8 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NODE_ENV=development
+# Switch to non-root node user so files created (like .next) match host user permissions
+USER node
 CMD ["npm", "run", "dev"]
 
 # Stage 3: Build the source code

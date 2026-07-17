@@ -19,10 +19,20 @@ To test the login portal and routing, please use the following dummy credentials
 - **Email**: `admin@university.edu.ph`
 - **Password**: `admin123`
 
-## Running Locally
+## Running Locally (Docker)
 
-1. `cd frontend`
-2. `npm install`
-3. `npm run dev`
+This project uses Docker to spin up the full stack seamlessly (Next.js frontend, Laravel backend, MySQL, Redis, and an Nginx reverse proxy).
 
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+1. Ensure **Docker** is installed and running on your machine.
+2. In the root directory of the project, start the containers:
+   ```bash
+   docker compose up -d --build
+   ```
+3. Access the application:
+   - **Frontend App**: [http://localhost:3000](http://localhost:3000)
+   - **Via Nginx Proxy**: [http://localhost:8080](http://localhost:8080)
+
+To stop the development environment, simply run:
+```bash
+docker compose down
+```

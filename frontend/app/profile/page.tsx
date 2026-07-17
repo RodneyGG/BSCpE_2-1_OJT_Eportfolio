@@ -215,9 +215,9 @@ export default function ProfilePage() {
   ]);
 
   const [dtrEntries, setDtrEntries] = useState([
-    { id: 1, date: "May 16, 2026", timeIn: "08:00 AM", timeOut: "05:00 PM", status: "present", task: "Onboarding and Setup", hours: 8 },
-    { id: 2, date: "May 17, 2026", timeIn: "08:30 AM", timeOut: "05:30 PM", status: "present", task: "Database Schema Design", hours: 8 },
-    { id: 3, date: "May 18, 2026", timeIn: "-", timeOut: "-", status: "absent", task: "Sick Leave", hours: 0 },
+    { id: 1, date: "May 16, 2026", timeIn: "08:00 AM", timeOut: "05:00 PM", status: "present", task: "Onboarding and Setup", hours: 8, proofFile: "dtr_proof_1.pdf" },
+    { id: 2, date: "May 17, 2026", timeIn: "08:30 AM", timeOut: "05:30 PM", status: "present", task: "Database Schema Design", hours: 8, proofFile: "dtr_proof_2.pdf" },
+    { id: 3, date: "May 18, 2026", timeIn: "-", timeOut: "-", status: "absent", task: "Sick Leave", hours: 0, proofFile: null as string | null },
   ]);
 
   const [journals, setJournals] = useState([
@@ -259,6 +259,7 @@ export default function ProfilePage() {
   const [newTimeOut, setNewTimeOut] = useState("");
   const [isAbsent, setIsAbsent] = useState(false);
   const [newTask, setNewTask] = useState("");
+  const [newProofFile, setNewProofFile] = useState<File | null>(null);
 
   const calculateHours = (inTime: string, outTime: string) => {
     if (!inTime || !outTime) return 0;
@@ -291,13 +292,15 @@ export default function ProfilePage() {
       timeOut: isAbsent ? "-" : formatTime(newTimeOut),
       status: isAbsent ? "absent" : "present",
       task: newTask || (isAbsent ? "Absent" : "Regular Task"),
-      hours: hours
+      hours: hours,
+      proofFile: newProofFile ? newProofFile.name : null
     };
     setDtrEntries([newEntry, ...dtrEntries]);
     setNewTask("");
     setNewTimeIn("");
     setNewTimeOut("");
     setIsAbsent(false);
+    setNewProofFile(null);
     setShowDtrForm(false);
   };
 
@@ -632,9 +635,13 @@ export default function ProfilePage() {
                   </div>
                   
                   <div style={{ display: "flex", gap: "1.5rem", alignItems: "flex-end", marginBottom: "1rem" }}>
-                    <div style={{ flex: 1 }}>
+                    <div style={{ flex: 2 }}>
                       <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "0.4rem", textTransform: "uppercase" }}>Task / Activity</label>
                       <input type="text" value={newTask} onChange={(e) => setNewTask(e.target.value)} placeholder={isAbsent ? "Reason for absence..." : "What did you do today?"} style={{ width: "100%", padding: "0.6rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1", fontSize: "0.85rem", outline: "none" }} required />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "0.4rem", textTransform: "uppercase" }}>Proof (PDF)</label>
+                      <input type="file" accept="application/pdf" onChange={(e) => setNewProofFile(e.target.files ? e.target.files[0] : null)} disabled={isAbsent} style={{ width: "100%", padding: "0.45rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1", fontSize: "0.75rem", outline: "none", background: isAbsent ? "#e2e8f0" : "white" }} required={!isAbsent} />
                     </div>
                     <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.85rem", fontWeight: 600, color: "#475569", paddingBottom: "0.6rem", cursor: "pointer" }}>
                       <input type="checkbox" checked={isAbsent} onChange={(e) => setIsAbsent(e.target.checked)} style={{ transform: "scale(1.2)" }} />
@@ -659,6 +666,7 @@ export default function ProfilePage() {
                       <th>Time Out</th>
                       <th>Status</th>
                       <th>Task / Activity</th>
+                      <th>Proof</th>
                       <th style={{ textAlign: "right" }}>Hours</th>
                     </tr>
                   </thead>
@@ -679,6 +687,13 @@ export default function ProfilePage() {
                         </td>
                         <td style={{ color: "#475569", maxWidth: "250px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                           {entry.task}
+                        </td>
+                        <td>
+                          {entry.proofFile ? (
+                            <span style={{ fontSize: "0.75rem", color: "#3b82f6", display: "flex", alignItems: "center", gap: "0.3rem" }}>
+                              <IconCheck /> PDF Attached
+                            </span>
+                          ) : <span style={{ fontSize: "0.75rem", color: "#94a3b8" }}>-</span>}
                         </td>
                         <td style={{ textAlign: "right", fontWeight: 700, color: "#0f172a", fontSize: "0.95rem" }}>{entry.hours}</td>
                       </tr>
