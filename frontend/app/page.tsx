@@ -480,7 +480,7 @@ export default function Home() {
                 </p>
                 <p style={{ fontSize: "0.6rem", letterSpacing: "0.2em",
                   textTransform: "uppercase", color: "#64748b", marginTop: "0.25rem",
-                  fontWeight: 600 }}>OJT Adviser</p>
+                  fontWeight: 600 }}>OJT Supervisor</p>
               </div>
 
               {/* Stats */}
@@ -491,7 +491,7 @@ export default function Home() {
                 {[
                   { value: COMPANIES.length, label: "Companies", icon: "🏢" },
                   { value: totalStudents,    label: "Students",  icon: "👥" },
-                  { value: "600",            label: "OJT Hrs",   icon: "⏱️" },
+                  { value: "300",            label: "OJT Hrs",   icon: "⏱️" },
                 ].map((s, i) => (
                   <div key={s.label} className="stat-tile" style={{
                     background: "rgba(255,255,255,0.08)",
@@ -606,7 +606,7 @@ export default function Home() {
               <div>
                 <p style={{ fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.15em",
                   textTransform: "uppercase", color: "#3b82f6", marginBottom: "0.75rem" }}>
-                  OJT Adviser
+                  OJT Supervisor
                 </p>
                 <p style={{ fontSize: "0.88rem", fontWeight: 700, color: "white",
                   marginBottom: "0.2rem" }}>Engr. Jake A. Binuya</p>
