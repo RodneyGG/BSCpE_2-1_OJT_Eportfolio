@@ -67,12 +67,19 @@ See individual feature docs in `docs/features/`.
 | Landing Page           | feature/portal-redesign       | Completed   |
 | GitHub Actions CI      | feature/github-actions-ci     | Completed   |
 | Profile + DTR + Upload | feature/dtr-and-uploads       | Completed   |
-| Authentication & UI    | feature/auth-and-ui           | In Progress |
+| Authentication & UI    | feature/auth-and-ui           | Completed   |
+| Admin Dashboard        | feature/admin-dashboard       | Completed   |
 
 ---
 
 ## Testing Credentials
 
-Use the following dummy account to access the portal:
+Use the following dummy accounts to access the portal:
+
+**Student Account:**
 - **Email**: `student@university.edu.ph`
 - **Password**: `password123`
+
+**Admin / Professor Account:**
+- **Email**: `admin@university.edu.ph`
+- **Password**: `admin123`

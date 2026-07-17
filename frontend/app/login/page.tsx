@@ -37,9 +37,13 @@ export default function LoginPage() {
     
     if (email === "student@university.edu.ph" && password === "password123") {
       setIsLoading(true);
-      // Simulate network delay
       setTimeout(() => {
         router.push("/profile");
+      }, 1000);
+    } else if (email === "admin@university.edu.ph" && password === "admin123") {
+      setIsLoading(true);
+      setTimeout(() => {
+        router.push("/admin");
       }, 1000);
     } else {
       alert("Invalid credentials. Please use the dummy account.");
