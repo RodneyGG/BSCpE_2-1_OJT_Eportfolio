@@ -1,7 +1,38 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+
+/* ═══════════════════════════ Scroll reveal hook ════════════════════ */
+function useReveal() {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setVisible(true); obs.disconnect(); } },
+      { threshold: 0.1 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+  return { ref, visible };
+}
+
+function RevealBox({ children, delay = 0, style = {} }: { children: React.ReactNode, delay?: number, style?: React.CSSProperties }) {
+  const { ref, visible } = useReveal();
+  return (
+    <div ref={ref} style={{
+      opacity: visible ? 1 : 0,
+      transform: visible ? "translateY(0)" : "translateY(24px)",
+      transition: `opacity 0.6s ease ${delay}s, transform 0.6s ease ${delay}s`,
+      ...style
+    }}>
+      {children}
+    </div>
+  );
+}
 
 /* ═══════════════════════════ Icons ═══════════════════════════ */
 function IconBack() {
@@ -166,7 +197,7 @@ export default function ProfilePage() {
   ]);
 
   const [journals, setJournals] = useState([
-    { id: 1, week: "Week 1", summary: "Completed onboarding, met with the supervisor, and familiarized myself with the codebase and tech stack.", date: "May 20, 2026" }
+    { id: 1, week: "Week 1", summary: "Completed onboarding, met with the supervisor, and familiarized myself with the codebase and tech stack.", dateRange: "May 20 - May 24" }
   ]);
 
   // Upload Simulation
@@ -230,18 +261,30 @@ export default function ProfilePage() {
 
   // Add Journal Simulation
   const [showJournalForm, setShowJournalForm] = useState(false);
+  const [journalStartDate, setJournalStartDate] = useState("");
+  const [journalEndDate, setJournalEndDate] = useState("");
   const [newJournalSummary, setNewJournalSummary] = useState("");
 
   const handleAddJournal = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newJournalSummary) return;
+    if (!newJournalSummary || !journalStartDate || !journalEndDate) return;
+    
+    // Format dates (e.g. 2026-06-29 -> Jun 29)
+    const formatShortDate = (dString: string) => {
+      const d = new Date(dString);
+      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    };
+    const formattedRange = `${formatShortDate(journalStartDate)} - ${formatShortDate(journalEndDate)}`;
+
     setJournals([{
       id: Date.now(),
       week: `Week ${journals.length + 1}`,
       summary: newJournalSummary,
-      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+      dateRange: formattedRange
     }, ...journals]);
     setNewJournalSummary("");
+    setJournalStartDate("");
+    setJournalEndDate("");
     setShowJournalForm(false);
   };
 
@@ -253,10 +296,6 @@ export default function ProfilePage() {
       display: "flex", flexDirection: "column",
     }}>
       <style>{`
-        @keyframes fadeSlideUp {
-          from { opacity: 0; transform: translateY(18px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
         @keyframes pulse {
           0%, 100% { opacity: 1; }
           50% { opacity: 0.5; }
@@ -305,68 +344,69 @@ export default function ProfilePage() {
       <main style={{ maxWidth: 1100, margin: "0 auto", padding: "3rem 2rem", flex: 1, width: "100%" }}>
         
         {/* Profile Header Card */}
-        <div style={{
-          background: "white", borderRadius: "1.5rem",
-          boxShadow: "0 10px 30px -5px rgba(0,0,0,0.05)", overflow: "hidden",
-          animation: "fadeSlideUp 0.6s ease both",
-          marginBottom: "2.5rem", border: "1px solid #f1f5f9"
-        }}>
-          {/* Cover Photo Area */}
+        <RevealBox>
           <div style={{
-            height: 160,
-            background: "linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%)",
-            position: "relative"
+            background: "white", borderRadius: "1.5rem",
+            boxShadow: "0 10px 30px -5px rgba(0,0,0,0.05)", overflow: "hidden",
+            marginBottom: "2.5rem", border: "1px solid #f1f5f9"
           }}>
-            <div style={{ position: "absolute", inset: 0, opacity: 0.1, backgroundImage: "radial-gradient(circle at 2px 2px, white 1px, transparent 0)", backgroundSize: "24px 24px" }} />
-          </div>
-
-          {/* User Info Area */}
-          <div style={{ padding: "0 2.5rem 2.5rem", position: "relative" }}>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "2rem", alignItems: "flex-end", marginTop: "-54px", marginBottom: "2rem" }}>
-              {/* Avatar */}
-              <div style={{
-                width: 120, height: 120, borderRadius: "50%",
-                background: "linear-gradient(135deg, #f59e0b 0%, #ef4444 100%)",
-                border: "6px solid white", display: "flex", alignItems: "center", justifyContent: "center",
-                boxShadow: "0 4px 12px rgba(0,0,0,0.08)", flexShrink: 0,
-                fontSize: "2.75rem", fontWeight: 800, color: "white"
-              }}>
-                JD
-              </div>
-              
-              <div style={{ flex: 1, minWidth: 200, paddingBottom: "0.5rem" }}>
-                <h1 style={{ fontSize: "2rem", fontWeight: 800, color: "#0f172a", margin: "0 0 0.5rem 0", letterSpacing: "normal" }}>Juan Dela Cruz</h1>
-                <p style={{ fontSize: "0.95rem", color: "#64748b", margin: 0, fontWeight: 500 }}>BS Computer Engineering · 2nd Year</p>
-              </div>
-
-              {/* Action Button */}
-              <button style={{
-                background: "#f1f5f9", border: "none", borderRadius: "0.75rem",
-                padding: "0.75rem 1.5rem", fontSize: "0.85rem", fontWeight: 600, color: "#475569",
-                cursor: "pointer", transition: "background 0.2s", marginBottom: "0.5rem"
-              }}>
-                Edit Profile
-              </button>
+            {/* Cover Photo Area */}
+            <div style={{
+              height: 160,
+              background: "linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%)",
+              position: "relative"
+            }}>
+              <div style={{ position: "absolute", inset: 0, opacity: 0.1, backgroundImage: "radial-gradient(circle at 2px 2px, white 1px, transparent 0)", backgroundSize: "24px 24px" }} />
             </div>
 
-            {/* Contact & Meta Row */}
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "2.5rem", borderTop: "1px solid #e2e8f0", paddingTop: "1.75rem" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", color: "#475569", fontSize: "0.9rem", fontWeight: 500 }}>
-                <IconMail /> juan.delacruz@university.edu.ph
+            {/* User Info Area */}
+            <div style={{ padding: "0 2.5rem 2.5rem", position: "relative" }}>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "2rem", alignItems: "flex-end", marginTop: "-54px", marginBottom: "2rem" }}>
+                {/* Avatar */}
+                <div style={{
+                  width: 120, height: 120, borderRadius: "50%",
+                  background: "linear-gradient(135deg, #f59e0b 0%, #ef4444 100%)",
+                  border: "6px solid white", display: "flex", alignItems: "center", justifyContent: "center",
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.08)", flexShrink: 0,
+                  fontSize: "2.75rem", fontWeight: 800, color: "white"
+                }}>
+                  JD
+                </div>
+                
+                <div style={{ flex: 1, minWidth: 200, paddingBottom: "0.5rem" }}>
+                  <h1 style={{ fontSize: "2rem", fontWeight: 800, color: "#0f172a", margin: "0 0 0.5rem 0", letterSpacing: "normal" }}>Juan Dela Cruz</h1>
+                  <p style={{ fontSize: "0.95rem", color: "#64748b", margin: 0, fontWeight: 500 }}>BS Computer Engineering · 2nd Year</p>
+                </div>
+
+                {/* Action Button */}
+                <button style={{
+                  background: "#f1f5f9", border: "none", borderRadius: "0.75rem",
+                  padding: "0.75rem 1.5rem", fontSize: "0.85rem", fontWeight: 600, color: "#475569",
+                  cursor: "pointer", transition: "background 0.2s", marginBottom: "0.5rem"
+                }}>
+                  Edit Profile
+                </button>
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", color: "#475569", fontSize: "0.9rem", fontWeight: 500 }}>
-                <IconPhone /> +63 912 345 6789
+
+              {/* Contact & Meta Row */}
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "2.5rem", borderTop: "1px solid #e2e8f0", paddingTop: "1.75rem" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", color: "#475569", fontSize: "0.9rem", fontWeight: 500 }}>
+                  <IconMail /> juan.delacruz@university.edu.ph
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", color: "#475569", fontSize: "0.9rem", fontWeight: 500 }}>
+                  <IconPhone /> +63 912 345 6789
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        </RevealBox>
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "2.5rem" }}>
           
           {/* ── Top Row (Status & Tracker) ── */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "2.5rem" }}>
             {/* OJT Status */}
-            <div style={{ animation: "fadeSlideUp 0.6s ease 0.1s both" }}>
+            <RevealBox delay={0.1}>
               <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#0f172a", marginBottom: "1.25rem" }}>OJT Deployment Details</h2>
               <div className="ui-card">
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.5rem" }}>
@@ -391,10 +431,10 @@ export default function ProfilePage() {
                   </div>
                 </div>
               </div>
-            </div>
+            </RevealBox>
 
             {/* Hours Progress */}
-            <div style={{ animation: "fadeSlideUp 0.6s ease 0.2s both" }}>
+            <RevealBox delay={0.2}>
               <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#0f172a", marginBottom: "1.25rem" }}>Hours Tracker</h2>
               <div className="ui-card stat-card" style={{ transition: "all 0.3s ease" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "1rem" }}>
@@ -414,21 +454,21 @@ export default function ProfilePage() {
                 </div>
                 <p style={{ fontSize: "0.85rem", color: "#64748b", margin: "1.25rem 0 0", textAlign: "center", fontWeight: 500 }}>Keep up the good work! {300 - dtrEntries.reduce((sum, entry) => sum + entry.hours, 118)} hours remaining.</p>
               </div>
-            </div>
+            </RevealBox>
           </div>
 
           {/* ── Documents Section ── */}
-          <div style={{ animation: "fadeSlideUp 0.6s ease 0.3s both" }}>
+          <RevealBox delay={0.1}>
             <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#0f172a", marginBottom: "1.25rem" }}>Required Documents</h2>
             <div className="ui-card" style={{ padding: 0, overflow: "hidden" }}>
               {documents.map((doc) => (
                 <DocumentRow key={doc.id} doc={doc} onUpload={handleUpload} />
               ))}
             </div>
-          </div>
+          </RevealBox>
 
           {/* ── Weekly Journals Section ── */}
-          <div style={{ animation: "fadeSlideUp 0.6s ease 0.4s both" }}>
+          <RevealBox delay={0.2}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem" }}>
               <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#0f172a", margin: 0 }}>Weekly Journals</h2>
               <button 
@@ -443,7 +483,17 @@ export default function ProfilePage() {
 
             <div className="ui-card" style={{ padding: "2rem" }}>
               {showJournalForm && (
-                <form onSubmit={handleAddJournal} style={{ background: "#f8fafc", padding: "1.5rem", borderRadius: "1rem", marginBottom: "2rem", border: "1px dashed #cbd5e1", animation: "fadeSlideUp 0.3s ease" }}>
+                <form onSubmit={handleAddJournal} style={{ background: "#f8fafc", padding: "1.5rem", borderRadius: "1rem", marginBottom: "2rem", border: "1px dashed #cbd5e1" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1rem" }}>
+                    <div>
+                      <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 700, color: "#475569", marginBottom: "0.5rem", textTransform: "uppercase" }}>Start Date</label>
+                      <input type="date" value={journalStartDate} onChange={(e) => setJournalStartDate(e.target.value)} style={{ width: "100%", padding: "0.75rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1", fontSize: "0.9rem", outline: "none" }} required />
+                    </div>
+                    <div>
+                      <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 700, color: "#475569", marginBottom: "0.5rem", textTransform: "uppercase" }}>End Date</label>
+                      <input type="date" value={journalEndDate} onChange={(e) => setJournalEndDate(e.target.value)} style={{ width: "100%", padding: "0.75rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1", fontSize: "0.9rem", outline: "none" }} required />
+                    </div>
+                  </div>
                   <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 700, color: "#475569", marginBottom: "0.5rem", textTransform: "uppercase" }}>Summary of the Week</label>
                   <textarea 
                     value={newJournalSummary} 
@@ -464,7 +514,7 @@ export default function ProfilePage() {
                   <div key={journal.id} style={{ background: "#f8fafc", padding: "1.5rem", borderRadius: "1rem", border: "1px solid #e2e8f0" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
                       <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "#0f172a", margin: 0 }}>{journal.week}</h3>
-                      <span style={{ fontSize: "0.8rem", color: "#64748b", fontWeight: 500 }}>{journal.date}</span>
+                      <span style={{ fontSize: "0.8rem", color: "#64748b", fontWeight: 500 }}>{journal.dateRange}</span>
                     </div>
                     <p style={{ fontSize: "0.9rem", color: "#475569", lineHeight: 1.6, margin: 0 }}>
                       {journal.summary}
@@ -473,10 +523,10 @@ export default function ProfilePage() {
                 ))}
               </div>
             </div>
-          </div>
+          </RevealBox>
 
           {/* ── DTR Section ── */}
-          <div style={{ animation: "fadeSlideUp 0.6s ease 0.5s both" }}>
+          <RevealBox delay={0.3}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem" }}>
               <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#0f172a", margin: 0 }}>Daily Time Record</h2>
               <button 
@@ -493,7 +543,7 @@ export default function ProfilePage() {
               
               {/* DTR Entry Form */}
               {showDtrForm && (
-                <form onSubmit={handleAddDtr} style={{ background: "#f8fafc", padding: "1.5rem", borderRadius: "1rem", marginBottom: "2rem", border: "1px dashed #cbd5e1", animation: "fadeSlideUp 0.3s ease" }}>
+                <form onSubmit={handleAddDtr} style={{ background: "#f8fafc", padding: "1.5rem", borderRadius: "1rem", marginBottom: "2rem", border: "1px dashed #cbd5e1" }}>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1.5rem", marginBottom: "1.25rem" }}>
                     <div>
                       <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "0.4rem", textTransform: "uppercase" }}>Date</label>
@@ -571,7 +621,7 @@ export default function ProfilePage() {
               </div>
 
             </div>
-          </div>
+          </RevealBox>
 
         </div>
       </main>

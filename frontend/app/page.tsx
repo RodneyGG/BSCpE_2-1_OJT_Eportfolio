@@ -397,7 +397,7 @@ export default function Home() {
               </a>
               <div style={{ width: 1, height: 20, backgroundColor: "rgba(255,255,255,0.12)" }} />
               {/* User pill */}
-              <a href="/profile" style={{
+              <a href="/login" style={{
                 display: "flex", alignItems: "center", gap: "0.5rem",
                 background: "rgba(255,255,255,0.1)",
                 border: "1px solid rgba(255,255,255,0.15)",
