@@ -62,6 +62,8 @@ All features follow an **8-phase workflow**:
 
 See individual feature docs in `docs/features/`.
 
-| Feature         | Branch                    | Status      |
-|-----------------|---------------------------|-------------|
-| Landing Page    | feature/landing-page      | In Progress |
+| Feature                | Branch                        | Status      |
+|------------------------|-------------------------------|-------------|
+| Landing Page           | feature/portal-redesign       | Completed   |
+| GitHub Actions CI      | feature/github-actions-ci     | Completed   |
+| Profile + DTR + Upload | feature/dtr-and-uploads       | In Progress |
