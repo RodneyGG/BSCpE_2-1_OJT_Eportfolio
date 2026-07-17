@@ -70,9 +70,9 @@ export default function ProfilePage() {
   ]);
 
   const [dtrEntries, setDtrEntries] = useState([
-    { id: 1, date: "May 16, 2026", task: "Onboarding and Setup", hours: 8, status: "approved" },
-    { id: 2, date: "May 17, 2026", task: "Database Schema Design", hours: 8, status: "approved" },
-    { id: 3, date: "May 18, 2026", task: "Frontend Dashboard UI", hours: 8, status: "pending" },
+    { id: 1, date: "May 16, 2026", timeIn: "08:00 AM", timeOut: "05:00 PM", status: "present", task: "Onboarding and Setup", hours: 8 },
+    { id: 2, date: "May 17, 2026", timeIn: "08:30 AM", timeOut: "05:30 PM", status: "present", task: "Database Schema Design", hours: 8 },
+    { id: 3, date: "May 18, 2026", timeIn: "-", timeOut: "-", status: "absent", task: "Sick Leave", hours: 0 },
   ]);
 
   // Upload Simulation
@@ -88,21 +88,51 @@ export default function ProfilePage() {
 
   // Add DTR Simulation
   const [showDtrForm, setShowDtrForm] = useState(false);
+  const [newDate, setNewDate] = useState("");
+  const [newTimeIn, setNewTimeIn] = useState("");
+  const [newTimeOut, setNewTimeOut] = useState("");
+  const [isAbsent, setIsAbsent] = useState(false);
   const [newTask, setNewTask] = useState("");
-  const [newHours, setNewHours] = useState("8");
+
+  const calculateHours = (inTime: string, outTime: string) => {
+    if (!inTime || !outTime) return 0;
+    // Basic hours calculation (assuming HH:MM format 24h)
+    const [inH, inM] = inTime.split(':').map(Number);
+    const [outH, outM] = outTime.split(':').map(Number);
+    let diff = (outH + outM / 60) - (inH + inM / 60);
+    if (diff > 4) diff -= 1; // 1 hour lunch break deduction
+    return diff > 0 ? Math.round(diff * 10) / 10 : 0;
+  };
+
+  const formatTime = (time24: string) => {
+    if (!time24) return "-";
+    const [h, m] = time24.split(':');
+    let hours = parseInt(h);
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12 || 12;
+    return `${hours}:${m} ${ampm}`;
+  };
 
   const handleAddDtr = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTask) return;
+    if (!isAbsent && (!newTimeIn || !newTimeOut)) return;
+    
+    const hours = isAbsent ? 0 : calculateHours(newTimeIn, newTimeOut);
+    
     const newEntry = {
       id: Date.now(),
-      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-      task: newTask,
-      hours: parseInt(newHours) || 8,
-      status: "pending"
+      date: newDate || new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      timeIn: isAbsent ? "-" : formatTime(newTimeIn),
+      timeOut: isAbsent ? "-" : formatTime(newTimeOut),
+      status: isAbsent ? "absent" : "present",
+      task: newTask || (isAbsent ? "Absent" : "Regular Task"),
+      hours: hours
     };
     setDtrEntries([newEntry, ...dtrEntries]);
     setNewTask("");
+    setNewTimeIn("");
+    setNewTimeOut("");
+    setIsAbsent(false);
     setShowDtrForm(false);
   };
 
@@ -138,6 +168,10 @@ export default function ProfilePage() {
           position: absolute; top: 0; left: 0; width: "100%"; height: "100%";
           opacity: 0; cursor: pointer;
         }
+        .dtr-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; text-align: left; }
+        .dtr-table th { background: #f8fafc; padding: 0.75rem 1rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid #e2e8f0; }
+        .dtr-table td { padding: 0.85rem 1rem; color: #0f172a; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+        .dtr-table tr:hover td { background: #f8fafc; }
       `}</style>
 
       {/* ══ TOP NAV ══ */}
@@ -335,49 +369,81 @@ export default function ProfilePage() {
                 
                 {/* DTR Entry Form */}
                 {showDtrForm && (
-                  <form onSubmit={handleAddDtr} style={{ background: "#f8fafc", padding: "1rem", borderRadius: "0.75rem", marginBottom: "1.5rem", border: "1px dashed #cbd5e1", animation: "fadeSlideUp 0.3s ease" }}>
-                    <div style={{ display: "flex", gap: "1rem", marginBottom: "0.75rem" }}>
-                      <div style={{ flex: 1 }}>
-                        <label style={{ display: "block", fontSize: "0.7rem", fontWeight: 700, color: "#475569", marginBottom: "0.25rem", textTransform: "uppercase" }}>Task / Activity</label>
-                        <input type="text" value={newTask} onChange={(e) => setNewTask(e.target.value)} placeholder="What did you do today?" style={{ width: "100%", padding: "0.5rem", borderRadius: "0.35rem", border: "1px solid #cbd5e1", fontSize: "0.8rem", outline: "none" }} required />
+                  <form onSubmit={handleAddDtr} style={{ background: "#f8fafc", padding: "1.25rem", borderRadius: "0.75rem", marginBottom: "1.5rem", border: "1px dashed #cbd5e1", animation: "fadeSlideUp 0.3s ease" }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1rem", marginBottom: "1rem" }}>
+                      <div>
+                        <label style={{ display: "block", fontSize: "0.7rem", fontWeight: 700, color: "#475569", marginBottom: "0.25rem", textTransform: "uppercase" }}>Date</label>
+                        <input type="date" value={newDate} onChange={(e) => setNewDate(e.target.value)} style={{ width: "100%", padding: "0.5rem", borderRadius: "0.35rem", border: "1px solid #cbd5e1", fontSize: "0.8rem", outline: "none" }} required />
                       </div>
-                      <div style={{ width: "80px" }}>
-                        <label style={{ display: "block", fontSize: "0.7rem", fontWeight: 700, color: "#475569", marginBottom: "0.25rem", textTransform: "uppercase" }}>Hours</label>
-                        <input type="number" value={newHours} onChange={(e) => setNewHours(e.target.value)} min="1" max="12" style={{ width: "100%", padding: "0.5rem", borderRadius: "0.35rem", border: "1px solid #cbd5e1", fontSize: "0.8rem", outline: "none" }} required />
+                      <div>
+                        <label style={{ display: "block", fontSize: "0.7rem", fontWeight: 700, color: "#475569", marginBottom: "0.25rem", textTransform: "uppercase" }}>Time In</label>
+                        <input type="time" value={newTimeIn} onChange={(e) => setNewTimeIn(e.target.value)} disabled={isAbsent} style={{ width: "100%", padding: "0.5rem", borderRadius: "0.35rem", border: "1px solid #cbd5e1", fontSize: "0.8rem", outline: "none", background: isAbsent ? "#e2e8f0" : "white" }} required={!isAbsent} />
+                      </div>
+                      <div>
+                        <label style={{ display: "block", fontSize: "0.7rem", fontWeight: 700, color: "#475569", marginBottom: "0.25rem", textTransform: "uppercase" }}>Time Out</label>
+                        <input type="time" value={newTimeOut} onChange={(e) => setNewTimeOut(e.target.value)} disabled={isAbsent} style={{ width: "100%", padding: "0.5rem", borderRadius: "0.35rem", border: "1px solid #cbd5e1", fontSize: "0.8rem", outline: "none", background: isAbsent ? "#e2e8f0" : "white" }} required={!isAbsent} />
                       </div>
                     </div>
-                    <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.5rem" }}>
+                    
+                    <div style={{ display: "flex", gap: "1rem", alignItems: "flex-end", marginBottom: "0.75rem" }}>
+                      <div style={{ flex: 1 }}>
+                        <label style={{ display: "block", fontSize: "0.7rem", fontWeight: 700, color: "#475569", marginBottom: "0.25rem", textTransform: "uppercase" }}>Task / Activity</label>
+                        <input type="text" value={newTask} onChange={(e) => setNewTask(e.target.value)} placeholder={isAbsent ? "Reason for absence..." : "What did you do today?"} style={{ width: "100%", padding: "0.5rem", borderRadius: "0.35rem", border: "1px solid #cbd5e1", fontSize: "0.8rem", outline: "none" }} required />
+                      </div>
+                      <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.8rem", fontWeight: 600, color: "#475569", paddingBottom: "0.5rem", cursor: "pointer" }}>
+                        <input type="checkbox" checked={isAbsent} onChange={(e) => setIsAbsent(e.target.checked)} style={{ transform: "scale(1.2)" }} />
+                        Mark as Absent
+                      </label>
+                    </div>
+
+                    <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.5rem", marginTop: "1rem" }}>
                       <button type="button" onClick={() => setShowDtrForm(false)} style={{ background: "transparent", color: "#64748b", border: "none", padding: "0.4rem 0.8rem", fontSize: "0.75rem", fontWeight: 600, cursor: "pointer" }}>Cancel</button>
                       <button type="submit" style={{ background: "#0f172a", color: "white", border: "none", borderRadius: "0.35rem", padding: "0.4rem 1rem", fontSize: "0.75rem", fontWeight: 600, cursor: "pointer" }}>Save Entry</button>
                     </div>
                   </form>
                 )}
 
-                {/* DTR Timeline */}
-                <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                  {dtrEntries.map((entry, index) => (
-                    <div key={entry.id} style={{ display: "flex", gap: "1rem", position: "relative" }}>
-                      {/* Timeline Line */}
-                      {index !== dtrEntries.length - 1 && (
-                        <div style={{ position: "absolute", top: "24px", left: "11px", bottom: "-16px", width: "2px", background: "#f1f5f9" }} />
+                {/* DTR Excel-style Table */}
+                <div style={{ overflowX: "auto", border: "1px solid #e2e8f0", borderRadius: "0.5rem" }}>
+                  <table className="dtr-table">
+                    <thead>
+                      <tr>
+                        <th>Date</th>
+                        <th>Time In</th>
+                        <th>Time Out</th>
+                        <th>Status</th>
+                        <th>Task / Activity</th>
+                        <th style={{ textAlign: "right" }}>Hours</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {dtrEntries.map((entry) => (
+                        <tr key={entry.id}>
+                          <td style={{ fontWeight: 600, whiteSpace: "nowrap" }}>{entry.date}</td>
+                          <td style={{ whiteSpace: "nowrap" }}>{entry.timeIn}</td>
+                          <td style={{ whiteSpace: "nowrap" }}>{entry.timeOut}</td>
+                          <td>
+                            <span style={{ 
+                              fontSize: "0.65rem", fontWeight: 700, textTransform: "uppercase", padding: "0.2rem 0.6rem", borderRadius: "9999px",
+                              color: entry.status === "present" ? "#166534" : "#b45309",
+                              background: entry.status === "present" ? "#dcfce7" : "#fef3c7" 
+                            }}>
+                              {entry.status}
+                            </span>
+                          </td>
+                          <td style={{ color: "#475569", maxWidth: "200px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            {entry.task}
+                          </td>
+                          <td style={{ textAlign: "right", fontWeight: 700, color: "#0f172a" }}>{entry.hours}</td>
+                        </tr>
+                      ))}
+                      {dtrEntries.length === 0 && (
+                        <tr>
+                          <td colSpan={6} style={{ textAlign: "center", padding: "2rem", color: "#94a3b8" }}>No DTR records found.</td>
+                        </tr>
                       )}
-                      
-                      {/* Timeline Dot */}
-                      <div style={{ width: "24px", height: "24px", borderRadius: "50%", background: entry.status === "approved" ? "#dcfce7" : "#fef3c7", border: `2px solid ${entry.status === "approved" ? "#10b981" : "#f59e0b"}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, zIndex: 1 }}>
-                        <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: entry.status === "approved" ? "#10b981" : "#f59e0b" }} />
-                      </div>
-
-                      {/* Content */}
-                      <div style={{ paddingBottom: "0.5rem", flex: 1 }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "0.25rem" }}>
-                          <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "#94a3b8" }}>{entry.date}</span>
-                          <span style={{ fontSize: "0.7rem", fontWeight: 700, color: entry.status === "approved" ? "#166534" : "#b45309", background: entry.status === "approved" ? "#dcfce7" : "#fef3c7", padding: "0.15rem 0.5rem", borderRadius: "9999px", textTransform: "uppercase" }}>{entry.status}</span>
-                        </div>
-                        <div style={{ fontSize: "0.9rem", fontWeight: 600, color: "#0f172a", marginBottom: "0.15rem" }}>{entry.task}</div>
-                        <div style={{ fontSize: "0.8rem", color: "#64748b" }}>{entry.hours} hours rendered</div>
-                      </div>
-                    </div>
-                  ))}
+                    </tbody>
+                  </table>
                 </div>
 
               </div>
