@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 
 /* ═══════════════════════════ Icons ═══════════════════════════ */
@@ -39,8 +40,72 @@ function IconPhone() {
   );
 }
 
+function IconUpload() {
+  return (
+    <svg width={14} height={14} viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
+    </svg>
+  );
+}
+
+function IconPlus() {
+  return (
+    <svg width={14} height={14} viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 5v14M5 12h14"/>
+    </svg>
+  );
+}
+
 /* ═══════════════════════════ Page ════════════════════════════ */
 export default function ProfilePage() {
+  // Mock Data States
+  const [documents, setDocuments] = useState([
+    { id: 1, name: "Resume / CV", status: "submitted", date: "May 10" },
+    { id: 2, name: "Endorsement Letter", status: "submitted", date: "May 12" },
+    { id: 3, name: "Memorandum of Agreement", status: "submitted", date: "May 15" },
+    { id: 4, name: "Medical Certificate", status: "pending", date: "Required before start" },
+    { id: 5, name: "Parents' Consent", status: "pending", date: "Required before start" },
+  ]);
+
+  const [dtrEntries, setDtrEntries] = useState([
+    { id: 1, date: "May 16, 2026", task: "Onboarding and Setup", hours: 8, status: "approved" },
+    { id: 2, date: "May 17, 2026", task: "Database Schema Design", hours: 8, status: "approved" },
+    { id: 3, date: "May 18, 2026", task: "Frontend Dashboard UI", hours: 8, status: "pending" },
+  ]);
+
+  // Upload Simulation
+  const handleUpload = (id: number) => {
+    // Simulate an upload delay
+    setDocuments(docs => docs.map(d => d.id === id ? { ...d, status: "uploading" } : d));
+    setTimeout(() => {
+      setDocuments(docs => docs.map(d => 
+        d.id === id ? { ...d, status: "submitted", date: "Just now" } : d
+      ));
+    }, 1500);
+  };
+
+  // Add DTR Simulation
+  const [showDtrForm, setShowDtrForm] = useState(false);
+  const [newTask, setNewTask] = useState("");
+  const [newHours, setNewHours] = useState("8");
+
+  const handleAddDtr = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTask) return;
+    const newEntry = {
+      id: Date.now(),
+      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      task: newTask,
+      hours: parseInt(newHours) || 8,
+      status: "pending"
+    };
+    setDtrEntries([newEntry, ...dtrEntries]);
+    setNewTask("");
+    setShowDtrForm(false);
+  };
+
   return (
     <div style={{
       minHeight: "100vh",
@@ -53,15 +118,26 @@ export default function ProfilePage() {
           from { opacity: 0; transform: translateY(18px); }
           to   { opacity: 1; transform: translateY(0); }
         }
-        @keyframes scaleIn {
-          from { opacity: 0; transform: scale(0.94); }
-          to   { opacity: 1; transform: scale(1); }
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.5; }
         }
         .stat-card:hover {
           transform: translateY(-2px);
           box-shadow: 0 8px 16px rgba(0,0,0,0.08);
         }
         .back-link:hover { opacity: 0.8; }
+        .upload-btn {
+          background: #f1f5f9; color: #475569; padding: 0.35rem 0.75rem;
+          border-radius: 0.5rem; font-size: 0.7rem; font-weight: 600;
+          display: flex; gap: 0.35rem; align-items: center; border: 1px dashed #cbd5e1;
+          cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden;
+        }
+        .upload-btn:hover { border-color: #3b82f6; color: #3b82f6; background: #eff6ff; }
+        .upload-btn input[type="file"] {
+          position: absolute; top: 0; left: 0; width: "100%"; height: "100%";
+          opacity: 0; cursor: pointer;
+        }
       `}</style>
 
       {/* ══ TOP NAV ══ */}
@@ -148,7 +224,7 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "2rem" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "2rem" }}>
           
           {/* ── Left Column ── */}
           <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
@@ -186,50 +262,127 @@ export default function ProfilePage() {
               <div className="stat-card" style={{ background: "white", borderRadius: "1rem", padding: "1.5rem", boxShadow: "0 2px 4px rgba(0,0,0,0.04)", transition: "transform 0.2s, box-shadow 0.2s" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "0.75rem" }}>
                   <div>
-                    <span style={{ fontSize: "2rem", fontWeight: 800, color: "#0f172a", lineHeight: 1 }}>142</span>
+                    <span style={{ fontSize: "2rem", fontWeight: 800, color: "#0f172a", lineHeight: 1 }}>
+                      {dtrEntries.reduce((sum, entry) => sum + entry.hours, 118)}
+                    </span>
                     <span style={{ fontSize: "0.85rem", color: "#64748b", fontWeight: 600, marginLeft: "0.3rem" }}>/ 600 hrs</span>
                   </div>
-                  <span style={{ fontSize: "0.85rem", fontWeight: 700, color: "#3b82f6" }}>23%</span>
+                  <span style={{ fontSize: "0.85rem", fontWeight: 700, color: "#3b82f6" }}>
+                    {Math.round((dtrEntries.reduce((sum, entry) => sum + entry.hours, 118) / 600) * 100)}%
+                  </span>
                 </div>
                 {/* Progress Bar */}
                 <div style={{ width: "100%", height: 8, background: "#e2e8f0", borderRadius: 9999, overflow: "hidden" }}>
-                  <div style={{ width: "23%", height: "100%", background: "linear-gradient(90deg, #3b82f6, #6366f1)", borderRadius: 9999 }} />
+                  <div style={{ width: `${(dtrEntries.reduce((sum, entry) => sum + entry.hours, 118) / 600) * 100}%`, height: "100%", background: "linear-gradient(90deg, #3b82f6, #6366f1)", borderRadius: 9999, transition: "width 0.5s ease" }} />
                 </div>
-                <p style={{ fontSize: "0.75rem", color: "#94a3b8", margin: "1rem 0 0", textAlign: "center" }}>Keep up the good work! 458 hours remaining.</p>
+                <p style={{ fontSize: "0.75rem", color: "#94a3b8", margin: "1rem 0 0", textAlign: "center" }}>Keep up the good work! {600 - dtrEntries.reduce((sum, entry) => sum + entry.hours, 118)} hours remaining.</p>
               </div>
             </div>
           </div>
 
           {/* ── Right Column ── */}
           <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
+            
             {/* Documents */}
             <div style={{ animation: "fadeSlideUp 0.6s ease 0.3s both" }}>
               <h2 style={{ fontSize: "1rem", fontWeight: 700, color: "#0f172a", marginBottom: "1rem" }}>Required Documents</h2>
               <div style={{ background: "white", borderRadius: "1rem", padding: "0.5rem", boxShadow: "0 2px 4px rgba(0,0,0,0.04)" }}>
-                {[
-                  { name: "Resume / CV", status: "submitted", date: "May 10" },
-                  { name: "Endorsement Letter", status: "submitted", date: "May 12" },
-                  { name: "Memorandum of Agreement", status: "submitted", date: "May 15" },
-                  { name: "Medical Certificate", status: "pending", date: "Required before start" },
-                  { name: "Parents' Consent", status: "pending", date: "Required before start" },
-                ].map((doc, i) => (
-                  <div key={i} style={{
+                {documents.map((doc, i) => (
+                  <div key={doc.id} style={{
                     display: "flex", alignItems: "center", justifyContent: "space-between",
-                    padding: "1rem", borderBottom: i === 4 ? "none" : "1px solid #f1f5f9"
+                    padding: "1rem", borderBottom: i === documents.length - 1 ? "none" : "1px solid #f1f5f9"
                   }}>
                     <div>
                       <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "#0f172a" }}>{doc.name}</div>
                       <div style={{ fontSize: "0.7rem", color: "#94a3b8", marginTop: "0.2rem" }}>{doc.date}</div>
                     </div>
-                    {doc.status === "submitted" ? (
+                    {doc.status === "submitted" && (
                       <span style={{ background: "#dcfce7", color: "#166534", padding: "0.2rem 0.6rem", borderRadius: "0.35rem", fontSize: "0.65rem", fontWeight: 700, textTransform: "uppercase" }}>Submitted</span>
-                    ) : (
-                      <span style={{ background: "#fef3c7", color: "#b45309", padding: "0.2rem 0.6rem", borderRadius: "0.35rem", fontSize: "0.65rem", fontWeight: 700, textTransform: "uppercase" }}>Pending</span>
+                    )}
+                    {doc.status === "uploading" && (
+                      <span style={{ color: "#3b82f6", fontSize: "0.7rem", fontWeight: 600, animation: "pulse 1s infinite" }}>Uploading...</span>
+                    )}
+                    {doc.status === "pending" && (
+                      <label className="upload-btn">
+                        <IconUpload /> Upload
+                        <input type="file" onChange={(e) => {
+                          if (e.target.files && e.target.files[0]) {
+                            handleUpload(doc.id);
+                          }
+                        }} />
+                      </label>
                     )}
                   </div>
                 ))}
               </div>
             </div>
+
+            {/* DTR (Daily Time Record) */}
+            <div style={{ animation: "fadeSlideUp 0.6s ease 0.4s both" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+                <h2 style={{ fontSize: "1rem", fontWeight: 700, color: "#0f172a", margin: 0 }}>Daily Time Record</h2>
+                <button 
+                  onClick={() => setShowDtrForm(!showDtrForm)}
+                  style={{ background: "#3b82f6", color: "white", border: "none", borderRadius: "0.5rem", padding: "0.4rem 0.8rem", fontSize: "0.75rem", fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: "0.3rem", transition: "background 0.2s" }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = "#2563eb"}
+                  onMouseLeave={(e) => e.currentTarget.style.background = "#3b82f6"}
+                >
+                  <IconPlus /> Add Log
+                </button>
+              </div>
+
+              <div style={{ background: "white", borderRadius: "1rem", padding: "1.5rem", boxShadow: "0 2px 4px rgba(0,0,0,0.04)" }}>
+                
+                {/* DTR Entry Form */}
+                {showDtrForm && (
+                  <form onSubmit={handleAddDtr} style={{ background: "#f8fafc", padding: "1rem", borderRadius: "0.75rem", marginBottom: "1.5rem", border: "1px dashed #cbd5e1", animation: "fadeSlideUp 0.3s ease" }}>
+                    <div style={{ display: "flex", gap: "1rem", marginBottom: "0.75rem" }}>
+                      <div style={{ flex: 1 }}>
+                        <label style={{ display: "block", fontSize: "0.7rem", fontWeight: 700, color: "#475569", marginBottom: "0.25rem", textTransform: "uppercase" }}>Task / Activity</label>
+                        <input type="text" value={newTask} onChange={(e) => setNewTask(e.target.value)} placeholder="What did you do today?" style={{ width: "100%", padding: "0.5rem", borderRadius: "0.35rem", border: "1px solid #cbd5e1", fontSize: "0.8rem", outline: "none" }} required />
+                      </div>
+                      <div style={{ width: "80px" }}>
+                        <label style={{ display: "block", fontSize: "0.7rem", fontWeight: 700, color: "#475569", marginBottom: "0.25rem", textTransform: "uppercase" }}>Hours</label>
+                        <input type="number" value={newHours} onChange={(e) => setNewHours(e.target.value)} min="1" max="12" style={{ width: "100%", padding: "0.5rem", borderRadius: "0.35rem", border: "1px solid #cbd5e1", fontSize: "0.8rem", outline: "none" }} required />
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.5rem" }}>
+                      <button type="button" onClick={() => setShowDtrForm(false)} style={{ background: "transparent", color: "#64748b", border: "none", padding: "0.4rem 0.8rem", fontSize: "0.75rem", fontWeight: 600, cursor: "pointer" }}>Cancel</button>
+                      <button type="submit" style={{ background: "#0f172a", color: "white", border: "none", borderRadius: "0.35rem", padding: "0.4rem 1rem", fontSize: "0.75rem", fontWeight: 600, cursor: "pointer" }}>Save Entry</button>
+                    </div>
+                  </form>
+                )}
+
+                {/* DTR Timeline */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                  {dtrEntries.map((entry, index) => (
+                    <div key={entry.id} style={{ display: "flex", gap: "1rem", position: "relative" }}>
+                      {/* Timeline Line */}
+                      {index !== dtrEntries.length - 1 && (
+                        <div style={{ position: "absolute", top: "24px", left: "11px", bottom: "-16px", width: "2px", background: "#f1f5f9" }} />
+                      )}
+                      
+                      {/* Timeline Dot */}
+                      <div style={{ width: "24px", height: "24px", borderRadius: "50%", background: entry.status === "approved" ? "#dcfce7" : "#fef3c7", border: `2px solid ${entry.status === "approved" ? "#10b981" : "#f59e0b"}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, zIndex: 1 }}>
+                        <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: entry.status === "approved" ? "#10b981" : "#f59e0b" }} />
+                      </div>
+
+                      {/* Content */}
+                      <div style={{ paddingBottom: "0.5rem", flex: 1 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "0.25rem" }}>
+                          <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "#94a3b8" }}>{entry.date}</span>
+                          <span style={{ fontSize: "0.7rem", fontWeight: 700, color: entry.status === "approved" ? "#166534" : "#b45309", background: entry.status === "approved" ? "#dcfce7" : "#fef3c7", padding: "0.15rem 0.5rem", borderRadius: "9999px", textTransform: "uppercase" }}>{entry.status}</span>
+                        </div>
+                        <div style={{ fontSize: "0.9rem", fontWeight: 600, color: "#0f172a", marginBottom: "0.15rem" }}>{entry.task}</div>
+                        <div style={{ fontSize: "0.8rem", color: "#64748b" }}>{entry.hours} hours rendered</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+              </div>
+            </div>
+
           </div>
           
         </div>
