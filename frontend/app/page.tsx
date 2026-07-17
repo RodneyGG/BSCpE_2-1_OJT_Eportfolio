@@ -291,13 +291,11 @@ function CompanyRow({ company, isOpen, onToggle, index }: {
 export default function Home() {
   const [openId, setOpenId] = useState<number | null>(0);
   const [navScrolled, setNavScrolled] = useState(false);
-  const [mounted, setMounted] = useState(false);
 
   const toggle = (id: number) => setOpenId(prev => prev === id ? null : id);
   const totalStudents = COMPANIES.reduce((s, c) => s + c.studentCount, 0);
 
   useEffect(() => {
-    setMounted(true);
     const onScroll = () => setNavScrolled(window.scrollY > 10);
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
@@ -361,7 +359,7 @@ export default function Home() {
           boxShadow: navScrolled ? "0 4px 24px rgba(0,0,0,0.4)" : "0 2px 12px rgba(15,23,42,0.4)",
           position: "sticky", top: 0, zIndex: 50,
           transition: "all 0.3s ease",
-          animation: mounted ? "fadeSlideDown 0.5s ease forwards" : "none",
+          animation: "fadeSlideDown 0.5s ease forwards",
         }}>
           <div className="nav-inner" style={{
             maxWidth: 1280, margin: "0 auto",
@@ -399,12 +397,22 @@ export default function Home() {
               </a>
               <div style={{ width: 1, height: 20, backgroundColor: "rgba(255,255,255,0.12)" }} />
               {/* User pill */}
-              <div style={{
+              <a href="/profile" style={{
                 display: "flex", alignItems: "center", gap: "0.5rem",
                 background: "rgba(255,255,255,0.1)",
                 border: "1px solid rgba(255,255,255,0.15)",
                 borderRadius: "9999px",
                 padding: "0.28rem 0.85rem 0.28rem 0.35rem",
+                textDecoration: "none",
+                transition: "background 0.2s ease, transform 0.2s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "rgba(255,255,255,0.15)";
+                e.currentTarget.style.transform = "translateY(-1px)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "rgba(255,255,255,0.1)";
+                e.currentTarget.style.transform = "translateY(0)";
               }}>
                 <div style={{
                   width: 26, height: 26, borderRadius: "50%",
@@ -415,7 +423,7 @@ export default function Home() {
                 <span style={{ fontSize: "0.7rem", fontWeight: 700, color: "white",
                   letterSpacing: "0.05em", textTransform: "uppercase",
                   whiteSpace: "nowrap" }}>JUAN DELA CRUZ</span>
-              </div>
+              </a>
             </div>
           </div>
         </nav>
