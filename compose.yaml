@@ -32,7 +32,8 @@ services:
 
   # Laravel Backend API
   backend:
-    image: laravel:1.0
+    build:
+      context: ./backend
     container_name: laravel_backend
     ports:
       - "8000:8000"
