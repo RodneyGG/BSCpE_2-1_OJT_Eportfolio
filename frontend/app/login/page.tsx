@@ -33,11 +33,16 @@ export default function LoginPage() {
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) return;
-    setIsLoading(true);
-    // Simulate network delay
-    setTimeout(() => {
-      router.push("/profile");
-    }, 1000);
+    
+    if (email === "student@university.edu.ph" && password === "password123") {
+      setIsLoading(true);
+      // Simulate network delay
+      setTimeout(() => {
+        router.push("/profile");
+      }, 1000);
+    } else {
+      alert("Invalid credentials. Please use the dummy account.");
+    }
   };
 
   return (
@@ -139,7 +144,7 @@ export default function LoginPage() {
               boxShadow: isLoading ? "none" : "0 4px 12px rgba(37,99,235,0.2)"
             }}
           >
-            {isLoading ? "Signing In..." : "Sign In"}
+            {isLoading ? "Logging In..." : "Log In"}
           </button>
           
           <div style={{ textAlign: "center", marginTop: "2rem" }}>
