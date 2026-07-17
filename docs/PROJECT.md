@@ -73,6 +73,12 @@ See individual feature docs in `docs/features/`.
 
 ## Testing Credentials
 
-Use the following dummy account to access the portal:
+Use the following dummy accounts to access the portal:
+
+**Student Account:**
 - **Email**: `student@university.edu.ph`
 - **Password**: `password123`
+
+**Admin / Professor Account:**
+- **Email**: `admin@university.edu.ph`
+- **Password**: `admin123`
