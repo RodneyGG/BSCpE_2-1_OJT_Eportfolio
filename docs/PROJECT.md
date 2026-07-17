@@ -66,4 +66,13 @@ See individual feature docs in `docs/features/`.
 |------------------------|-------------------------------|-------------|
 | Landing Page           | feature/portal-redesign       | Completed   |
 | GitHub Actions CI      | feature/github-actions-ci     | Completed   |
-| Profile + DTR + Upload | feature/dtr-and-uploads       | In Progress |
+| Profile + DTR + Upload | feature/dtr-and-uploads       | Completed   |
+| Authentication & UI    | feature/auth-and-ui           | In Progress |
+
+---
+
+## Testing Credentials
+
+Use the following dummy account to access the portal:
+- **Email**: `student@university.edu.ph`
+- **Password**: `password123`
