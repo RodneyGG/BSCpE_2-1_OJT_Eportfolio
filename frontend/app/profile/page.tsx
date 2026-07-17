@@ -265,17 +265,17 @@ export default function ProfilePage() {
                     <span style={{ fontSize: "2rem", fontWeight: 800, color: "#0f172a", lineHeight: 1 }}>
                       {dtrEntries.reduce((sum, entry) => sum + entry.hours, 118)}
                     </span>
-                    <span style={{ fontSize: "0.85rem", color: "#64748b", fontWeight: 600, marginLeft: "0.3rem" }}>/ 600 hrs</span>
+                    <span style={{ fontSize: "0.85rem", color: "#64748b", fontWeight: 600, marginLeft: "0.3rem" }}>/ 300 hrs</span>
                   </div>
                   <span style={{ fontSize: "0.85rem", fontWeight: 700, color: "#3b82f6" }}>
-                    {Math.round((dtrEntries.reduce((sum, entry) => sum + entry.hours, 118) / 600) * 100)}%
+                    {Math.round((dtrEntries.reduce((sum, entry) => sum + entry.hours, 118) / 300) * 100)}%
                   </span>
                 </div>
                 {/* Progress Bar */}
                 <div style={{ width: "100%", height: 8, background: "#e2e8f0", borderRadius: 9999, overflow: "hidden" }}>
-                  <div style={{ width: `${(dtrEntries.reduce((sum, entry) => sum + entry.hours, 118) / 600) * 100}%`, height: "100%", background: "linear-gradient(90deg, #3b82f6, #6366f1)", borderRadius: 9999, transition: "width 0.5s ease" }} />
+                  <div style={{ width: `${(dtrEntries.reduce((sum, entry) => sum + entry.hours, 118) / 300) * 100}%`, height: "100%", background: "linear-gradient(90deg, #3b82f6, #6366f1)", borderRadius: 9999, transition: "width 0.5s ease" }} />
                 </div>
-                <p style={{ fontSize: "0.75rem", color: "#94a3b8", margin: "1rem 0 0", textAlign: "center" }}>Keep up the good work! {600 - dtrEntries.reduce((sum, entry) => sum + entry.hours, 118)} hours remaining.</p>
+                <p style={{ fontSize: "0.75rem", color: "#94a3b8", margin: "1rem 0 0", textAlign: "center" }}>Keep up the good work! {300 - dtrEntries.reduce((sum, entry) => sum + entry.hours, 118)} hours remaining.</p>
               </div>
             </div>
           </div>
