@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-
+import { BuildingOfficeIcon, UserGroupIcon, ClockIcon } from "@heroicons/react/24/outline";
 /* ═══════════════════════════ Data ═══════════════════════════ */
 interface Student { id: string; name: string; role: string; }
 interface Company { id: number; name: string; location: string; studentCount: number; students: Student[]; }
@@ -480,7 +480,7 @@ export default function Home() {
                 </p>
                 <p style={{ fontSize: "0.6rem", letterSpacing: "0.2em",
                   textTransform: "uppercase", color: "#64748b", marginTop: "0.25rem",
-                  fontWeight: 600 }}>OJT Supervisor</p>
+                  fontWeight: 600 }}>OJT ADVISER</p>
               </div>
 
               {/* Stats */}
@@ -489,9 +489,9 @@ export default function Home() {
                 animation: "fadeSlideUp 0.6s ease 0.25s both",
               }}>
                 {[
-                  { value: COMPANIES.length, label: "Companies", icon: "🏢" },
-                  { value: totalStudents,    label: "Students",  icon: "👥" },
-                  { value: "300",            label: "OJT Hrs",   icon: "⏱️" },
+                  { value: COMPANIES.length, label: "Companies", icon: <BuildingOfficeIcon width={24} style={{ color: "#93c5fd" }} /> },
+                  { value: totalStudents,    label: "Students",  icon: <UserGroupIcon width={24} style={{ color: "#93c5fd" }} /> },
+                  { value: "300",            label: "OJT Hrs",   icon: <ClockIcon width={24} style={{ color: "#93c5fd" }} /> },
                 ].map((s, i) => (
                   <div key={s.label} className="stat-tile" style={{
                     background: "rgba(255,255,255,0.08)",
@@ -606,10 +606,10 @@ export default function Home() {
               <div>
                 <p style={{ fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.15em",
                   textTransform: "uppercase", color: "#3b82f6", marginBottom: "0.75rem" }}>
-                  OJT Supervisor
+                  OJT ADVISER
                 </p>
                 <p style={{ fontSize: "0.88rem", fontWeight: 700, color: "white",
-                  marginBottom: "0.2rem" }}>Coco Martin</p>
+                  marginBottom: "0.2rem" }}>ENGR. JAKE A. BINUYA</p>
                 <p style={{ fontSize: "0.68rem", color: "#64748b", margin: 0 }}>
                   College of Engineering
                 </p>
