@@ -89,6 +89,15 @@ function IconPlus() {
   );
 }
 
+function IconX() {
+  return (
+    <svg width={20} height={20} viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M18 6L6 18M6 6l12 12"/>
+    </svg>
+  );
+}
+
 /* ═══════════════════════════ Components ════════════════════════ */
 
 function DocumentRow({ doc, onUpload }: { doc: { id: number, name: string, status: string, date: string }, onUpload: (id: number) => void }) {
@@ -181,6 +190,21 @@ function DocumentRow({ doc, onUpload }: { doc: { id: number, name: string, statu
 
 /* ═══════════════════════════ Page ════════════════════════════ */
 export default function ProfilePage() {
+  const [profile, setProfile] = useState({
+    name: "Juan Dela Cruz",
+    program: "BS Computer Engineering · 2nd Year",
+    email: "student@university.edu.ph",
+    phone: "+63 912 345 6789",
+    company: "TechCore Solutions Inc.",
+    location: "Cebu City, Cebu",
+    role: "IT Intern",
+    supervisor: "Coco Martin"
+  });
+
+  const [profilePic, setProfilePic] = useState<string | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editForm, setEditForm] = useState({ ...profile });
+
   // Mock Data States
   const [documents, setDocuments] = useState([
     { id: 1, name: "Resume / CV", status: "submitted", date: "May 10" },
@@ -208,6 +232,24 @@ export default function ProfilePage() {
         d.id === id ? { ...d, status: "submitted", date: "Just now" } : d
       ));
     }, 1500);
+  };
+
+  // Profile Photo Upload
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const url = URL.createObjectURL(e.target.files[0]);
+      setProfilePic(url);
+    }
+  };
+
+  const handlePhotoRemove = () => {
+    setProfilePic(null);
+  };
+
+  const handleSaveProfile = (e: React.FormEvent) => {
+    e.preventDefault();
+    setProfile(editForm);
+    setShowEditModal(false);
   };
 
   // Add DTR Simulation
@@ -269,7 +311,6 @@ export default function ProfilePage() {
     e.preventDefault();
     if (!newJournalSummary || !journalStartDate || !journalEndDate) return;
     
-    // Format dates (e.g. 2026-06-29 -> Jun 29)
     const formatShortDate = (dString: string) => {
       const d = new Date(dString);
       return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -291,18 +332,23 @@ export default function ProfilePage() {
   return (
     <div style={{
       minHeight: "100vh",
-      backgroundColor: "#f8fafc",
+      background: "linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)",
       fontFamily: "var(--font-geist-sans, system-ui, sans-serif)",
       display: "flex", flexDirection: "column",
+      position: "relative"
     }}>
       <style>{`
         @keyframes pulse {
           0%, 100% { opacity: 1; }
           50% { opacity: 0.5; }
         }
+        @keyframes modalEnter {
+          from { opacity: 0; transform: scale(0.95); }
+          to { opacity: 1; transform: scale(1); }
+        }
         .ui-card {
           background: white; border-radius: 1.25rem; padding: 1.75rem; 
-          box-shadow: 0 4px 20px rgba(0,0,0,0.03); border: 1px solid #f1f5f9;
+          box-shadow: 0 10px 30px rgba(0,0,0,0.04); border: 1px solid rgba(255,255,255,0.8);
         }
         .stat-card:hover {
           transform: translateY(-2px);
@@ -314,13 +360,24 @@ export default function ProfilePage() {
         .dtr-table td { padding: 1rem 1.25rem; color: #0f172a; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
         .dtr-table tr:last-child td { border-bottom: none; }
         .dtr-table tr:hover td { background: #f8fafc; }
+        
+        .photo-btn {
+          background: rgba(255,255,255,0.9); border: 1px solid #e2e8f0; border-radius: 999px;
+          padding: 0.4rem 0.8rem; font-size: 0.7rem; font-weight: 600; color: #475569;
+          cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .photo-btn:hover { background: white; color: #0f172a; transform: translateY(-1px); }
+        .photo-upload-wrapper { position: relative; overflow: hidden; display: inline-block; }
+        .photo-upload-wrapper input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
       `}</style>
 
       {/* ══ TOP NAV ══ */}
       <nav style={{
-        background: "white",
-        boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
-        position: "sticky", top: 0, zIndex: 50,
+        background: "rgba(255, 255, 255, 0.8)",
+        backdropFilter: "blur(12px)",
+        WebkitBackdropFilter: "blur(12px)",
+        borderBottom: "1px solid rgba(255,255,255,0.5)",
+        position: "sticky", top: 0, zIndex: 40,
       }}>
         <div style={{
           maxWidth: 1100, margin: "0 auto", padding: "0 2rem", height: 64,
@@ -347,54 +404,69 @@ export default function ProfilePage() {
         <RevealBox>
           <div style={{
             background: "white", borderRadius: "1.5rem",
-            boxShadow: "0 10px 30px -5px rgba(0,0,0,0.05)", overflow: "hidden",
-            marginBottom: "2.5rem", border: "1px solid #f1f5f9"
+            boxShadow: "0 15px 40px -5px rgba(0,0,0,0.08)", overflow: "hidden",
+            marginBottom: "2.5rem", border: "1px solid rgba(255,255,255,0.5)"
           }}>
             {/* Cover Photo Area */}
             <div style={{
               height: 160,
-              background: "linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%)",
+              background: "linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)",
               position: "relative"
             }}>
-              <div style={{ position: "absolute", inset: 0, opacity: 0.1, backgroundImage: "radial-gradient(circle at 2px 2px, white 1px, transparent 0)", backgroundSize: "24px 24px" }} />
+              <div style={{ position: "absolute", inset: 0, opacity: 0.2, backgroundImage: "radial-gradient(circle at 2px 2px, white 1px, transparent 0)", backgroundSize: "24px 24px" }} />
             </div>
 
             {/* User Info Area */}
             <div style={{ padding: "0 2.5rem 2.5rem", position: "relative" }}>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "2rem", alignItems: "flex-end", marginTop: "-54px", marginBottom: "2rem" }}>
-                {/* Avatar */}
-                <div style={{
-                  width: 120, height: 120, borderRadius: "50%",
-                  background: "linear-gradient(135deg, #f59e0b 0%, #ef4444 100%)",
-                  border: "6px solid white", display: "flex", alignItems: "center", justifyContent: "center",
-                  boxShadow: "0 4px 12px rgba(0,0,0,0.08)", flexShrink: 0,
-                  fontSize: "2.75rem", fontWeight: 800, color: "white"
-                }}>
-                  JD
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "2rem", marginBottom: "2rem" }}>
+                
+                {/* Avatar with offset */}
+                <div style={{ marginTop: "-60px", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.75rem" }}>
+                  <div style={{
+                    width: 130, height: 130, borderRadius: "50%",
+                    background: profilePic ? `url(${profilePic}) center/cover` : "linear-gradient(135deg, #f59e0b 0%, #ef4444 100%)",
+                    border: "6px solid white", display: "flex", alignItems: "center", justifyContent: "center",
+                    boxShadow: "0 8px 16px rgba(0,0,0,0.1)", flexShrink: 0,
+                    fontSize: "3rem", fontWeight: 800, color: "white"
+                  }}>
+                    {!profilePic && profile.name.split(" ").map(w => w[0]).slice(0, 2).join("")}
+                  </div>
+                  
+                  <div style={{ display: "flex", gap: "0.5rem" }}>
+                    <div className="photo-upload-wrapper">
+                      <button className="photo-btn">Upload</button>
+                      <input type="file" accept="image/*" onChange={handlePhotoUpload} />
+                    </div>
+                    {profilePic && (
+                      <button className="photo-btn" onClick={handlePhotoRemove}>Remove</button>
+                    )}
+                  </div>
                 </div>
                 
-                <div style={{ flex: 1, minWidth: 200, paddingBottom: "0.5rem" }}>
-                  <h1 style={{ fontSize: "2rem", fontWeight: 800, color: "#0f172a", margin: "0 0 0.5rem 0", letterSpacing: "normal" }}>Juan Dela Cruz</h1>
-                  <p style={{ fontSize: "0.95rem", color: "#64748b", margin: 0, fontWeight: 500 }}>BS Computer Engineering · 2nd Year</p>
+                <div style={{ flex: 1, minWidth: 200, paddingTop: "0.5rem", display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "1rem" }}>
+                  <div>
+                    <h1 style={{ fontSize: "2rem", fontWeight: 800, color: "#0f172a", margin: "0 0 0.25rem 0", letterSpacing: "normal" }}>{profile.name}</h1>
+                    <p style={{ fontSize: "1rem", color: "#64748b", margin: 0, fontWeight: 500 }}>{profile.program}</p>
+                  </div>
+                  
+                  {/* Action Button */}
+                  <button onClick={() => setShowEditModal(true)} style={{
+                    background: "#0f172a", border: "none", borderRadius: "0.75rem",
+                    padding: "0.75rem 1.5rem", fontSize: "0.85rem", fontWeight: 600, color: "white",
+                    cursor: "pointer", transition: "all 0.2s", boxShadow: "0 4px 12px rgba(15,23,42,0.15)"
+                  }} onMouseEnter={(e) => e.currentTarget.style.transform = "translateY(-2px)"} onMouseLeave={(e) => e.currentTarget.style.transform = "translateY(0)"}>
+                    Edit Profile Details
+                  </button>
                 </div>
-
-                {/* Action Button */}
-                <button style={{
-                  background: "#f1f5f9", border: "none", borderRadius: "0.75rem",
-                  padding: "0.75rem 1.5rem", fontSize: "0.85rem", fontWeight: 600, color: "#475569",
-                  cursor: "pointer", transition: "background 0.2s", marginBottom: "0.5rem"
-                }}>
-                  Edit Profile
-                </button>
               </div>
 
               {/* Contact & Meta Row */}
               <div style={{ display: "flex", flexWrap: "wrap", gap: "2.5rem", borderTop: "1px solid #e2e8f0", paddingTop: "1.75rem" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", color: "#475569", fontSize: "0.9rem", fontWeight: 500 }}>
-                  <IconMail /> juan.delacruz@university.edu.ph
+                  <IconMail /> {profile.email}
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", color: "#475569", fontSize: "0.9rem", fontWeight: 500 }}>
-                  <IconPhone /> +63 912 345 6789
+                  <IconPhone /> {profile.phone}
                 </div>
               </div>
             </div>
@@ -412,8 +484,8 @@ export default function ProfilePage() {
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.5rem" }}>
                   <div>
                     <div style={{ fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#3b82f6", marginBottom: "0.3rem" }}>Assigned Company</div>
-                    <div style={{ fontSize: "1.2rem", fontWeight: 700, color: "#0f172a" }}>TechCore Solutions Inc.</div>
-                    <div style={{ fontSize: "0.85rem", color: "#64748b", marginTop: "0.2rem" }}>Cebu City, Cebu</div>
+                    <div style={{ fontSize: "1.2rem", fontWeight: 700, color: "#0f172a" }}>{profile.company}</div>
+                    <div style={{ fontSize: "0.85rem", color: "#64748b", marginTop: "0.2rem" }}>{profile.location}</div>
                   </div>
                   <span style={{ background: "#dcfce7", color: "#166534", padding: "0.4rem 0.8rem", borderRadius: "9999px", fontSize: "0.75rem", fontWeight: 700, display: "flex", alignItems: "center", gap: "0.4rem" }}>
                     <IconCheck /> Active
@@ -423,11 +495,11 @@ export default function ProfilePage() {
                 <div style={{ borderTop: "1px solid #f1f5f9", paddingTop: "1.25rem", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
                   <div>
                     <div style={{ fontSize: "0.75rem", color: "#94a3b8", textTransform: "uppercase", fontWeight: 600, marginBottom: "0.25rem" }}>Role</div>
-                    <div style={{ fontSize: "0.9rem", fontWeight: 600, color: "#475569" }}>IT Intern</div>
+                    <div style={{ fontSize: "0.9rem", fontWeight: 600, color: "#475569" }}>{profile.role}</div>
                   </div>
                   <div>
-                    <div style={{ fontSize: "0.75rem", color: "#94a3b8", textTransform: "uppercase", fontWeight: 600, marginBottom: "0.25rem" }}>Supervisor Name</div>
-                    <div style={{ fontSize: "0.9rem", fontWeight: 600, color: "#475569" }}>Engr. Jake Binuya</div>
+                    <div style={{ fontSize: "0.75rem", color: "#94a3b8", textTransform: "uppercase", fontWeight: 600, marginBottom: "0.25rem" }}>OJT Supervisor</div>
+                    <div style={{ fontSize: "0.9rem", fontWeight: 600, color: "#475569" }}>{profile.supervisor}</div>
                   </div>
                 </div>
               </div>
@@ -473,7 +545,7 @@ export default function ProfilePage() {
               <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#0f172a", margin: 0 }}>Weekly Journals</h2>
               <button 
                 onClick={() => setShowJournalForm(!showJournalForm)}
-                style={{ background: "#3b82f6", color: "white", border: "none", borderRadius: "0.5rem", padding: "0.5rem 1rem", fontSize: "0.85rem", fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: "0.4rem", transition: "background 0.2s" }}
+                style={{ background: "#3b82f6", color: "white", border: "none", borderRadius: "0.75rem", padding: "0.6rem 1.25rem", fontSize: "0.85rem", fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: "0.4rem", transition: "background 0.2s" }}
                 onMouseEnter={(e) => e.currentTarget.style.background = "#2563eb"}
                 onMouseLeave={(e) => e.currentTarget.style.background = "#3b82f6"}
               >
@@ -511,12 +583,12 @@ export default function ProfilePage() {
 
               <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
                 {journals.map((journal) => (
-                  <div key={journal.id} style={{ background: "#f8fafc", padding: "1.5rem", borderRadius: "1rem", border: "1px solid #e2e8f0" }}>
+                  <div key={journal.id} style={{ background: "white", padding: "1.5rem", borderRadius: "1rem", border: "1px solid #e2e8f0", boxShadow: "0 2px 4px rgba(0,0,0,0.02)" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
                       <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "#0f172a", margin: 0 }}>{journal.week}</h3>
-                      <span style={{ fontSize: "0.8rem", color: "#64748b", fontWeight: 500 }}>{journal.dateRange}</span>
+                      <span style={{ fontSize: "0.8rem", color: "#64748b", fontWeight: 600 }}>{journal.dateRange}</span>
                     </div>
-                    <p style={{ fontSize: "0.9rem", color: "#475569", lineHeight: 1.6, margin: 0 }}>
+                    <p style={{ fontSize: "0.95rem", color: "#475569", lineHeight: 1.6, margin: 0 }}>
                       {journal.summary}
                     </p>
                   </div>
@@ -531,7 +603,7 @@ export default function ProfilePage() {
               <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#0f172a", margin: 0 }}>Daily Time Record</h2>
               <button 
                 onClick={() => setShowDtrForm(!showDtrForm)}
-                style={{ background: "#3b82f6", color: "white", border: "none", borderRadius: "0.5rem", padding: "0.5rem 1rem", fontSize: "0.85rem", fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: "0.4rem", transition: "background 0.2s" }}
+                style={{ background: "#3b82f6", color: "white", border: "none", borderRadius: "0.75rem", padding: "0.6rem 1.25rem", fontSize: "0.85rem", fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: "0.4rem", transition: "background 0.2s" }}
                 onMouseEnter={(e) => e.currentTarget.style.background = "#2563eb"}
                 onMouseLeave={(e) => e.currentTarget.style.background = "#3b82f6"}
               >
@@ -625,6 +697,62 @@ export default function ProfilePage() {
 
         </div>
       </main>
+
+      {/* ══ EDIT PROFILE MODAL ══ */}
+      {showEditModal && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }}>
+          <div style={{ position: "absolute", inset: 0, background: "rgba(15,23,42,0.6)", backdropFilter: "blur(4px)" }} onClick={() => setShowEditModal(false)} />
+          <div style={{ background: "white", borderRadius: "1.5rem", width: "100%", maxWidth: "600px", position: "relative", zIndex: 101, boxShadow: "0 25px 50px -12px rgba(0,0,0,0.5)", animation: "modalEnter 0.3s ease", display: "flex", flexDirection: "column", maxHeight: "90vh" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "1.5rem", borderBottom: "1px solid #e2e8f0" }}>
+              <h2 style={{ fontSize: "1.25rem", fontWeight: 800, color: "#0f172a", margin: 0 }}>Edit Profile Details</h2>
+              <button onClick={() => setShowEditModal(false)} style={{ background: "none", border: "none", color: "#64748b", cursor: "pointer", display: "flex" }}><IconX /></button>
+            </div>
+            <div style={{ padding: "1.5rem", overflowY: "auto", display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.25rem" }}>
+                <div>
+                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "0.4rem" }}>Full Name</label>
+                  <input type="text" value={editForm.name} onChange={(e) => setEditForm({...editForm, name: e.target.value})} style={{ width: "100%", padding: "0.75rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1", fontSize: "0.9rem", outline: "none" }} />
+                </div>
+                <div>
+                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "0.4rem" }}>Program & Year</label>
+                  <input type="text" value={editForm.program} onChange={(e) => setEditForm({...editForm, program: e.target.value})} style={{ width: "100%", padding: "0.75rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1", fontSize: "0.9rem", outline: "none" }} />
+                </div>
+                <div>
+                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "0.4rem" }}>Email Address</label>
+                  <input type="email" value={editForm.email} onChange={(e) => setEditForm({...editForm, email: e.target.value})} style={{ width: "100%", padding: "0.75rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1", fontSize: "0.9rem", outline: "none" }} />
+                </div>
+                <div>
+                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "0.4rem" }}>Phone Number</label>
+                  <input type="text" value={editForm.phone} onChange={(e) => setEditForm({...editForm, phone: e.target.value})} style={{ width: "100%", padding: "0.75rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1", fontSize: "0.9rem", outline: "none" }} />
+                </div>
+              </div>
+              <div style={{ borderTop: "1px solid #f1f5f9", margin: "0.5rem 0" }} />
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.25rem" }}>
+                <div>
+                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "0.4rem" }}>Company</label>
+                  <input type="text" value={editForm.company} onChange={(e) => setEditForm({...editForm, company: e.target.value})} style={{ width: "100%", padding: "0.75rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1", fontSize: "0.9rem", outline: "none" }} />
+                </div>
+                <div>
+                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "0.4rem" }}>Location</label>
+                  <input type="text" value={editForm.location} onChange={(e) => setEditForm({...editForm, location: e.target.value})} style={{ width: "100%", padding: "0.75rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1", fontSize: "0.9rem", outline: "none" }} />
+                </div>
+                <div>
+                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "0.4rem" }}>OJT Role</label>
+                  <input type="text" value={editForm.role} onChange={(e) => setEditForm({...editForm, role: e.target.value})} style={{ width: "100%", padding: "0.75rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1", fontSize: "0.9rem", outline: "none" }} />
+                </div>
+                <div>
+                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "0.4rem" }}>OJT Supervisor</label>
+                  <input type="text" value={editForm.supervisor} onChange={(e) => setEditForm({...editForm, supervisor: e.target.value})} style={{ width: "100%", padding: "0.75rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1", fontSize: "0.9rem", outline: "none" }} />
+                </div>
+              </div>
+            </div>
+            <div style={{ padding: "1.5rem", borderTop: "1px solid #e2e8f0", display: "flex", justifyContent: "flex-end", gap: "1rem", background: "#f8fafc", borderRadius: "0 0 1.5rem 1.5rem" }}>
+              <button onClick={() => setShowEditModal(false)} style={{ background: "transparent", color: "#64748b", border: "1px solid #cbd5e1", borderRadius: "0.5rem", padding: "0.6rem 1.25rem", fontSize: "0.9rem", fontWeight: 600, cursor: "pointer" }}>Cancel</button>
+              <button onClick={handleSaveProfile} style={{ background: "#2563eb", color: "white", border: "none", borderRadius: "0.5rem", padding: "0.6rem 1.5rem", fontSize: "0.9rem", fontWeight: 600, cursor: "pointer" }}>Save Changes</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
