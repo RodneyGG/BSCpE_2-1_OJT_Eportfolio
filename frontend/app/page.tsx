@@ -609,7 +609,7 @@ export default function Home() {
                   OJT Supervisor
                 </p>
                 <p style={{ fontSize: "0.88rem", fontWeight: 700, color: "white",
-                  marginBottom: "0.2rem" }}>Engr. Jake A. Binuya</p>
+                  marginBottom: "0.2rem" }}>Coco Martin</p>
                 <p style={{ fontSize: "0.68rem", color: "#64748b", margin: 0 }}>
                   College of Engineering
                 </p>
