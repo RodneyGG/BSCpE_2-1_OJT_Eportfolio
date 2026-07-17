@@ -291,13 +291,11 @@ function CompanyRow({ company, isOpen, onToggle, index }: {
 export default function Home() {
   const [openId, setOpenId] = useState<number | null>(0);
   const [navScrolled, setNavScrolled] = useState(false);
-  const [mounted, setMounted] = useState(false);
 
   const toggle = (id: number) => setOpenId(prev => prev === id ? null : id);
   const totalStudents = COMPANIES.reduce((s, c) => s + c.studentCount, 0);
 
   useEffect(() => {
-    setMounted(true);
     const onScroll = () => setNavScrolled(window.scrollY > 10);
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
@@ -361,7 +359,7 @@ export default function Home() {
           boxShadow: navScrolled ? "0 4px 24px rgba(0,0,0,0.4)" : "0 2px 12px rgba(15,23,42,0.4)",
           position: "sticky", top: 0, zIndex: 50,
           transition: "all 0.3s ease",
-          animation: mounted ? "fadeSlideDown 0.5s ease forwards" : "none",
+          animation: "fadeSlideDown 0.5s ease forwards",
         }}>
           <div className="nav-inner" style={{
             maxWidth: 1280, margin: "0 auto",
