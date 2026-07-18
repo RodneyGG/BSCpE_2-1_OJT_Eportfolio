@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { BuildingOfficeIcon, UserGroupIcon, ClockIcon } from "@heroicons/react/24/outline";
+import Link from "next/link";
+import { useRole } from "./context/RoleContext";
 /* ═══════════════════════════ Data ═══════════════════════════ */
 interface Student { id: string; name: string; role: string; }
 interface Company { id: number; name: string; location: string; studentCount: number; students: Student[]; }
@@ -235,19 +236,7 @@ function CompanyRow({ company, isOpen, onToggle, index }: {
 
         {/* Right */}
         <div style={{ display: "flex", alignItems: "center", gap: "0.65rem", flexShrink: 0 }}>
-          <span style={{
-            fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.06em",
-            textTransform: "uppercase", padding: "0.22rem 0.6rem",
-            borderRadius: "9999px", background: "#fef3c7", color: "#92400e",
-            border: "1px solid #fde68a",
-            display: "none",
-          }}
-            className="moa-pill"
-          >View MOA</span>
-          <span style={{ fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.06em",
-            textTransform: "uppercase", padding: "0.22rem 0.6rem",
-            borderRadius: "9999px", background: "#fef3c7", color: "#92400e",
-            border: "1px solid #fde68a" }}>MOA</span>
+          <MoaPill />
           <span style={{ color: isOpen ? "#1d4ed8" : "#94a3b8", transition: "color 0.2s" }}>
             <IconChevron open={isOpen} />
           </span>
@@ -284,6 +273,81 @@ function CompanyRow({ company, isOpen, onToggle, index }: {
         </div>
       </div>
     </div>
+  );
+}
+
+/* ══════════════════════ Auth-aware Nav Pill ════════════════════ */
+function NavUserPill() {
+  const { isLoggedIn, user } = useRole();
+  
+  if (!isLoggedIn) {
+    return (
+      <Link href="/login" style={{
+        display: "flex", alignItems: "center", gap: "0.5rem",
+        background: "rgba(255,255,255,0.1)",
+        border: "1px solid rgba(255,255,255,0.15)",
+        borderRadius: "9999px",
+        padding: "0.4rem 1rem",
+        textDecoration: "none",
+        transition: "background 0.2s ease, transform 0.2s ease",
+        fontSize: "0.75rem", fontWeight: 700, color: "white",
+        letterSpacing: "0.06em", textTransform: "uppercase",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.background = "rgba(255,255,255,0.18)";
+        e.currentTarget.style.transform = "translateY(-1px)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = "rgba(255,255,255,0.1)";
+        e.currentTarget.style.transform = "translateY(0)";
+      }}>
+        <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>
+        Log In
+      </Link>
+    );
+  }
+
+  const initials = user!.name.split(" ").map(w => w[0]).slice(0, 2).join("");
+  return (
+    <Link href="/profile" style={{
+      display: "flex", alignItems: "center", gap: "0.5rem",
+      background: "rgba(255,255,255,0.1)",
+      border: "1px solid rgba(255,255,255,0.15)",
+      borderRadius: "9999px",
+      padding: "0.28rem 0.85rem 0.28rem 0.35rem",
+      textDecoration: "none",
+      transition: "background 0.2s ease, transform 0.2s ease",
+    }}
+    onMouseEnter={(e) => {
+      e.currentTarget.style.background = "rgba(255,255,255,0.15)";
+      e.currentTarget.style.transform = "translateY(-1px)";
+    }}
+    onMouseLeave={(e) => {
+      e.currentTarget.style.background = "rgba(255,255,255,0.1)";
+      e.currentTarget.style.transform = "translateY(0)";
+    }}>
+      <div style={{
+        width: 26, height: 26, borderRadius: "50%",
+        background: "linear-gradient(135deg, #f59e0b 0%, #ef4444 100%)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        fontSize: "0.6rem", fontWeight: 800, color: "white", flexShrink: 0,
+      }}>{initials}</div>
+      <span style={{ fontSize: "0.7rem", fontWeight: 700, color: "white",
+        letterSpacing: "0.05em", textTransform: "uppercase",
+        whiteSpace: "nowrap" }}>{user!.name.toUpperCase()}</span>
+    </Link>
+  );
+}
+
+/* ══════════════════════ MOA Pill (auth-gated) ════════════════════ */
+function MoaPill() {
+  const { isLoggedIn } = useRole();
+  if (!isLoggedIn) return null;
+  return (
+    <span style={{ fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.06em",
+      textTransform: "uppercase", padding: "0.22rem 0.6rem",
+      borderRadius: "9999px", background: "#fef3c7", color: "#92400e",
+      border: "1px solid #fde68a" }}>MOA</span>
   );
 }
 
@@ -334,12 +398,16 @@ export default function Home() {
           transform: translateY(-3px);
         }
         .moa-pill-full { display: inline-flex !important; }
-        @media (max-width: 640px) {
+        @media (max-width: 768px) {
+          .hero-inner { flex-direction: column !important; align-items: stretch !important; }
           .hero-stats { justify-content: center !important; }
-          .hero-inner { flex-direction: column !important; align-items: flex-start !important; }
           .footer-grid { grid-template-columns: 1fr !important; }
+        }
+        @media (max-width: 640px) {
           .nav-inner { padding: 0 1rem !important; }
           .page-inner { padding: 1rem !important; }
+          .hero-stats { gap: 0.5rem !important; }
+          .stat-tile { min-width: 75px !important; padding: 0.75rem 0.85rem !important; }
         }
       `}</style>
 
@@ -396,34 +464,8 @@ export default function Home() {
                 Companies
               </a>
               <div style={{ width: 1, height: 20, backgroundColor: "rgba(255,255,255,0.12)" }} />
-              {/* User pill */}
-              <a href="/login" style={{
-                display: "flex", alignItems: "center", gap: "0.5rem",
-                background: "rgba(255,255,255,0.1)",
-                border: "1px solid rgba(255,255,255,0.15)",
-                borderRadius: "9999px",
-                padding: "0.28rem 0.85rem 0.28rem 0.35rem",
-                textDecoration: "none",
-                transition: "background 0.2s ease, transform 0.2s ease",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "rgba(255,255,255,0.15)";
-                e.currentTarget.style.transform = "translateY(-1px)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "rgba(255,255,255,0.1)";
-                e.currentTarget.style.transform = "translateY(0)";
-              }}>
-                <div style={{
-                  width: 26, height: 26, borderRadius: "50%",
-                  background: "linear-gradient(135deg, #f59e0b 0%, #ef4444 100%)",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: "0.6rem", fontWeight: 800, color: "white", flexShrink: 0,
-                }}>JD</div>
-                <span style={{ fontSize: "0.7rem", fontWeight: 700, color: "white",
-                  letterSpacing: "0.05em", textTransform: "uppercase",
-                  whiteSpace: "nowrap" }}>JUAN DELA CRUZ</span>
-              </a>
+              {/* Auth-aware user pill */}
+              <NavUserPill />
             </div>
           </div>
         </nav>
@@ -489,9 +531,9 @@ export default function Home() {
                 animation: "fadeSlideUp 0.6s ease 0.25s both",
               }}>
                 {[
-                  { value: COMPANIES.length, label: "Companies", icon: <BuildingOfficeIcon width={24} style={{ color: "#93c5fd" }} /> },
-                  { value: totalStudents,    label: "Students",  icon: <UserGroupIcon width={24} style={{ color: "#93c5fd" }} /> },
-                  { value: "300",            label: "OJT Hrs",   icon: <ClockIcon width={24} style={{ color: "#93c5fd" }} /> },
+                  { value: COMPANIES.length, label: "Companies", icon: <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="#93c5fd" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"><path d="M3 21h18M3 7v14M21 7v14M6 11h3M6 15h3M15 11h3M15 15h3M9 21V7l3-4 3 4v14" /></svg> },
+                  { value: totalStudents,    label: "Students",  icon: <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="#93c5fd" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> },
+                  { value: "300",            label: "OJT Hrs",   icon: <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="#93c5fd" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> },
                 ].map((s, i) => (
                   <div key={s.label} className="stat-tile" style={{
                     background: "rgba(255,255,255,0.08)",

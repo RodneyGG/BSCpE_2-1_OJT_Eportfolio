@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useRole } from '../context/RoleContext';
 
 function IconLock() {
   return (
@@ -26,6 +27,7 @@ function IconMail() {
 
 export default function LoginPage() {
   const router = useRouter();
+  const { login } = useRole();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -37,11 +39,13 @@ export default function LoginPage() {
     
     if (email === "student@university.edu.ph" && password === "password123") {
       setIsLoading(true);
+      login({ name: 'Juan Dela Cruz', email: 'student@university.edu.ph', role: 'normal' });
       setTimeout(() => {
         router.push("/profile");
       }, 1000);
     } else if (email === "admin@university.edu.ph" && password === "admin123") {
       setIsLoading(true);
+      login({ name: 'Admin', email: 'admin@university.edu.ph', role: 'admin' });
       setTimeout(() => {
         router.push("/admin");
       }, 1000);
