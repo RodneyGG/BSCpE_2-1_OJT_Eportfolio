@@ -39,6 +39,8 @@ jobs:
             ${{ runner.os }}-nextjs-${{ hashFiles('frontend/package-lock.json') }}-
       - name: Install dependencies
         run: npm ci
+      - name: Lint
+        run: npm run lint
       - name: Build with Next.js
         run: npm run build
       - name: Upload artifact
