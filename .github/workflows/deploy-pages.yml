@@ -16,39 +16,66 @@ concurrency:
 
 jobs:
   build:
-    name: Build & Deploy to GitHub Pages
+    name: Build Next.js Site
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: https://RodneyGG.github.io/BSCpE_2-1_OJT_Eportfolio/
     defaults:
       run:
         working-directory: frontend
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: "24"
           cache: npm
           cache-dependency-path: frontend/package-lock.json
+      
       - name: Restore cache
         uses: actions/cache@v4
         with:
-          path: |
-            frontend/.next/cache
+          path: frontend/.next/cache
           key: ${{ runner.os }}-nextjs-${{ hashFiles('frontend/package-lock.json') }}-${{ hashFiles('frontend/**.[jt]s', 'frontend/**.[jt]sx') }}
           restore-keys: |
             ${{ runner.os }}-nextjs-${{ hashFiles('frontend/package-lock.json') }}-
+      
       - name: Install dependencies
         run: npm ci
+      
       - name: Lint
         run: npm run lint
+      
       - name: Build with Next.js
         run: npm run build
-      - name: Deploy to gh-pages branch
+      
+      # Pass the built site to the deploy job
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: github-pages-build
+          path: frontend/out
+          retention-days: 1
+
+  deploy:
+    name: Deploy to GitHub Pages
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: github-pages
+      url: https://rodneygg.github.io/BSCpE_2-1_OJT_Eportfolio/
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: github-pages-build
+          path: ./out
+
+      - name: Push to gh-pages branch
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./frontend/out
+          publish_dir: ./out
