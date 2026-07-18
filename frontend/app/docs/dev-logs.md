@@ -33,3 +33,8 @@ When recording a new issue, please use the following format:
   - Initialized Husky in the root via `npm install husky --save-dev` in frontend.
   - Added `.husky/pre-push` script to execute `npm run lint` and `npm run build` from the `frontend` dir.
   - Added `"prepare": "cd .. && husky .husky"` in `frontend/package.json` for future clones.
+
+### Date: 2026-07-18
+- **Issue/Error**: GitHub Actions throwing deprecation warnings: `Node 20 is being deprecated. This workflow is running with Node 24 by default.`
+- **Root Cause**: The `actions/setup-node@v4` step in workflows was hardcoded to use Node `20`.
+- **Solution/Compilation Fix**: Upgraded `node-version` from `20` to `24` in both `.github/workflows/deploy-pages.yml` and `.github/workflows/ci.yml`.
