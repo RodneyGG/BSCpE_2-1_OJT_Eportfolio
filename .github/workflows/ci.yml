@@ -1,51 +1,230 @@
-name: Frontend CI
+name: Continuous Integration
 
 on:
+  # Trigger on push to develop branch
   push:
     branches:
-      - main
-      - 'feature/**'
+      - develop
+  # Trigger on PRs against main and develop
   pull_request:
     branches:
       - main
+      - develop
+
+# Cancels previously running jobs for the same PR or branch to save Actions minutes
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Use least privilege principle for default token
+permissions:
+  contents: read
 
 jobs:
-  frontend-ci:
-    name: Type Check · Lint · Build
+  # ==========================================
+  # FRONTEND JOB
+  # ==========================================
+  frontend:
+    name: 🌐 Frontend CI
     runs-on: ubuntu-latest
-
     defaults:
       run:
         working-directory: frontend
-
     steps:
-      # ── 1. Checkout ──────────────────────────────────────────
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # ── 2. Setup Node 24 ─────────────────────────────────────
-      - name: Setup Node.js
+      - name: Setup Node.js LTS
         uses: actions/setup-node@v4
         with:
-          node-version: '24'
-          cache: 'npm'
+          node-version: "22" # Current stable node version
+          cache: "npm"
           cache-dependency-path: frontend/package-lock.json
 
-      # ── 3. Install dependencies ───────────────────────────────
       - name: Install dependencies
         run: npm ci
 
-      # ── 4. TypeScript type check ──────────────────────────────
-      - name: Type check
-        run: npx tsc --noEmit
-
-      # ── 5. ESLint ─────────────────────────────────────────────
-      - name: Lint
+      - name: Run ESLint
         run: npm run lint
 
-      # ── 6. Next.js build ──────────────────────────────────────
-      - name: Build
+      - name: Run TypeScript type checking
+        run: npx tsc --noEmit
+
+      - name: Build Next.js
         run: npm run build
         env:
-          # Treat warnings as errors during CI build
+          # Fails the build if there are unhandled warnings
           CI: true
+
+  # ==========================================
+  # BACKEND JOB
+  # ==========================================
+  backend:
+    name: 🐘 Backend CI
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    
+    # Spin up temporary MySQL and Redis services for testing and migrations
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: testing_db
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping" 
+          --health-interval=10s 
+          --health-timeout=5s 
+          --health-retries=3
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping" 
+          --health-interval=10s 
+          --health-timeout=5s 
+          --health-retries=3
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup PHP 8.2
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, xml, bcmath, mysql, redis, pdo_mysql
+          coverage: pcov # Fast code coverage driver
+
+      - name: Get Composer Cache Directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('backend/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Validate composer.json
+        run: composer validate --strict
+
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Setup Application Environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Run Laravel Pint (Code Style)
+        # Assuming Pint is installed in vendor/bin. Continue on error initially if codebase is unformatted
+        run: ./vendor/bin/pint --test
+        continue-on-error: true 
+
+      - name: Run PHPStan (Static Analysis)
+        # Runs if installed, otherwise skips gracefully
+        run: if [ -f "./vendor/bin/phpstan" ]; then ./vendor/bin/phpstan analyse; fi
+        continue-on-error: true
+
+      - name: Run Database Migrations
+        run: php artisan migrate --force
+        env:
+          DB_CONNECTION: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_DATABASE: testing_db
+          DB_USERNAME: root
+          DB_PASSWORD: root
+
+      - name: Run PHPUnit tests
+        run: php artisan test --coverage-clover coverage.xml
+        env:
+          DB_CONNECTION: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_DATABASE: testing_db
+          DB_USERNAME: root
+          DB_PASSWORD: root
+
+      - name: Upload PHPUnit Results & Coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phpunit-coverage
+          path: backend/coverage.xml
+          retention-days: 14
+
+  # ==========================================
+  # DOCKER JOB
+  # ==========================================
+  docker:
+    name: 🐳 Docker Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate docker-compose.yml
+        run: docker compose config -q
+
+      - name: Build Docker images
+        run: docker compose build
+
+      - name: Start containers
+        # Starts the full stack and detaches
+        run: docker compose up -d
+
+      - name: Verify containers started successfully
+        run: |
+          echo "Waiting 15 seconds for containers to initialize..."
+          sleep 15
+          docker compose ps
+          # Check if any container failed to stay running
+          FAILED=$(docker compose ps -q | xargs -r docker inspect -f '{{.State.Status}}' | grep -v 'running' || true)
+          if [ ! -z "$FAILED" ]; then
+            echo "❌ One or more containers failed to start or crashed."
+            docker compose logs
+            exit 1
+          fi
+          echo "✅ All containers are running!"
+
+      - name: Stop containers
+        if: always()
+        run: docker compose down -v
+
+  # ==========================================
+  # SECURITY JOB
+  # ==========================================
+  security:
+    name: 🔒 Security Scans
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: NPM Audit (Production only)
+        working-directory: frontend
+        # Fails the build if Critical vulnerabilities are found in prod dependencies
+        run: npm audit --omit=dev --audit-level=critical
+
+      - name: Composer Audit
+        working-directory: backend
+        run: composer audit
+
+      - name: Run Trivy Vulnerability & Secret Scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          scanners: 'vuln,secret'
+          exit-code: '1' # Fails the pipeline on detection
+          ignore-unfixed: true
+          severity: 'CRITICAL'
