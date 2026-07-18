@@ -7,7 +7,7 @@ if (isGithubActions) {
 }
 
 const nextConfig: NextConfig = {
-  output: "export",
+  output: process.env.BUILD_STANDALONE === "true" ? "standalone" : "export",
   images: {
     unoptimized: true,
   },
