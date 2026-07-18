@@ -1,0 +1,20 @@
+#!/usr/bin/env sh
+echo "🚀 Running pre-push checks (Lint & Build)..."
+
+cd frontend
+
+# Run linter
+npm run lint
+if [ $? -ne 0 ]; then
+  echo "❌ Linting failed. Please fix errors before pushing."
+  exit 1
+fi
+
+# Run build
+npm run build
+if [ $? -ne 0 ]; then
+  echo "❌ Build failed. Please fix errors before pushing."
+  exit 1
+fi
+
+echo "✅ All checks passed! Proceeding with push."
