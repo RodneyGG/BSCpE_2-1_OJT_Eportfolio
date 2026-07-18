@@ -376,9 +376,31 @@ export default function ProfilePage() {
         .photo-upload-wrapper input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
         @media (max-width: 768px) {
           .dtr-table th, .dtr-table td { padding: 0.6rem 0.75rem; font-size: 0.75rem; }
+          .profile-header-inner { padding: 0 1.5rem 1.5rem !important; }
+          .profile-info-row { flex-direction: column !important; align-items: flex-start !important; }
+          .profile-avatar-wrap { margin-top: -45px !important; }
+          .profile-avatar-wrap > div:first-child { width: 100px !important; height: 100px !important; font-size: 2.2rem !important; }
+          .profile-contact-row { gap: 1rem !important; }
+          .profile-top-grid { grid-template-columns: 1fr !important; }
+          .dtr-form-grid { grid-template-columns: 1fr 1fr !important; }
+          .dtr-task-row { flex-direction: column !important; align-items: stretch !important; }
+          .edit-modal-grid { grid-template-columns: 1fr !important; }
+          .profile-main { padding: 2rem 1rem !important; }
         }
-        @media (max-width: 640px) {
+        @media (max-width: 480px) {
           .ui-card { padding: 1rem !important; }
+          .dtr-form-grid { grid-template-columns: 1fr !important; }
+          .profile-nav-inner { padding: 0 1rem !important; }
+          .profile-cover { height: 120px !important; }
+          .profile-avatar-wrap { margin-top: -35px !important; }
+          .profile-avatar-wrap > div:first-child { width: 80px !important; height: 80px !important; font-size: 1.8rem !important; border-width: 4px !important; }
+          .profile-name { font-size: 1.4rem !important; }
+          .profile-contact-row { gap: 0.75rem !important; font-size: 0.8rem !important; }
+          .dtr-header { flex-direction: column !important; align-items: stretch !important; }
+          .dtr-header > div { width: 100% !important; }
+          .dtr-header button, .dtr-header label { width: 100% !important; justify-content: center !important; }
+          .journal-header { flex-direction: column !important; align-items: stretch !important; gap: 0.75rem !important; }
+          .journal-form-grid { grid-template-columns: 1fr !important; }
         }
       `}</style>
 
@@ -388,7 +410,7 @@ export default function ProfilePage() {
         boxShadow: "0 2px 12px rgba(15,23,42,0.4)",
         position: "sticky", top: 0, zIndex: 40,
       }}>
-        <div style={{
+        <div className="profile-nav-inner" style={{
           maxWidth: 1100, margin: "0 auto", padding: "0 2rem", height: 64,
           display: "flex", alignItems: "center", justifyContent: "space-between",
         }}>
@@ -407,7 +429,7 @@ export default function ProfilePage() {
       </nav>
 
       {/* ══ MAIN LAYOUT ══ */}
-      <main style={{ maxWidth: 1100, margin: "0 auto", padding: "3rem 2rem", flex: 1, width: "100%" }}>
+      <main className="profile-main" style={{ maxWidth: 1100, margin: "0 auto", padding: "3rem 2rem", flex: 1, width: "100%" }}>
         
         {/* Profile Header Card */}
         <RevealBox>
@@ -417,7 +439,7 @@ export default function ProfilePage() {
             marginBottom: "2.5rem", border: "1px solid rgba(255,255,255,0.5)"
           }}>
             {/* Cover Photo Area */}
-            <div style={{
+            <div className="profile-cover" style={{
               height: 160,
               background: "linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)",
               position: "relative"
@@ -426,11 +448,11 @@ export default function ProfilePage() {
             </div>
 
             {/* User Info Area */}
-            <div style={{ padding: "0 2.5rem 2.5rem", position: "relative" }}>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "2rem", marginBottom: "2rem" }}>
+            <div className="profile-header-inner" style={{ padding: "0 2.5rem 2.5rem", position: "relative" }}>
+              <div className="profile-info-row" style={{ display: "flex", flexWrap: "wrap", gap: "2rem", marginBottom: "2rem" }}>
                 
                 {/* Avatar with offset */}
-                <div style={{ marginTop: "-60px", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.75rem" }}>
+                <div className="profile-avatar-wrap" style={{ marginTop: "-60px", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.75rem" }}>
                   <div style={{
                     width: 130, height: 130, borderRadius: "50%",
                     background: profilePic ? `url(${profilePic}) center/cover` : "linear-gradient(135deg, #f59e0b 0%, #ef4444 100%)",
@@ -454,7 +476,7 @@ export default function ProfilePage() {
                 
                 <div style={{ flex: 1, minWidth: 200, paddingTop: "0.5rem", display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "1rem" }}>
                   <div>
-                    <h1 style={{ fontSize: "2rem", fontWeight: 800, color: "#0f172a", margin: "0 0 0.25rem 0", letterSpacing: "normal" }}>{profile.name}</h1>
+                    <h1 className="profile-name" style={{ fontSize: "2rem", fontWeight: 800, color: "#0f172a", margin: "0 0 0.25rem 0", letterSpacing: "normal" }}>{profile.name}</h1>
                     <p style={{ fontSize: "1rem", color: "#64748b", margin: 0, fontWeight: 500 }}>{profile.program}</p>
                   </div>
                   
@@ -470,7 +492,7 @@ export default function ProfilePage() {
               </div>
 
               {/* Contact & Meta Row */}
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "2.5rem", borderTop: "1px solid #e2e8f0", paddingTop: "1.75rem" }}>
+              <div className="profile-contact-row" style={{ display: "flex", flexWrap: "wrap", gap: "2rem", borderTop: "1px solid #e2e8f0", paddingTop: "1.75rem" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", color: "#475569", fontSize: "0.9rem", fontWeight: 500 }}>
                   <IconMail /> {profile.email}
                 </div>
@@ -479,10 +501,7 @@ export default function ProfilePage() {
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", color: "#475569", fontSize: "0.9rem", fontWeight: 500 }}>
                   <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                  Guardian: {profile.guardian}
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", color: "#475569", fontSize: "0.9rem", fontWeight: 500 }}>
-                  <IconPhone /> Guardian: {profile.guardianContact}
+                  {profile.guardian} · <IconPhone /> {profile.guardianContact}
                 </div>
               </div>
             </div>
@@ -492,7 +511,7 @@ export default function ProfilePage() {
         <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "2.5rem" }}>
           
           {/* ── Top Row (Status & Tracker) ── */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "2.5rem" }}>
+          <div className="profile-top-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "2.5rem" }}>
             {/* OJT Status */}
             <RevealBox delay={0.1}>
               <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#0f172a", marginBottom: "1.25rem" }}>OJT Deployment Details</h2>
@@ -557,7 +576,7 @@ export default function ProfilePage() {
 
           {/* ── Weekly Journals Section ── */}
           <RevealBox delay={0.2}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem" }}>
+            <div className="journal-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem" }}>
               <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#0f172a", margin: 0 }}>Weekly Journals</h2>
               <button 
                 onClick={() => setShowJournalForm(!showJournalForm)}
@@ -572,7 +591,7 @@ export default function ProfilePage() {
             <div className="ui-card" style={{ padding: "2rem" }}>
               {showJournalForm && (
                 <form onSubmit={handleAddJournal} style={{ background: "#f8fafc", padding: "1.5rem", borderRadius: "1rem", marginBottom: "2rem", border: "1px dashed #cbd5e1" }}>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1rem" }}>
+                  <div className="journal-form-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1rem" }}>
                     <div>
                       <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 700, color: "#475569", marginBottom: "0.5rem", textTransform: "uppercase" }}>Start Date</label>
                       <input type="date" value={journalStartDate} onChange={(e) => setJournalStartDate(e.target.value)} style={{ width: "100%", padding: "0.75rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1", fontSize: "0.9rem", outline: "none" }} required />
@@ -615,7 +634,7 @@ export default function ProfilePage() {
 
           {/* ── DTR Section ── */}
           <RevealBox delay={0.3}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem", flexWrap: "wrap", gap: "0.75rem" }}>
+            <div className="dtr-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem", flexWrap: "wrap", gap: "0.75rem" }}>
               <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#0f172a", margin: 0 }}>Daily Time Record</h2>
               <div style={{ display: "flex", gap: "0.75rem", alignItems: "center", flexWrap: "wrap" }}>
                 <label style={{ 
@@ -643,7 +662,7 @@ export default function ProfilePage() {
               {/* DTR Entry Form */}
               {showDtrForm && (
                 <form onSubmit={handleAddDtr} style={{ background: "#f8fafc", padding: "1.5rem", borderRadius: "1rem", marginBottom: "2rem", border: "1px dashed #cbd5e1" }}>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1.5rem", marginBottom: "1.25rem" }}>
+                  <div className="dtr-form-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1.5rem", marginBottom: "1.25rem" }}>
                     <div>
                       <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "0.4rem", textTransform: "uppercase" }}>Date</label>
                       <input type="date" value={newDate} onChange={(e) => setNewDate(e.target.value)} style={{ width: "100%", padding: "0.6rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1", fontSize: "0.85rem", outline: "none" }} required />
@@ -658,7 +677,7 @@ export default function ProfilePage() {
                     </div>
                   </div>
                   
-                  <div style={{ display: "flex", gap: "1.5rem", alignItems: "flex-end", marginBottom: "1rem" }}>
+                  <div className="dtr-task-row" style={{ display: "flex", gap: "1.5rem", alignItems: "flex-end", marginBottom: "1rem" }}>
                     <div style={{ flex: 2 }}>
                       <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "0.4rem", textTransform: "uppercase" }}>Task / Activity</label>
                       <input type="text" value={newTask} onChange={(e) => setNewTask(e.target.value)} placeholder={isAbsent ? "Reason for absence..." : "What did you do today?"} style={{ width: "100%", padding: "0.6rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1", fontSize: "0.85rem", outline: "none" }} required />
@@ -747,7 +766,7 @@ export default function ProfilePage() {
               <button onClick={() => setShowEditModal(false)} style={{ background: "none", border: "none", color: "#64748b", cursor: "pointer", display: "flex" }}><IconX /></button>
             </div>
             <div style={{ padding: "1.5rem", overflowY: "auto", display: "flex", flexDirection: "column", gap: "1.25rem" }}>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.25rem" }}>
+              <div className="edit-modal-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.25rem" }}>
                 <div>
                   <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "0.4rem" }}>Full Name</label>
                   <input type="text" value={editForm.name} onChange={(e) => setEditForm({...editForm, name: e.target.value})} style={{ width: "100%", padding: "0.75rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1", fontSize: "0.9rem", outline: "none" }} />
@@ -766,7 +785,7 @@ export default function ProfilePage() {
                 </div>
               </div>
               <div style={{ borderTop: "1px solid #f1f5f9", margin: "0.5rem 0" }} />
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.25rem" }}>
+              <div className="edit-modal-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.25rem" }}>
                 <div>
                   <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "0.4rem" }}>Company</label>
                   <input type="text" value={editForm.company} onChange={(e) => setEditForm({...editForm, company: e.target.value})} style={{ width: "100%", padding: "0.75rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1", fontSize: "0.9rem", outline: "none" }} />
@@ -785,7 +804,7 @@ export default function ProfilePage() {
                 </div>
               </div>
               <div style={{ borderTop: "1px solid #f1f5f9", margin: "0.5rem 0" }} />
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.25rem" }}>
+              <div className="edit-modal-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.25rem" }}>
                 <div>
                   <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "0.4rem" }}>Guardian Name</label>
                   <input type="text" value={editForm.guardian} onChange={(e) => setEditForm({...editForm, guardian: e.target.value})} style={{ width: "100%", padding: "0.75rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1", fontSize: "0.9rem", outline: "none" }} />
