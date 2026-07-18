@@ -16,7 +16,11 @@ concurrency:
 
 jobs:
   build:
+    name: Build & Deploy to GitHub Pages
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: https://RodneyGG.github.io/BSCpE_2-1_OJT_Eportfolio/
     defaults:
       run:
         working-directory: frontend
