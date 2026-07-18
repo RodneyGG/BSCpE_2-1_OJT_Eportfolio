@@ -21,16 +21,15 @@ To test the login portal and routing, please use the following dummy credentials
 
 ## Running Locally (Docker)
 
-This project uses Docker to spin up the full stack seamlessly (Next.js frontend, Laravel backend, MySQL, Redis, and an Nginx reverse proxy).
+This project uses Docker to spin up the Next.js frontend development server seamlessly.
 
 1. Ensure **Docker** is installed and running on your machine.
-2. In the root directory of the project, start the containers:
+2. In the root directory of the project, start the container:
    ```bash
    docker compose up -d --build
    ```
 3. Access the application:
    - **Frontend App**: [http://localhost:3000](http://localhost:3000)
-   - **Via Nginx Proxy**: [http://localhost:8080](http://localhost:8080)
 
 To stop the development environment, simply run:
 ```bash

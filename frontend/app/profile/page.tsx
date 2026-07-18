@@ -499,9 +499,14 @@ export default function ProfilePage() {
                 <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", color: "#475569", fontSize: "0.9rem", fontWeight: 500 }}>
                   <IconPhone /> {profile.phone}
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", color: "#475569", fontSize: "0.9rem", fontWeight: 500 }}>
-                  <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                  {profile.guardian} · <IconPhone /> {profile.guardianContact}
+                <div style={{ display: "flex", flexBasis: "100%", flexDirection: "column", gap: "0.5rem" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", color: "#475569", fontSize: "0.9rem", fontWeight: 500 }}>
+                    <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    Guardian: {profile.guardian}
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", color: "#475569", fontSize: "0.9rem", fontWeight: 500 }}>
+                    <IconPhone /> {profile.guardianContact}
+                  </div>
                 </div>
               </div>
             </div>

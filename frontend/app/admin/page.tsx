@@ -350,7 +350,8 @@ export default function AdminDashboard() {
         }
         @media (max-width: 640px) {
           .admin-card { padding: 1rem !important; }
-          .admin-search { width: 100% !important; }
+          .admin-search { width: 100% !important; max-width: none !important; }
+          .admin-main { padding: 1.5rem 1rem !important; }
         }
       `}</style>
 
@@ -380,7 +381,7 @@ export default function AdminDashboard() {
       </nav>
 
       {/* ══ MAIN DASHBOARD ══ */}
-      <main style={{ maxWidth: 1400, margin: "0 auto", padding: "2.5rem 2rem", flex: 1, width: "100%" }}>
+      <main className="admin-main" style={{ maxWidth: 1400, margin: "0 auto", padding: "2.5rem 2rem", flex: 1, width: "100%" }}>
         
         {/* Header */}
         <RevealBox>
@@ -427,9 +428,9 @@ export default function AdminDashboard() {
           {/* ── COMPANIES DIRECTORY ── */}
           <RevealBox delay={0.4}>
             <div className="admin-card" style={{ padding: "0", overflow: "hidden", border: "none", background: "transparent", boxShadow: "none" }}>
-              <div style={{ padding: "0 0 1.5rem 0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div style={{ padding: "0 0 1.5rem 0", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem" }}>
                 <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#0f172a", margin: 0 }}>Partner Companies</h2>
-                <div style={{ position: "relative", width: "300px" }}>
+                <div className="admin-search" style={{ position: "relative", width: "100%", maxWidth: "300px" }}>
                   <div style={{ position: "absolute", left: "1rem", top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }}>
                     <IconSearch />
                   </div>
