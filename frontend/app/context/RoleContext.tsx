@@ -4,25 +4,51 @@ import { createContext, useContext, useState, ReactNode } from "react";
 
 export type Role = "normal" | "prof" | "admin";
 
-interface RoleContextValue {
+interface User {
+  name: string;
+  email: string;
   role: Role;
-  setRole: (role: Role) => void;
 }
 
-const RoleContext = createContext<RoleContextValue>({
+interface AuthContextValue {
+  role: Role;
+  setRole: (role: Role) => void;
+  user: User | null;
+  login: (user: User) => void;
+  logout: () => void;
+  isLoggedIn: boolean;
+}
+
+const AuthContext = createContext<AuthContextValue>({
   role: "normal",
   setRole: () => {},
+  user: null,
+  login: () => {},
+  logout: () => {},
+  isLoggedIn: false,
 });
 
 export function RoleProvider({ children }: { children: ReactNode }) {
   const [role, setRole] = useState<Role>("normal");
+  const [user, setUser] = useState<User | null>(null);
+
+  const login = (u: User) => {
+    setUser(u);
+    setRole(u.role);
+  };
+
+  const logout = () => {
+    setUser(null);
+    setRole("normal");
+  };
+
   return (
-    <RoleContext.Provider value={{ role, setRole }}>
+    <AuthContext.Provider value={{ role, setRole, user, login, logout, isLoggedIn: !!user }}>
       {children}
-    </RoleContext.Provider>
+    </AuthContext.Provider>
   );
 }
 
 export function useRole() {
-  return useContext(RoleContext);
+  return useContext(AuthContext);
 }

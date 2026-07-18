@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { BuildingOfficeIcon, UserGroupIcon, ClockIcon } from "@heroicons/react/24/outline";
 
 /* ═══════════════════════════ Scroll reveal hook ════════════════════ */
 function useReveal() {
@@ -346,12 +345,19 @@ export default function AdminDashboard() {
           background: #dcfce7; border: 1px solid #bbf7d0; color: #166534;
         }
         .btn-approve:hover { background: #bbf7d0; border-color: #86efac; }
+        @media (max-width: 768px) {
+          .admin-grid-main { grid-template-columns: 1fr !important; }
+        }
+        @media (max-width: 640px) {
+          .admin-card { padding: 1rem !important; }
+          .admin-search { width: 100% !important; }
+        }
       `}</style>
 
       {/* ══ TOP NAV ══ */}
       <nav style={{
-        background: "white",
-        boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+        background: "linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%)",
+        boxShadow: "0 2px 12px rgba(15,23,42,0.4)",
         position: "sticky", top: 0, zIndex: 50,
       }}>
         <div style={{
@@ -360,13 +366,13 @@ export default function AdminDashboard() {
         }}>
           <Link href="/" className="back-link" style={{
             display: "flex", alignItems: "center", gap: "0.5rem",
-            color: "#475569", textDecoration: "none", fontSize: "0.85rem",
+            color: "#93c5fd", textDecoration: "none", fontSize: "0.85rem",
             fontWeight: 600, transition: "opacity 0.2s ease"
           }}>
             <IconBack />
             Return to Homepage
           </Link>
-          <div style={{ fontSize: "0.8rem", fontWeight: 800, color: "#1e293b", letterSpacing: "0.05em", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          <div style={{ fontSize: "0.8rem", fontWeight: 800, color: "white", letterSpacing: "0.05em", display: "flex", alignItems: "center", gap: "0.5rem" }}>
             <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#ef4444" }}></div>
             OJT ADMIN DASHBOARD
           </div>
@@ -416,7 +422,7 @@ export default function AdminDashboard() {
           </RevealBox>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "2.5rem" }}>
+        <div className="admin-grid-main" style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "2.5rem" }}>
           
           {/* ── COMPANIES DIRECTORY ── */}
           <RevealBox delay={0.4}>

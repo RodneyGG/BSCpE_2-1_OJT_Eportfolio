@@ -198,7 +198,9 @@ export default function ProfilePage() {
     company: "TechCore Solutions Inc.",
     location: "Cebu City, Cebu",
     role: "IT Intern",
-    supervisor: "Coco Martin"
+    supervisor: "Coco Martin",
+    guardian: "Maria Dela Cruz",
+    guardianContact: "+63 917 123 4567"
   });
 
   const [profilePic, setProfilePic] = useState<string | null>(null);
@@ -372,14 +374,18 @@ export default function ProfilePage() {
         .photo-btn:hover { background: white; color: #0f172a; transform: translateY(-1px); }
         .photo-upload-wrapper { position: relative; overflow: hidden; display: inline-block; }
         .photo-upload-wrapper input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+        @media (max-width: 768px) {
+          .dtr-table th, .dtr-table td { padding: 0.6rem 0.75rem; font-size: 0.75rem; }
+        }
+        @media (max-width: 640px) {
+          .ui-card { padding: 1rem !important; }
+        }
       `}</style>
 
       {/* ══ TOP NAV ══ */}
       <nav style={{
-        background: "rgba(255, 255, 255, 0.8)",
-        backdropFilter: "blur(12px)",
-        WebkitBackdropFilter: "blur(12px)",
-        borderBottom: "1px solid rgba(255,255,255,0.5)",
+        background: "linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%)",
+        boxShadow: "0 2px 12px rgba(15,23,42,0.4)",
         position: "sticky", top: 0, zIndex: 40,
       }}>
         <div style={{
@@ -388,13 +394,13 @@ export default function ProfilePage() {
         }}>
           <Link href="/" className="back-link" style={{
             display: "flex", alignItems: "center", gap: "0.5rem",
-            color: "#475569", textDecoration: "none", fontSize: "0.85rem",
+            color: "#93c5fd", textDecoration: "none", fontSize: "0.85rem",
             fontWeight: 600, transition: "opacity 0.2s ease"
           }}>
             <IconBack />
             Return to Dashboard
           </Link>
-          <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "#94a3b8", letterSpacing: "0.1em", textTransform: "uppercase" }}>
+          <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "white", letterSpacing: "0.1em", textTransform: "uppercase" }}>
             Student Profile
           </div>
         </div>
@@ -470,6 +476,13 @@ export default function ProfilePage() {
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", color: "#475569", fontSize: "0.9rem", fontWeight: 500 }}>
                   <IconPhone /> {profile.phone}
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", color: "#475569", fontSize: "0.9rem", fontWeight: 500 }}>
+                  <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  Guardian: {profile.guardian}
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", color: "#475569", fontSize: "0.9rem", fontWeight: 500 }}>
+                  <IconPhone /> Guardian: {profile.guardianContact}
                 </div>
               </div>
             </div>
@@ -602,16 +615,27 @@ export default function ProfilePage() {
 
           {/* ── DTR Section ── */}
           <RevealBox delay={0.3}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem", flexWrap: "wrap", gap: "0.75rem" }}>
               <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#0f172a", margin: 0 }}>Daily Time Record</h2>
-              <button 
-                onClick={() => setShowDtrForm(!showDtrForm)}
-                style={{ background: "#3b82f6", color: "white", border: "none", borderRadius: "0.75rem", padding: "0.6rem 1.25rem", fontSize: "0.85rem", fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: "0.4rem", transition: "background 0.2s" }}
-                onMouseEnter={(e) => e.currentTarget.style.background = "#2563eb"}
-                onMouseLeave={(e) => e.currentTarget.style.background = "#3b82f6"}
-              >
-                <IconPlus /> Add Log
-              </button>
+              <div style={{ display: "flex", gap: "0.75rem", alignItems: "center", flexWrap: "wrap" }}>
+                <label style={{ 
+                  background: "white", color: "#475569", border: "1px solid #cbd5e1", borderRadius: "0.75rem", 
+                  padding: "0.6rem 1.25rem", fontSize: "0.85rem", fontWeight: 600, cursor: "pointer", 
+                  display: "flex", alignItems: "center", gap: "0.4rem", transition: "all 0.2s",
+                  position: "relative", overflow: "hidden"
+                }}>
+                  <IconUpload /> Upload Proof (PDF)
+                  <input type="file" accept="application/pdf" style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer" }} />
+                </label>
+                <button 
+                  onClick={() => setShowDtrForm(!showDtrForm)}
+                  style={{ background: "#3b82f6", color: "white", border: "none", borderRadius: "0.75rem", padding: "0.6rem 1.25rem", fontSize: "0.85rem", fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: "0.4rem", transition: "background 0.2s" }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = "#2563eb"}
+                  onMouseLeave={(e) => e.currentTarget.style.background = "#3b82f6"}
+                >
+                  <IconPlus /> Add Log
+                </button>
+              </div>
             </div>
 
             <div className="ui-card" style={{ padding: "2rem" }}>
@@ -758,6 +782,17 @@ export default function ProfilePage() {
                 <div>
                   <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "0.4rem" }}>OJT Supervisor</label>
                   <input type="text" value={editForm.supervisor} onChange={(e) => setEditForm({...editForm, supervisor: e.target.value})} style={{ width: "100%", padding: "0.75rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1", fontSize: "0.9rem", outline: "none" }} />
+                </div>
+              </div>
+              <div style={{ borderTop: "1px solid #f1f5f9", margin: "0.5rem 0" }} />
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.25rem" }}>
+                <div>
+                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "0.4rem" }}>Guardian Name</label>
+                  <input type="text" value={editForm.guardian} onChange={(e) => setEditForm({...editForm, guardian: e.target.value})} style={{ width: "100%", padding: "0.75rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1", fontSize: "0.9rem", outline: "none" }} />
+                </div>
+                <div>
+                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "0.4rem" }}>Guardian Contact</label>
+                  <input type="text" value={editForm.guardianContact} onChange={(e) => setEditForm({...editForm, guardianContact: e.target.value})} style={{ width: "100%", padding: "0.75rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1", fontSize: "0.9rem", outline: "none" }} />
                 </div>
               </div>
             </div>
