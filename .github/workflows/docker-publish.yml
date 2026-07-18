@@ -12,28 +12,8 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  build-frontend-and-backend:
-    name: 🔨 Build Docker Images
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Build Frontend Image (Test)
-        uses: docker/build-push-action@v5
-        with:
-          context: ./frontend
-          push: false
-
-      - name: Build Backend Image (Test)
-        uses: docker/build-push-action@v5
-        with:
-          context: ./backend
-          push: false
-
-  deploy-to-ghcr:
-    name: 🚀 Deploy to GitHub Registry
-    needs: build-frontend-and-backend
+  build-and-deploy:
+    name: 🔨 Build & 🚀 Deploy to GHCR
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -55,19 +35,12 @@ jobs:
         run: |
           echo "IMAGE_NAME_LOWER=$(echo ${{ env.IMAGE_NAME }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
 
+      # --- STAGE 1: METADATA ---
       - name: Extract metadata for Frontend
         id: meta-frontend
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}-frontend
-
-      - name: Push Frontend Image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./frontend
-          push: true
-          tags: ${{ steps.meta-frontend.outputs.tags }}
-          labels: ${{ steps.meta-frontend.outputs.labels }}
 
       - name: Extract metadata for Backend
         id: meta-backend
@@ -75,7 +48,33 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}-backend
 
-      - name: Push Backend Image
+      # --- STAGE 2: BUILD TEST (Ensures both compile before pushing) ---
+      - name: 🔨 Build Frontend Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: false
+          tags: ${{ steps.meta-frontend.outputs.tags }}
+          labels: ${{ steps.meta-frontend.outputs.labels }}
+
+      - name: 🔨 Build Backend Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: false
+          tags: ${{ steps.meta-backend.outputs.tags }}
+          labels: ${{ steps.meta-backend.outputs.labels }}
+
+      # --- STAGE 3: DEPLOY (Instant thanks to Docker cache!) ---
+      - name: 🚀 Push Frontend Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: true
+          tags: ${{ steps.meta-frontend.outputs.tags }}
+          labels: ${{ steps.meta-frontend.outputs.labels }}
+
+      - name: 🚀 Push Backend Image
         uses: docker/build-push-action@v5
         with:
           context: ./backend
