@@ -159,6 +159,7 @@ function DocumentRow({ doc, onUpload }: { doc: { id: number, name: string, statu
       
       {doc.status === "pending" && (
         <div 
+          className="pdf-upload-box"
           onDragEnter={handleDrag}
           onDragLeave={handleDrag}
           onDragOver={handleDrag}
@@ -365,15 +366,17 @@ export default function ProfilePage() {
         .dtr-table td { padding: 1rem 1.25rem; color: #0f172a; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
         .dtr-table tr:last-child td { border-bottom: none; }
         .dtr-table tr:hover td { background: #f8fafc; }
+
+        .photo-upload-wrapper { position: relative; overflow: hidden; display: inline-block; }
         
         .photo-btn {
-          background: rgba(255,255,255,0.9); border: 1px solid #e2e8f0; border-radius: 999px;
-          padding: 0.4rem 0.8rem; font-size: 0.7rem; font-weight: 600; color: #475569;
-          cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+          background: rgba(255,255,255,0.9); border: 1px solid #e2e8f0; border-radius: 999px; padding: 0.4rem 0.8rem; font-size: 0.7rem; font-weight: 600; color: #475569; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
-        .photo-btn:hover { background: white; color: #0f172a; transform: translateY(-1px); }
-        .photo-upload-wrapper { position: relative; overflow: hidden; display: inline-block; }
+        .photo-btn:hover,
+        .photo-upload-wrapper:hover .photo-btn { background: #e2e8f0; color: #0f172a; transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
+    
         .photo-upload-wrapper input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+        .pdf-upload-box:hover { background: #e2e8f0 !important; border-color: #94a3b8 !important; transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
         @media (max-width: 768px) {
           .dtr-table th, .dtr-table td { padding: 0.6rem 0.75rem; font-size: 0.75rem; }
           .profile-header-inner { padding: 0 1.5rem 1.5rem !important; }
@@ -402,6 +405,7 @@ export default function ProfilePage() {
           .journal-header { flex-direction: column !important; align-items: stretch !important; gap: 0.75rem !important; }
           .journal-form-grid { grid-template-columns: 1fr !important; }
         }
+
       `}</style>
 
       {/* ══ TOP NAV ══ */}
