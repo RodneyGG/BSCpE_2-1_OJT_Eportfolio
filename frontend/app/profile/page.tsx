@@ -159,6 +159,7 @@ function DocumentRow({ doc, onUpload }: { doc: { id: number, name: string, statu
       
       {doc.status === "pending" && (
         <div 
+          className="pdf-upload-box"
           onDragEnter={handleDrag}
           onDragLeave={handleDrag}
           onDragOver={handleDrag}
@@ -375,6 +376,7 @@ export default function ProfilePage() {
         .photo-upload-wrapper:hover .photo-btn { background: #e2e8f0; color: #0f172a; transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
     
         .photo-upload-wrapper input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+        .pdf-upload-box:hover { background: #e2e8f0 !important; border-color: #94a3b8 !important; transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
         @media (max-width: 768px) {
           .dtr-table th, .dtr-table td { padding: 0.6rem 0.75rem; font-size: 0.75rem; }
           .profile-header-inner { padding: 0 1.5rem 1.5rem !important; }
