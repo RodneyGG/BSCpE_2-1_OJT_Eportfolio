@@ -365,6 +365,8 @@ export default function ProfilePage() {
         .dtr-table td { padding: 1rem 1.25rem; color: #0f172a; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
         .dtr-table tr:last-child td { border-bottom: none; }
         .dtr-table tr:hover td { background: #f8fafc; }
+
+        .photo-upload-wrapper { position: relative; overflow: hidden; display: inline-block; }
         
         .photo-btn {
           background: rgba(255,255,255,0.9); border: 1px solid #e2e8f0; border-radius: 999px; padding: 0.4rem 0.8rem; font-size: 0.7rem; font-weight: 600; color: #475569; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
