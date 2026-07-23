@@ -371,6 +371,7 @@ export default function ProfilePage() {
         .photo-btn {
           background: rgba(255,255,255,0.9); border: 1px solid #e2e8f0; border-radius: 999px; padding: 0.4rem 0.8rem; font-size: 0.7rem; font-weight: 600; color: #475569; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
+        .photo-btn:hover,
         .photo-upload-wrapper:hover .photo-btn { background: #e2e8f0; color: #0f172a; transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
     
         .photo-upload-wrapper input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
