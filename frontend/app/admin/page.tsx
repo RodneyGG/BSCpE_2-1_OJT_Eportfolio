@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import { useRole } from "../context/RoleContext";
 
 /* ═══════════════════════════ Scroll reveal hook ════════════════════ */
 function useReveal() {
@@ -286,6 +287,7 @@ function CompanyRow({ company, isOpen, onToggle, index, onStudentClick }: {
 
 /* ═══════════════════════════ Page ════════════════════════════ */
 export default function AdminDashboard() {
+  const { logout } = useRole();
   const [openId, setOpenId] = useState<number | null>(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
@@ -373,9 +375,19 @@ export default function AdminDashboard() {
             <IconBack />
             Return to Homepage
           </Link>
-          <div style={{ fontSize: "0.8rem", fontWeight: 800, color: "white", letterSpacing: "0.05em", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-            <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#ef4444" }}></div>
-            OJT ADMIN DASHBOARD
+          <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
+            <div style={{ fontSize: "0.8rem", fontWeight: 800, color: "white", letterSpacing: "0.05em", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#ef4444" }}></div>
+              OJT ADMIN DASHBOARD
+            </div>
+            <div style={{ width: 1, height: 20, backgroundColor: "rgba(255,255,255,0.12)" }} />
+            <button onClick={() => { logout(); window.location.href = '/login'; }} style={{
+              background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "9999px",
+              padding: "0.4rem 0.8rem", color: "white", fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.05em",
+              textTransform: "uppercase", cursor: "pointer", transition: "background 0.2s ease"
+            }} onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.2)"} onMouseLeave={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.1)"}>
+              Log Out
+            </button>
           </div>
         </div>
       </nav>

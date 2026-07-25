@@ -278,7 +278,7 @@ function CompanyRow({ company, isOpen, onToggle, index }: {
 
 /* ══════════════════════ Auth-aware Nav Pill ════════════════════ */
 function NavUserPill() {
-  const { isLoggedIn, user } = useRole();
+  const { isLoggedIn, user, logout } = useRole();
   
   if (!isLoggedIn) {
     return (
@@ -309,33 +309,52 @@ function NavUserPill() {
 
   const initials = user!.name.split(" ").map(w => w[0]).slice(0, 2).join("");
   return (
-    <Link href="/profile" style={{
-      display: "flex", alignItems: "center", gap: "0.5rem",
-      background: "rgba(255,255,255,0.1)",
-      border: "1px solid rgba(255,255,255,0.15)",
-      borderRadius: "9999px",
-      padding: "0.28rem 0.85rem 0.28rem 0.35rem",
-      textDecoration: "none",
-      transition: "background 0.2s ease, transform 0.2s ease",
-    }}
-    onMouseEnter={(e) => {
-      e.currentTarget.style.background = "rgba(255,255,255,0.15)";
-      e.currentTarget.style.transform = "translateY(-1px)";
-    }}
-    onMouseLeave={(e) => {
-      e.currentTarget.style.background = "rgba(255,255,255,0.1)";
-      e.currentTarget.style.transform = "translateY(0)";
-    }}>
-      <div style={{
-        width: 26, height: 26, borderRadius: "50%",
-        background: "linear-gradient(135deg, #f59e0b 0%, #ef4444 100%)",
+    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+      <Link href="/profile" style={{
+        display: "flex", alignItems: "center", gap: "0.5rem",
+        background: "rgba(255,255,255,0.1)",
+        border: "1px solid rgba(255,255,255,0.15)",
+        borderRadius: "9999px",
+        padding: "0.28rem 0.85rem 0.28rem 0.35rem",
+        textDecoration: "none",
+        transition: "background 0.2s ease, transform 0.2s ease",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.background = "rgba(255,255,255,0.15)";
+        e.currentTarget.style.transform = "translateY(-1px)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = "rgba(255,255,255,0.1)";
+        e.currentTarget.style.transform = "translateY(0)";
+      }}>
+        <div style={{
+          width: 26, height: 26, borderRadius: "50%",
+          background: "linear-gradient(135deg, #f59e0b 0%, #ef4444 100%)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: "0.6rem", fontWeight: 800, color: "white", flexShrink: 0,
+        }}>{initials}</div>
+        <span style={{ fontSize: "0.7rem", fontWeight: 700, color: "white",
+          letterSpacing: "0.05em", textTransform: "uppercase",
+          whiteSpace: "nowrap" }}>{user!.name.toUpperCase()}</span>
+      </Link>
+      <button onClick={() => { logout(); window.location.href = '/'; }} style={{
         display: "flex", alignItems: "center", justifyContent: "center",
-        fontSize: "0.6rem", fontWeight: 800, color: "white", flexShrink: 0,
-      }}>{initials}</div>
-      <span style={{ fontSize: "0.7rem", fontWeight: 700, color: "white",
+        background: "rgba(255,255,255,0.1)",
+        border: "1px solid rgba(255,255,255,0.15)",
+        borderRadius: "9999px",
+        padding: "0.4rem 0.8rem",
+        cursor: "pointer",
+        color: "white",
+        fontSize: "0.7rem", fontWeight: 700,
         letterSpacing: "0.05em", textTransform: "uppercase",
-        whiteSpace: "nowrap" }}>{user!.name.toUpperCase()}</span>
-    </Link>
+        transition: "background 0.2s ease",
+      }}
+      onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.2)"}
+      onMouseLeave={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.1)"}
+      >
+        Logout
+      </button>
+    </div>
   );
 }
 
@@ -353,6 +372,7 @@ function MoaPill() {
 
 /* ═══════════════════════════ Page ════════════════════════════ */
 export default function Home() {
+  const { isLoggedIn, role } = useRole();
   const [openId, setOpenId] = useState<number | null>(0);
   const [navScrolled, setNavScrolled] = useState(false);
 
@@ -458,11 +478,25 @@ export default function Home() {
 
             {/* Right */}
             <div style={{ display: "flex", alignItems: "center", gap: "1.25rem" }}>
-              <a href="#companies" style={{ fontSize: "0.75rem", fontWeight: 600,
+              <Link href="/companies" style={{ fontSize: "0.75rem", fontWeight: 600,
                 color: "#93c5fd", textDecoration: "none", letterSpacing: "0.06em",
                 textTransform: "uppercase", transition: "color 0.2s" }}>
                 Companies
-              </a>
+              </Link>
+              {isLoggedIn && (
+                <Link href="/profile" style={{ fontSize: "0.75rem", fontWeight: 600,
+                  color: "#93c5fd", textDecoration: "none", letterSpacing: "0.06em",
+                  textTransform: "uppercase", transition: "color 0.2s" }}>
+                  Profile
+                </Link>
+              )}
+              {isLoggedIn && role === 'admin' && (
+                <Link href="/admin" style={{ fontSize: "0.75rem", fontWeight: 600,
+                  color: "#93c5fd", textDecoration: "none", letterSpacing: "0.06em",
+                  textTransform: "uppercase", transition: "color 0.2s" }}>
+                  Admin
+                </Link>
+              )}
               <div style={{ width: 1, height: 20, backgroundColor: "rgba(255,255,255,0.12)" }} />
               {/* Auth-aware user pill */}
               <NavUserPill />
