@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useRole } from "../context/RoleContext";
 
 /* ═══════════════════════════ Scroll reveal hook ════════════════════ */
@@ -288,6 +289,7 @@ function CompanyRow({ company, isOpen, onToggle, index, onStudentClick }: {
 /* ═══════════════════════════ Page ════════════════════════════ */
 export default function AdminDashboard() {
   const { logout, role, user } = useRole();
+  const router = useRouter();
   const [openId, setOpenId] = useState<number | null>(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
@@ -381,7 +383,7 @@ export default function AdminDashboard() {
               {role === 'prof' ? 'OJT PROFESSOR DASHBOARD' : 'OJT ADMIN DASHBOARD'}
             </div>
             <div style={{ width: 1, height: 20, backgroundColor: "rgba(255,255,255,0.12)" }} />
-            <button onClick={() => { logout(); window.location.href = '/login'; }} style={{
+            <button onClick={() => { logout(); router.push('/login'); }} style={{
               background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "9999px",
               padding: "0.4rem 0.8rem", color: "white", fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.05em",
               textTransform: "uppercase", cursor: "pointer", transition: "background 0.2s ease"
@@ -396,11 +398,13 @@ export default function AdminDashboard() {
       <main className="admin-main" style={{ maxWidth: 1400, margin: "0 auto", padding: "2.5rem 2rem", flex: 1, width: "100%" }}>
         
         {/* Debug Dump Info */}
-        <div style={{ background: "#1e293b", color: "#38bdf8", padding: "1rem", borderRadius: "0.5rem", marginBottom: "2rem", fontFamily: "monospace", fontSize: "0.85rem", whiteSpace: "pre-wrap" }}>
-          <strong>Debug Info:</strong><br />
-          Role: {role}<br />
-          User: {JSON.stringify(user, null, 2)}
-        </div>
+        {process.env.NODE_ENV === 'development' && (
+          <div style={{ background: "#1e293b", color: "#38bdf8", padding: "1rem", borderRadius: "0.5rem", marginBottom: "2rem", fontFamily: "monospace", fontSize: "0.85rem", whiteSpace: "pre-wrap" }}>
+            <strong>Debug Info:</strong><br />
+            Role: {role}<br />
+            User: {JSON.stringify(user, null, 2)}
+          </div>
+        )}
 
         {/* Header */}
         <RevealBox>
