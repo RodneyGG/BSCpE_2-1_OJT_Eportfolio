@@ -478,11 +478,15 @@ export default function Home() {
 
             {/* Right */}
             <div style={{ display: "flex", alignItems: "center", gap: "1.25rem" }}>
-              <Link href="/companies" style={{ fontSize: "0.75rem", fontWeight: 600,
+              <a href="#companies" style={{ fontSize: "0.75rem", fontWeight: 600,
                 color: "#93c5fd", textDecoration: "none", letterSpacing: "0.06em",
-                textTransform: "uppercase", transition: "color 0.2s" }}>
+                textTransform: "uppercase", transition: "color 0.2s" }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  document.getElementById('companies')?.scrollIntoView({ behavior: 'smooth' });
+                }}>
                 Companies
-              </Link>
+              </a>
               {isLoggedIn && (
                 <Link href="/profile" style={{ fontSize: "0.75rem", fontWeight: 600,
                   color: "#93c5fd", textDecoration: "none", letterSpacing: "0.06em",

@@ -49,6 +49,12 @@ export default function LoginPage() {
       setTimeout(() => {
         router.push("/admin");
       }, 1000);
+    } else if (email === "professor@university.edu.ph" && password === "prof123") {
+      setIsLoading(true);
+      login({ name: 'Professor Smith', email: 'professor@university.edu.ph', role: 'prof' });
+      setTimeout(() => {
+        router.push("/admin");
+      }, 1000);
     } else {
       alert("Invalid credentials. Please use the dummy account.");
     }

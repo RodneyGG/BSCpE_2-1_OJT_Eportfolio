@@ -287,7 +287,7 @@ function CompanyRow({ company, isOpen, onToggle, index, onStudentClick }: {
 
 /* ═══════════════════════════ Page ════════════════════════════ */
 export default function AdminDashboard() {
-  const { logout } = useRole();
+  const { logout, role, user } = useRole();
   const [openId, setOpenId] = useState<number | null>(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
@@ -378,7 +378,7 @@ export default function AdminDashboard() {
           <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
             <div style={{ fontSize: "0.8rem", fontWeight: 800, color: "white", letterSpacing: "0.05em", display: "flex", alignItems: "center", gap: "0.5rem" }}>
               <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#ef4444" }}></div>
-              OJT ADMIN DASHBOARD
+              {role === 'prof' ? 'OJT PROFESSOR DASHBOARD' : 'OJT ADMIN DASHBOARD'}
             </div>
             <div style={{ width: 1, height: 20, backgroundColor: "rgba(255,255,255,0.12)" }} />
             <button onClick={() => { logout(); window.location.href = '/login'; }} style={{
@@ -395,6 +395,13 @@ export default function AdminDashboard() {
       {/* ══ MAIN DASHBOARD ══ */}
       <main className="admin-main" style={{ maxWidth: 1400, margin: "0 auto", padding: "2.5rem 2rem", flex: 1, width: "100%" }}>
         
+        {/* Debug Dump Info */}
+        <div style={{ background: "#1e293b", color: "#38bdf8", padding: "1rem", borderRadius: "0.5rem", marginBottom: "2rem", fontFamily: "monospace", fontSize: "0.85rem", whiteSpace: "pre-wrap" }}>
+          <strong>Debug Info:</strong><br />
+          Role: {role}<br />
+          User: {JSON.stringify(user, null, 2)}
+        </div>
+
         {/* Header */}
         <RevealBox>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "2.5rem", flexWrap: "wrap", gap: "1rem" }}>
