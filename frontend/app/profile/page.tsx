@@ -372,11 +372,14 @@ export default function ProfilePage() {
         .photo-btn {
           background: rgba(255,255,255,0.9); border: 1px solid #e2e8f0; border-radius: 999px; padding: 0.4rem 0.8rem; font-size: 0.7rem; font-weight: 600; color: #475569; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
-        .photo-btn:hover,
-        .photo-upload-wrapper:hover .photo-btn { background: #e2e8f0; color: #0f172a; transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
-    
+      
         .photo-upload-wrapper input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
         .pdf-upload-box:hover { background: #e2e8f0 !important; border-color: #94a3b8 !important; transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
+        .proof-upload-btn:hover, .proof-upload-btn:has(input:hover) { background: #e2e8f0 !important; color: #0f172a; transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
+        .proof-upload-btn { background: white; color: #475569; border: 1px solid #cbd5e1; border-radius: 0.75rem; padding: 0.6rem 1.25rem; font-size: 0.85rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.4rem; transition: all 0.2s; position: relative; overflow: hidden; }
+        .hover-lift:hover, .hover-lift:has(input:hover) { background: #e2e8f0; color: #0f172a; transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
+        .photo-upload-wrapper:hover .photo-btn,
+        .photo-upload-wrapper:has(input:hover) .photo-btn { background: #e2e8f0; color: #0f172a; transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
         @media (max-width: 768px) {
           .dtr-table th, .dtr-table td { padding: 0.6rem 0.75rem; font-size: 0.75rem; }
           .profile-header-inner { padding: 0 1.5rem 1.5rem !important; }
@@ -469,11 +472,11 @@ export default function ProfilePage() {
                   
                   <div style={{ display: "flex", gap: "0.5rem" }}>
                     <div className="photo-upload-wrapper">
-                      <button className="photo-btn">Upload</button>
+                      <button className="photo-btn hover-lift">Upload</button>
                       <input type="file" accept="image/*" onChange={handlePhotoUpload} />
                     </div>
                     {profilePic && (
-                      <button className="photo-btn" onClick={handlePhotoRemove}>Remove</button>
+                      <button className="photo-btn hover-lift" onClick={handlePhotoRemove}>Remove</button>
                     )}
                   </div>
                 </div>
@@ -485,7 +488,7 @@ export default function ProfilePage() {
                   </div>
                   
                   {/* Action Button */}
-                  <button onClick={() => setShowEditModal(true)} style={{
+                  <button onClick={() => setShowEditModal(true)} className="hover-lift" style={{
                     background: "#0f172a", border: "none", borderRadius: "0.75rem",
                     padding: "0.75rem 1.5rem", fontSize: "0.85rem", fontWeight: 600, color: "white",
                     cursor: "pointer", transition: "all 0.2s", boxShadow: "0 4px 12px rgba(15,23,42,0.15)"
@@ -646,12 +649,7 @@ export default function ProfilePage() {
             <div className="dtr-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem", flexWrap: "wrap", gap: "0.75rem" }}>
               <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#0f172a", margin: 0 }}>Daily Time Record</h2>
               <div style={{ display: "flex", gap: "0.75rem", alignItems: "center", flexWrap: "wrap" }}>
-                <label style={{ 
-                  background: "white", color: "#475569", border: "1px solid #cbd5e1", borderRadius: "0.75rem", 
-                  padding: "0.6rem 1.25rem", fontSize: "0.85rem", fontWeight: 600, cursor: "pointer", 
-                  display: "flex", alignItems: "center", gap: "0.4rem", transition: "all 0.2s",
-                  position: "relative", overflow: "hidden"
-                }}>
+               <label className="proof-upload-btn">
                   <IconUpload /> Upload Proof (PDF)
                   <input type="file" accept="application/pdf" style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer" }} />
                 </label>
