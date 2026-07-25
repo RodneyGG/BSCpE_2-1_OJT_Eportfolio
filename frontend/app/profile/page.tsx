@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import { useRole } from "../context/RoleContext";
 
 /* ═══════════════════════════ Scroll reveal hook ════════════════════ */
 function useReveal() {
@@ -191,6 +192,7 @@ function DocumentRow({ doc, onUpload }: { doc: { id: number, name: string, statu
 
 /* ═══════════════════════════ Page ════════════════════════════ */
 export default function ProfilePage() {
+  const { role, logout } = useRole();
   const [profile, setProfile] = useState({
     name: "Juan Dela Cruz",
     program: "BS Computer Engineering · 2nd Year",
@@ -421,16 +423,53 @@ export default function ProfilePage() {
           maxWidth: 1100, margin: "0 auto", padding: "0 2rem", height: 64,
           display: "flex", alignItems: "center", justifyContent: "space-between",
         }}>
-          <Link href="/" className="back-link" style={{
-            display: "flex", alignItems: "center", gap: "0.5rem",
-            color: "#93c5fd", textDecoration: "none", fontSize: "0.85rem",
-            fontWeight: 600, transition: "opacity 0.2s ease"
-          }}>
-            <IconBack />
-            Return to Dashboard
-          </Link>
-          <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "white", letterSpacing: "0.1em", textTransform: "uppercase" }}>
-            Student Profile
+          <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
+            <Link href="/" className="back-link" style={{
+              display: "flex", alignItems: "center", gap: "0.5rem",
+              color: "#93c5fd", textDecoration: "none", fontSize: "0.85rem",
+              fontWeight: 600, transition: "opacity 0.2s ease"
+            }}>
+              <IconBack />
+              Return to Dashboard
+            </Link>
+            {role === 'admin' && (
+              <>
+                <div style={{ width: 1, height: 20, backgroundColor: "rgba(255,255,255,0.12)" }} />
+                <Link href="/admin" className="back-link" style={{
+                  color: "#93c5fd", textDecoration: "none", fontSize: "0.85rem",
+                  fontWeight: 600, transition: "opacity 0.2s ease"
+                }}>
+                  Return to Admin Dashboard
+                </Link>
+              </>
+            )}
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+            <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "white", letterSpacing: "0.1em", textTransform: "uppercase" }}>
+              Student Profile
+            </div>
+            <button
+              onClick={() => { logout(); window.location.href = "/"; }}
+              style={{
+                display: "flex", alignItems: "center", gap: "0.4rem",
+                background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.3)",
+                borderRadius: "9999px", padding: "0.35rem 0.85rem",
+                color: "#fca5a5", fontSize: "0.7rem", fontWeight: 700,
+                letterSpacing: "0.06em", textTransform: "uppercase",
+                cursor: "pointer", transition: "all 0.2s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "rgba(239,68,68,0.25)";
+                e.currentTarget.style.color = "white";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "rgba(239,68,68,0.15)";
+                e.currentTarget.style.color = "#fca5a5";
+              }}
+            >
+              <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+              Log Out
+            </button>
           </div>
         </div>
       </nav>

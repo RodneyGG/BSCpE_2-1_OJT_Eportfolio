@@ -1,0 +1,33 @@
+# Dependencies — always install fresh inside the container
+node_modules
+
+# Build outputs — rebuilt inside the container
+.next
+out
+build
+
+# Version control
+.git
+.gitignore
+
+# IDE / editor
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env*
+
+# Misc
+*.md
+*.log
+.husky
+coverage
+.vercel
+*.tsbuildinfo
+next-env.d.ts

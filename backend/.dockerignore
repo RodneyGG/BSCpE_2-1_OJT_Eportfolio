@@ -1,0 +1,36 @@
+# Dependencies — installed fresh via composer install
+vendor
+node_modules
+
+# Version control
+.git
+.gitignore
+.gitattributes
+
+# IDE / editor
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Environment (use runtime env vars instead)
+.env
+
+# Storage artifacts (generated at runtime)
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+
+# Testing
+tests
+phpunit.xml
+coverage
+
+# Misc
+*.md
+docker-compose*.yml

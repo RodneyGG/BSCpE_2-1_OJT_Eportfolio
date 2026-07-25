@@ -5,6 +5,28 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRole } from '../context/RoleContext';
 
+// Centralized test credentials (should only be active in dev or controlled via env flags)
+const TEST_ACCOUNTS = [
+  {
+    email: "student@university.edu.ph",
+    password: "password123",
+    profile: { name: 'Juan Dela Cruz', email: 'student@university.edu.ph', role: 'normal' as const },
+    redirect: "/profile"
+  },
+  {
+    email: "admin@university.edu.ph",
+    password: "admin123",
+    profile: { name: 'Admin', email: 'admin@university.edu.ph', role: 'admin' as const },
+    redirect: "/admin"
+  },
+  {
+    email: "professor@university.edu.ph",
+    password: "prof123",
+    profile: { name: 'Professor Smith', email: 'professor@university.edu.ph', role: 'prof' as const },
+    redirect: "/admin"
+  }
+];
+
 function IconLock() {
   return (
     <svg width={20} height={20} viewBox="0 0 24 24" fill="none"
@@ -37,21 +59,22 @@ export default function LoginPage() {
     e.preventDefault();
     if (!email || !password) return;
     
-    if (email === "student@university.edu.ph" && password === "password123") {
-      setIsLoading(true);
-      login({ name: 'Juan Dela Cruz', email: 'student@university.edu.ph', role: 'normal' });
-      setTimeout(() => {
-        router.push("/profile");
-      }, 1000);
-    } else if (email === "admin@university.edu.ph" && password === "admin123") {
-      setIsLoading(true);
-      login({ name: 'Admin', email: 'admin@university.edu.ph', role: 'admin' });
-      setTimeout(() => {
-        router.push("/admin");
-      }, 1000);
-    } else {
-      alert("Invalid credentials. Please use the dummy account.");
+    // In production, this should call a real authentication endpoint.
+    // We only allow test accounts in development mode.
+    if (process.env.NODE_ENV === 'development' || process.env.NEXT_PUBLIC_ALLOW_TEST_ACCOUNTS === 'true') {
+      const account = TEST_ACCOUNTS.find(acc => acc.email === email && acc.password === password);
+      
+      if (account) {
+        setIsLoading(true);
+        login(account.profile);
+        setTimeout(() => {
+          router.push(account.redirect);
+        }, 1000);
+        return;
+      }
     }
+    
+    alert("Invalid credentials. Please use a valid account or ensure test accounts are enabled.");
   };
 
   return (
