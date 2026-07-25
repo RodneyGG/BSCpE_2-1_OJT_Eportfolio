@@ -471,6 +471,7 @@ export default function ProfilePage() {
               Log Out
             </button>
           </div>
+        </div>
       </nav>
 
       {/* ══ MAIN LAYOUT ══ */}
