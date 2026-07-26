@@ -1,9 +1,9 @@
 # ============================================================
-# Stage 1 — Install PHP extensions & system deps
+# Stage 1 — Base & Dependencies
 # ============================================================
-FROM php:8.4-cli-alpine AS base
+FROM dunglas/frankenphp:1.4-php8.4-alpine AS base
 
-# Install system dependencies and PHP extensions in a single layer
+# Install system dependencies
 RUN apk add --no-cache \
     bash \
     curl \
@@ -14,27 +14,27 @@ RUN apk add --no-cache \
     zip \
     libzip-dev \
     unzip \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install -j$(nproc) pdo pdo_mysql gd zip bcmath pcntl
+    pcre-dev \
+    $PHPIZE_DEPS
 
-# Install Redis extension via PECL, then clean up build deps
-RUN apk add --no-cache --virtual .build-deps pcre-dev $PHPIZE_DEPS \
-    && pecl install redis \
-    && docker-php-ext-enable redis \
-    && apk del .build-deps \
-    && rm -rf /tmp/pear
+# Install PHP extensions
+RUN install-php-extensions \
+    pdo_mysql \
+    gd \
+    zip \
+    bcmath \
+    pcntl \
+    redis \
+    opcache
 
 # ============================================================
-# Stage 2 — Install Composer dependencies
+# Stage 2 — Composer Vendor
 # ============================================================
 FROM base AS vendor
 
-WORKDIR /var/www/html
+WORKDIR /app
 
-# Get Composer from the official image
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
-
-# Copy only the manifests first for better layer caching
 COPY composer.json composer.lock ./
 
 RUN composer install \
@@ -46,36 +46,40 @@ RUN composer install \
     && composer clear-cache
 
 # ============================================================
-# Stage 3 — Production runner
+# Stage 3 — Production Runner
 # ============================================================
 FROM base AS runner
 
-WORKDIR /var/www/html
+WORKDIR /app
 
-# Copy Composer binary for artisan commands
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+# Copy dependencies
+COPY --from=vendor /app/vendor ./vendor
 
-# Copy vendor from the vendor stage
-COPY --from=vendor /var/www/html/vendor ./vendor
-
-# Copy application source
+# Copy application files
 COPY . .
 
-# Ensure Laravel storage dirs exist with correct permissions
+# Set up Laravel permissions
 RUN mkdir -p storage/logs \
     storage/framework/cache/data \
     storage/framework/sessions \
     storage/framework/views \
     bootstrap/cache \
-    && chmod -R 775 storage bootstrap/cache
+    && chmod -R 775 storage bootstrap/cache \
+    && chown -R root:root storage bootstrap/cache
 
-# Run post-install scripts (package discovery, etc.)
-RUN composer dump-autoload --optimize --no-dev
+# Run post-install scripts
+RUN php artisan package:discover --ansi
 
+# Expose the FrankenPHP port (Octane default is 8000)
 EXPOSE 8000
 
-# Health check for container orchestration
+# Set environment variables for Octane/FrankenPHP
+ENV OCTANE_SERVER=frankenphp
+ENV FRANKENPHP_CONFIG="worker ./public/index.php"
+
+# Healthcheck for Docker Compose
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
   CMD curl -f http://localhost:8000/up || exit 1
 
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
+# Start Laravel Octane
+CMD ["php", "artisan", "octane:start", "--server=frankenphp", "--host=0.0.0.0", "--port=8000"]
