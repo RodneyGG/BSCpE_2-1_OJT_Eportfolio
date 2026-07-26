@@ -210,6 +210,14 @@ export default function ProfilePage() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editForm, setEditForm] = useState({ ...profile });
 
+  useEffect(() => {
+    return () => {
+      if (profilePic) {
+        URL.revokeObjectURL(profilePic);
+      }
+    };
+  }, [profilePic]);
+
   // Mock Data States
   const [documents, setDocuments] = useState([
     { id: 1, name: "Resume / CV", status: "submitted", date: "May 10" },
@@ -242,12 +250,18 @@ export default function ProfilePage() {
   // Profile Photo Upload
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
+      if (profilePic) {
+        URL.revokeObjectURL(profilePic);
+      }
       const url = URL.createObjectURL(e.target.files[0]);
       setProfilePic(url);
     }
   };
 
   const handlePhotoRemove = () => {
+    if (profilePic) {
+      URL.revokeObjectURL(profilePic);
+    }
     setProfilePic(null);
   };
 
