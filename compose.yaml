@@ -33,8 +33,6 @@ services:
       target: development
     container_name: nextjs_frontend
     restart: unless-stopped
-    ports:
-      - "3000:3000"
     environment:
       - NODE_ENV=development
       - WATCHPACK_POLLING=true
@@ -59,8 +57,6 @@ services:
       context: ./backend
     container_name: laravel_backend
     restart: unless-stopped
-    ports:
-      - "8000:8000"
     environment:
       - APP_ENV=local
       - APP_DEBUG=true
@@ -96,8 +92,6 @@ services:
     image: mysql:8.0
     container_name: mysql_db
     restart: unless-stopped
-    ports:
-      - "3307:3306"
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: ${MYSQL_DATABASE:-eportfolio_db}
@@ -121,8 +115,6 @@ services:
     image: redis:7-alpine
     container_name: redis_cache
     restart: unless-stopped
-    ports:
-      - "6379:6379"
     volumes:
       - redis_data:/data
     healthcheck:

@@ -72,7 +72,6 @@ RUN rm -rf bootstrap/cache/*.php \
     && php artisan package:discover --ansi
 
 # Expose the FrankenPHP port (Octane default is 8000)
-EXPOSE 8000
 
 # Set environment variables for Octane/FrankenPHP
 ENV OCTANE_SERVER=frankenphp
