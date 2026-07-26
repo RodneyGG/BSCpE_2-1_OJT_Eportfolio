@@ -21,6 +21,7 @@ COPY . .
 ENV NODE_ENV=development
 
 # Expose Next.js dev server port
+EXPOSE 3000
 
 # Run as non-root for security — create .next dir first so node user owns it
 RUN mkdir -p .next && chown -R node:node .next
@@ -63,6 +64,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 USER nextjs
 
+EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
