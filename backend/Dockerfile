@@ -68,7 +68,8 @@ RUN mkdir -p storage/logs \
     && chown -R root:root storage bootstrap/cache
 
 # Run post-install scripts
-RUN php artisan package:discover --ansi
+RUN rm -rf bootstrap/cache/*.php \
+    && php artisan package:discover --ansi
 
 # Expose the FrankenPHP port (Octane default is 8000)
 EXPOSE 8000
