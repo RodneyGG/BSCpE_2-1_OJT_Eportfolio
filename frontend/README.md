@@ -1,36 +1,104 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# BSCpE 2-1 OJT E-Portfolio - Frontend
+
+This is the frontend component of the BSCpE 2-1 OJT E-Portfolio system. It provides an intuitive, responsive, and visually appealing web interface for students to track their on-the-job training progress and for administrators to manage placements.
+
+## Architecture & Technology Stack
+
+- **Framework**: Next.js 16 (App Router)
+- **Language**: TypeScript
+- **Styling**: Vanilla CSS (CSS-in-JS via inline styles & global CSS)
+- **State Management**: React Context (`RoleContext.tsx`)
+- **Deployment**: Configured for static export (can be deployed on Vercel, GitHub Pages, or any static host)
+- **Icons**: Inline SVG Icons (Lucide/Feather inspired)
+- **Avatars**: ui-avatars.com (Dynamic Initials)
+
+## Project Structure
+
+```
+frontend/
+├── app/                  # Next.js App Router root
+│   ├── admin/            # Admin/Professor Dashboard page
+│   ├── components/       # Reusable UI components
+│   ├── context/          # React Context providers (RoleContext for Auth)
+│   ├── data/             # Mock data and static definitions
+│   ├── docs/             # Frontend-specific documentation
+│   ├── login/            # Authentication page
+│   ├── profile/          # Student Profile and DTR tracking page
+│   ├── students/         # Student directory/views
+│   ├── globals.css       # Global styles and resets
+│   ├── layout.tsx        # Root layout wrapper
+│   └── page.tsx          # Landing/Home page
+├── public/               # Static assets (images, icons)
+├── package.json          # Project dependencies and scripts
+└── next.config.ts        # Next.js configuration (configured for static export)
+```
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js (v18 or higher recommended)
+- npm, yarn, pnpm, or bun
+
+### Installation
+
+1. Navigate to the frontend directory:
+   ```bash
+   cd frontend
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Run the development server:
+   ```bash
+   npm run dev
+   ```
+
+4. Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+## Key Features
+
+1. **Role-Based Access Control**:
+   - The app uses a simulated authentication system (`RoleContext.tsx`).
+   - Supports three roles: `normal` (Student), `admin` (Administrator), and `prof` (Professor).
+   - Auth state is persisted across reloads using `localStorage`.
+
+2. **Student Dashboard (`/profile`)**:
+   - DTR (Daily Time Record) tracking with hour calculation and progress visualization.
+   - Weekly journal entries.
+   - Document upload simulation (drag and drop or click to upload).
+   - Profile picture management with memory-leak prevention.
+
+3. **Admin Dashboard (`/admin`)**:
+   - Directory of partner companies and assigned students.
+   - Real-time search and filtering.
+   - Document approval workflow interface.
+   - Modal views for detailed student metrics.
+
+4. **Public Landing Page (`/`)**:
+   - Overview of the OJT program.
+   - Interactive accordion list of partner companies.
+   - Animated UI components.
+
+## Building for Production
+
+This project is configured to build as a static site.
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm run build
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The output will be generated in the `out/` directory, which can be deployed to any static web hosting service (e.g., GitHub Pages, AWS S3, Nginx).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## QA & Development Notes
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **Mock Data**: Currently, the application relies on hardcoded data for demonstration purposes. In a production environment, this should be replaced with API calls (e.g., using `fetch` or a library like `SWR`/`React Query`) connecting to the backend.
+- **Image Optimization**: The project uses standard `<img>` tags for external avatars (`ui-avatars.com`) with ESLint rules disabled for these specific instances due to the static export constraint (`unoptimized: true` in `next.config.ts`).
+- **State Persistence**: The `RoleContext` utilizes `localStorage` to ensure users remain logged in when refreshing the page.
 
-## Learn More
+## License
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+This project is part of the BSCpE 2-1 OJT E-Portfolio system.
