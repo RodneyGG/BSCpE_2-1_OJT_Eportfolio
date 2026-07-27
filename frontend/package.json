@@ -11,9 +11,11 @@
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
-    "next": "16.2.10",
+    "next": "^16.2.12",
+    "postcss": "^8.5.23",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "sharp": "^0.35.3"
   },
   "devDependencies": {
     "@next/eslint-plugin-next": "^16.2.11",
@@ -28,5 +30,9 @@
     "tailwindcss": "^4",
     "typescript": "^5",
     "typescript-eslint": "^8.65.0"
+  },
+  "overrides": {
+    "postcss": "^8.5.23",
+    "sharp": "^0.35.3"
   }
 }

@@ -5,9 +5,13 @@ import { createContext, useContext, useState, ReactNode, useEffect } from "react
 export type Role = "normal" | "prof" | "admin";
 
 interface User {
+  id?: number;
   name: string;
   email: string;
   role: Role;
+  company_id?: number | null;
+  company?: { id: number; name: string; address?: string } | null;
+  must_change_password?: boolean;
 }
 
 interface AuthContextValue {

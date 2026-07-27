@@ -3,6 +3,8 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRole } from "../context/RoleContext";
+import { fetchApi } from "../../lib/api";
+import CompanySelect from "./CompanySelect";
 
 /* ═══════════════════════════ Scroll reveal hook ════════════════════ */
 function useReveal() {
@@ -101,7 +103,7 @@ function IconX() {
 
 /* ═══════════════════════════ Components ════════════════════════ */
 
-function DocumentRow({ doc, onUpload }: { doc: { id: number, name: string, status: string, date: string }, onUpload: (id: number) => void }) {
+function DocumentRow({ doc, onUpload }: { doc: { id: number, name: string, status: string, date: string }, onUpload: (id: number, file: File) => void }) {
   const [dragActive, setDragActive] = useState(false);
 
   const handleDrag = (e: React.DragEvent) => {
@@ -124,7 +126,7 @@ function DocumentRow({ doc, onUpload }: { doc: { id: number, name: string, statu
         alert("Only PDF files are allowed.");
         return;
       }
-      onUpload(doc.id);
+      onUpload(doc.id, file);
     }
   };
 
@@ -136,7 +138,7 @@ function DocumentRow({ doc, onUpload }: { doc: { id: number, name: string, statu
         alert("Only PDF files are allowed.");
         return;
       }
-      onUpload(doc.id);
+      onUpload(doc.id, file);
     }
   };
 
@@ -192,14 +194,15 @@ function DocumentRow({ doc, onUpload }: { doc: { id: number, name: string, statu
 
 /* ═══════════════════════════ Page ════════════════════════════ */
 export default function ProfilePage() {
-  const { role, logout } = useRole();
+  const { role, logout, user, login } = useRole();
   const [profile, setProfile] = useState({
-    name: "Juan Dela Cruz",
+    name: user?.name || "Juan Dela Cruz",
     program: "BS Computer Engineering · 2nd Year",
-    email: "student@university.edu.ph",
+    email: user?.email || "student@university.edu.ph",
     phone: "+63 912 345 6789",
-    company: "TechCore Solutions Inc.",
-    location: "Cebu City, Cebu",
+    company_id: user?.company_id || "",
+    company: user?.company?.name || "No Company Selected",
+    location: user?.company?.address || "Location pending...",
     role: "IT Intern",
     supervisor: "Coco Martin",
     guardian: "Maria Dela Cruz",
@@ -208,7 +211,8 @@ export default function ProfilePage() {
 
   const [profilePic, setProfilePic] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [editForm, setEditForm] = useState({ ...profile });
+  const [editForm, setEditForm] = useState(profile);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     return () => {
@@ -237,14 +241,33 @@ export default function ProfilePage() {
     { id: 1, week: "Week 1", summary: "Completed onboarding, met with the supervisor, and familiarized myself with the codebase and tech stack.", dateRange: "May 20 - May 24" }
   ]);
 
-  // Upload Simulation
-  const handleUpload = (id: number) => {
+  // Real Upload via API
+  const handleUpload = async (id: number, file: File) => {
     setDocuments(docs => docs.map(d => d.id === id ? { ...d, status: "uploading" } : d));
-    setTimeout(() => {
+    
+    const docToUpload = documents.find(d => d.id === id);
+    if (!docToUpload) return;
+
+    try {
+      const formData = new FormData();
+      formData.append('document', file);
+      formData.append('document_type', docToUpload.name);
+
+      await fetchApi('/documents/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
       setDocuments(docs => docs.map(d => 
         d.id === id ? { ...d, status: "submitted", date: "Just now" } : d
       ));
-    }, 1500);
+    } catch (err: unknown) {
+      const error = err as Error;
+      alert(error.message || 'Failed to upload document.');
+      setDocuments(docs => docs.map(d => 
+        d.id === id ? { ...d, status: "pending" } : d
+      ));
+    }
   };
 
   // Profile Photo Upload
@@ -265,10 +288,36 @@ export default function ProfilePage() {
     setProfilePic(null);
   };
 
-  const handleSaveProfile = (e: React.FormEvent) => {
+  const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    setProfile(editForm);
-    setShowEditModal(false);
+    setIsSaving(true);
+    try {
+      if (editForm.company_id && editForm.company_id !== profile.company_id) {
+        const response = await fetchApi('/select-company', {
+          method: 'POST',
+          body: JSON.stringify({ company_id: editForm.company_id })
+        });
+        
+        // Update user context with new company
+        if (user) {
+          login({
+            ...user,
+            company_id: response.company.id,
+            company: response.company
+          });
+        }
+        
+        editForm.company = response.company.name;
+        editForm.location = response.company.address || "Location pending...";
+      }
+      setProfile(editForm);
+      setShowEditModal(false);
+    } catch (err: unknown) {
+      const error = err as Error;
+      alert(error.message || "Failed to update profile.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // Add DTR Simulation
@@ -848,7 +897,7 @@ export default function ProfilePage() {
               <div className="edit-modal-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.25rem" }}>
                 <div>
                   <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "0.4rem" }}>Company</label>
-                  <input type="text" value={editForm.company} onChange={(e) => setEditForm({...editForm, company: e.target.value})} style={{ width: "100%", padding: "0.75rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1", fontSize: "0.9rem", outline: "none" }} />
+                  <CompanySelect value={String(editForm.company_id)} onChange={(val) => setEditForm({...editForm, company_id: val})} />
                 </div>
                 <div>
                   <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "0.4rem" }}>Location</label>
@@ -876,8 +925,10 @@ export default function ProfilePage() {
               </div>
             </div>
             <div style={{ padding: "1.5rem", borderTop: "1px solid #e2e8f0", display: "flex", justifyContent: "flex-end", gap: "1rem", background: "#f8fafc", borderRadius: "0 0 1.5rem 1.5rem" }}>
-              <button onClick={() => setShowEditModal(false)} style={{ background: "transparent", color: "#64748b", border: "1px solid #cbd5e1", borderRadius: "0.5rem", padding: "0.6rem 1.25rem", fontSize: "0.9rem", fontWeight: 600, cursor: "pointer" }}>Cancel</button>
-              <button onClick={handleSaveProfile} style={{ background: "#2563eb", color: "white", border: "none", borderRadius: "0.5rem", padding: "0.6rem 1.5rem", fontSize: "0.9rem", fontWeight: 600, cursor: "pointer" }}>Save Changes</button>
+              <button onClick={() => setShowEditModal(false)} disabled={isSaving} style={{ background: "transparent", color: "#64748b", border: "1px solid #cbd5e1", borderRadius: "0.5rem", padding: "0.6rem 1.25rem", fontSize: "0.9rem", fontWeight: 600, cursor: isSaving ? "not-allowed" : "pointer" }}>Cancel</button>
+              <button onClick={handleSaveProfile} disabled={isSaving} style={{ background: isSaving ? "#94a3b8" : "#2563eb", color: "white", border: "none", borderRadius: "0.5rem", padding: "0.6rem 1.5rem", fontSize: "0.9rem", fontWeight: 600, cursor: isSaving ? "not-allowed" : "pointer", boxShadow: isSaving ? "none" : "0 4px 12px rgba(37,99,235,0.2)" }}>
+                {isSaving ? "Saving..." : "Save Changes"}
+              </button>
             </div>
           </div>
         </div>

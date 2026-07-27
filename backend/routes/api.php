@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Route;
 // Public routes
 Route::post('/login', [AuthController::class, 'login']);
 
+use App\Http\Controllers\Api\DocumentController;
+
 // Protected routes (require Sanctum token)
 Route::middleware('auth:sanctum')->group(function () {
     // Auth
@@ -19,4 +21,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/companies', [CompanyController::class, 'index']);
     Route::get('/companies/{company}', [CompanyController::class, 'show']);
     Route::patch('/companies/{company}/address', [CompanyController::class, 'updateAddress']);
+
+    // Documents
+    Route::post('/documents/upload', [DocumentController::class, 'upload']);
 });
