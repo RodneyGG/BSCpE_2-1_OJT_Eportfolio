@@ -99,7 +99,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.3'
+          php-version: '8.4'
           extensions: mbstring, xml, bcmath, mysql, redis, pdo_mysql
           coverage: pcov # Fast code coverage driver
 
@@ -169,6 +169,11 @@ jobs:
   docker:
     name: 🐳 Docker Validation
     runs-on: ubuntu-latest
+    env:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: testing_db
+      MYSQL_USER: test_user
+      MYSQL_PASSWORD: test_password
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -221,7 +226,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.3'
+          php-version: '8.4'
 
       - name: Composer Audit
         working-directory: backend
