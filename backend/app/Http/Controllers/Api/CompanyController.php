@@ -14,7 +14,7 @@ class CompanyController extends Controller
      */
     public function index(): JsonResponse
     {
-        $companies = Company::with('users:id,name,role,company_id')->orderBy('name')->get();
+        $companies = Company::with('users:id,name,role,email,company_id')->orderBy('name')->get();
 
         $formatted = $companies->map(function ($company) {
             return [
@@ -26,7 +26,13 @@ class CompanyController extends Controller
                     return [
                         'id' => $user->id,
                         'name' => $user->name,
-                        'role' => 'IT Intern', // Since they are students, default to IT Intern for the landing page
+                        'email' => $user->email,
+                        'role' => 'IT Intern', // Dummy
+                        'program' => 'BSCpE 2-1', // Dummy
+                        'hours' => 0,
+                        'totalHours' => 300,
+                        'status' => 'Active',
+                        'dtrProofs' => []
                     ];
                 })->values()
             ];

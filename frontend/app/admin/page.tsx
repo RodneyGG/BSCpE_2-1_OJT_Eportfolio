@@ -125,24 +125,6 @@ interface Company {
   students: Student[];
 }
 
-const COMPANIES: Company[] = [
-  {
-    id: 0, name: "TechCore Solutions Inc.", location: "Cebu City, Cebu", studentCount: 3,
-    students: [
-      { id: "s1", name: "Juan Dela Cruz", program: "BSCpE 2-1", role: "IT Intern", email: "jdelacruz@student.edu.ph", hours: 118, totalHours: 300, status: "Active", dtrProofs: ["week1_dtr.pdf", "week2_dtr.pdf"] },
-      { id: "s2", name: "Maria Santos", program: "BSCpE 2-1", role: "IT Intern", email: "msantos@student.edu.ph", hours: 250, totalHours: 300, status: "Active", dtrProofs: ["may_dtr_proof.pdf"] },
-      { id: "s3", name: "Carlos Reyes", program: "BSCpE 2-1", role: "Dev Intern", email: "creyes@student.edu.ph", hours: 300, totalHours: 300, status: "Completed", dtrProofs: ["final_dtr.pdf"] },
-    ],
-  },
-  {
-    id: 1, name: "InnovatePH Engineering", location: "Manila, Metro Manila", studentCount: 2,
-    students: [
-      { id: "s4", name: "Ana Lim", program: "BSCpE 2-1", role: "Eng. Intern", email: "alim@student.edu.ph", hours: 45, totalHours: 300, status: "Warning", dtrProofs: [] },
-      { id: "s5", name: "Rodel Gutierrez", program: "BSCpE 2-1", role: "Eng. Intern", email: "rgutierrez@student.edu.ph", hours: 0, totalHours: 300, status: "Pending Placement", dtrProofs: [] },
-    ],
-  },
-];
-
 
 /* ═══════════════════════════ Components ════════════════════════════ */
 function StudentProfile({ student, index, onClick }: { student: Student; index: number, onClick: (s: Student) => void }) {
@@ -295,6 +277,19 @@ export default function AdminDashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
 
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchApi('/companies')
+      .then((data: Company[]) => {
+        setCompanies(data);
+        if (data.length > 0) setOpenId(data[0].id);
+      })
+      .catch((err: unknown) => console.error("Failed to load companies:", err))
+      .finally(() => setLoading(false));
+  }, []);
+
   const [recentDocs, setRecentDocs] = useState([
     { id: 101, student: "Juan Dela Cruz", docType: "Memorandum of Agreement", date: "Just now", status: "Needs Review" },
     { id: 102, student: "Maria Santos", docType: "Weekly Journal (Week 4)", date: "2 hours ago", status: "Needs Review" },
@@ -311,7 +306,7 @@ export default function AdminDashboard() {
     return { color: "#475569", bg: "#f1f5f9" };
   };
 
-  const filteredCompanies = COMPANIES.filter(c => 
+  const filteredCompanies = companies.filter(c => 
     c.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
     c.students.some(s => s.name.toLowerCase().includes(searchQuery.toLowerCase()))
   );
@@ -464,7 +459,9 @@ export default function AdminDashboard() {
                 <div className="stat-icon" style={{ background: "#eff6ff", color: "#3b82f6" }}><IconUsers /></div>
                 <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "#10b981", background: "#dcfce7", padding: "0.2rem 0.6rem", borderRadius: "999px" }}>100% Enrolled</span>
               </div>
-              <h3 style={{ fontSize: "2rem", fontWeight: 800, color: "#0f172a", margin: "0 0 0.25rem 0" }}>42</h3>
+              <h3 style={{ fontSize: "2rem", fontWeight: 800, color: "#0f172a", margin: "0 0 0.25rem 0" }}>
+                {loading ? "..." : companies.reduce((acc, curr) => acc + curr.studentCount, 0)}
+              </h3>
               <p style={{ fontSize: "0.85rem", color: "#64748b", margin: 0, fontWeight: 600 }}>Total Students</p>
             </div>
           </RevealBox>
@@ -505,20 +502,25 @@ export default function AdminDashboard() {
               </div>
               
               <div style={{ display: "flex", flexDirection: "column" }}>
-                {filteredCompanies.map((company, index) => (
-                  <CompanyRow
-                    key={company.id}
-                    company={company}
-                    index={index}
-                    isOpen={openId === company.id}
-                    onToggle={() => toggle(company.id)}
-                    onStudentClick={setSelectedStudent}
-                  />
-                ))}
-                {filteredCompanies.length === 0 && (
+                {loading ? (
+                  <div style={{ textAlign: "center", padding: "3rem", color: "#94a3b8", background: "white", borderRadius: "1rem" }}>
+                    Loading companies...
+                  </div>
+                ) : filteredCompanies.length === 0 ? (
                   <div style={{ textAlign: "center", padding: "3rem", color: "#94a3b8", background: "white", borderRadius: "1rem" }}>
                     No companies or students found matching your search.
                   </div>
+                ) : (
+                  filteredCompanies.map((company, index) => (
+                    <CompanyRow
+                      key={company.id}
+                      company={company}
+                      index={index}
+                      isOpen={openId === company.id}
+                      onToggle={() => toggle(company.id)}
+                      onStudentClick={setSelectedStudent}
+                    />
+                  ))
                 )}
               </div>
             </div>
