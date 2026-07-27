@@ -27,3 +27,4 @@ Homestead.yaml
 Thumbs.db
 /frankenphp
 /public/frankenphp-worker.php
+/storage/app/google/*.json
