@@ -74,8 +74,9 @@ export default function LoginPage() {
       } else {
         router.push("/profile");
       }
-    } catch (err: any) {
-      setErrorMsg(err.message || 'Invalid credentials');
+    } catch (err: unknown) {
+      const error = err as any;
+      setErrorMsg(error.message || 'Invalid credentials');
     } finally {
       setIsLoading(false);
     }

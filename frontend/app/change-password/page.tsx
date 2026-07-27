@@ -64,13 +64,14 @@ export default function ChangePasswordPage() {
       } else {
         router.push("/profile");
       }
-    } catch (err: any) {
-      if (err.errors) {
+    } catch (err: unknown) {
+      const error = err as any;
+      if (error.errors) {
         // Validation errors
-        const firstError = Object.values(err.errors)[0] as string[];
+        const firstError = Object.values(error.errors)[0] as string[];
         setErrorMsg(firstError[0]);
       } else {
-        setErrorMsg(err.message || 'Failed to change password');
+        setErrorMsg(error.message || 'Failed to change password');
       }
     } finally {
       setIsLoading(false);
