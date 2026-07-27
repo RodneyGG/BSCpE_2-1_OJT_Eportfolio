@@ -16,7 +16,7 @@ class GoogleDriveService
     public function __construct()
     {
         $this->client = new Client();
-        $this->client->setAuthConfig(storage_path('app/google/service-account.json'));
+        $this->client->setAuthConfig(config('services.google_drive.credentials'));
         $this->client->addScope(Drive::DRIVE);
 
         $this->driveService = new Drive($this->client);
