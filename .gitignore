@@ -65,3 +65,12 @@ docker-compose.override.yml
 *.bak
 *.orig
 *.cache
+
+# =====================================================
+# Database files — NEVER push to GitHub
+# =====================================================
+*.sql
+*.sql.gz
+*.sqlite
+*.sqlite3
+*.db

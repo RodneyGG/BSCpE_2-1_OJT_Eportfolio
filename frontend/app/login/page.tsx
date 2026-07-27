@@ -8,21 +8,21 @@ import { useRole } from '../context/RoleContext';
 // Centralized test credentials (should only be active in dev or controlled via env flags)
 const TEST_ACCOUNTS = [
   {
-    email: "student@university.edu.ph",
-    password: "password123",
-    profile: { name: 'Juan Dela Cruz', email: 'student@university.edu.ph', role: 'normal' as const },
+    email: "student@ojt.dev",
+    password: "Student@2026",
+    profile: { name: 'Test Student', email: 'student@ojt.dev', role: 'normal' as const },
     redirect: "/profile"
   },
   {
-    email: "admin@university.edu.ph",
-    password: "admin123",
-    profile: { name: 'Admin', email: 'admin@university.edu.ph', role: 'admin' as const },
+    email: "admin@ojt.dev",
+    password: "Admin@2026",
+    profile: { name: 'Admin', email: 'admin@ojt.dev', role: 'admin' as const },
     redirect: "/admin"
   },
   {
-    email: "professor@university.edu.ph",
-    password: "prof123",
-    profile: { name: 'Professor Smith', email: 'professor@university.edu.ph', role: 'prof' as const },
+    email: "prof@ojt.dev",
+    password: "Prof@2026",
+    profile: { name: 'Engr. Jake A. Binuya', email: 'prof@ojt.dev', role: 'prof' as const },
     redirect: "/admin"
   }
 ];
