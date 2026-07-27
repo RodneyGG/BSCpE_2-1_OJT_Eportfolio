@@ -218,6 +218,11 @@ jobs:
           npm ci
           npm audit --omit=dev --audit-level=critical
 
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+
       - name: Composer Audit
         working-directory: backend
         run: |
