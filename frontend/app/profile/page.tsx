@@ -211,7 +211,7 @@ export default function ProfilePage() {
 
   const [profilePic, setProfilePic] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [editForm, setEditForm] = useState<any>({ ...profile });
+  const [editForm, setEditForm] = useState(profile);
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
@@ -262,7 +262,7 @@ export default function ProfilePage() {
         d.id === id ? { ...d, status: "submitted", date: "Just now" } : d
       ));
     } catch (err: unknown) {
-      const error = err as any;
+      const error = err as Error;
       alert(error.message || 'Failed to upload document.');
       setDocuments(docs => docs.map(d => 
         d.id === id ? { ...d, status: "pending" } : d
@@ -312,8 +312,9 @@ export default function ProfilePage() {
       }
       setProfile(editForm);
       setShowEditModal(false);
-    } catch (err: any) {
-      alert(err.message || "Failed to update profile.");
+    } catch (err: unknown) {
+      const error = err as Error;
+      alert(error.message || "Failed to update profile.");
     } finally {
       setIsSaving(false);
     }
@@ -896,7 +897,7 @@ export default function ProfilePage() {
               <div className="edit-modal-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.25rem" }}>
                 <div>
                   <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "0.4rem" }}>Company</label>
-                  <CompanySelect value={editForm.company_id} onChange={(val) => setEditForm({...editForm, company_id: val})} />
+                  <CompanySelect value={String(editForm.company_id)} onChange={(val) => setEditForm({...editForm, company_id: val})} />
                 </div>
                 <div>
                   <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "0.4rem" }}>Location</label>

@@ -65,7 +65,7 @@ export default function ChangePasswordPage() {
         router.push("/profile");
       }
     } catch (err: unknown) {
-      const error = err as any;
+      const error = err as Error & { errors?: Record<string, string[]> };
       if (error.errors) {
         // Validation errors
         const firstError = Object.values(error.errors)[0] as string[];

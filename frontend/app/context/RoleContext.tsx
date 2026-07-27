@@ -10,7 +10,7 @@ interface User {
   email: string;
   role: Role;
   company_id?: number | null;
-  company?: any | null;
+  company?: { id: number; name: string; address?: string } | null;
   must_change_password?: boolean;
 }
 

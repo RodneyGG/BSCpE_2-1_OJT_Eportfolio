@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { fetchApi } from "../../lib/api";
 
 export default function CompanySelect({ value, onChange }: { value: string, onChange: (val: string) => void }) {
-  const [companies, setCompanies] = useState<any[]>([]);
+  const [companies, setCompanies] = useState<Array<{id: number, name: string}>>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
