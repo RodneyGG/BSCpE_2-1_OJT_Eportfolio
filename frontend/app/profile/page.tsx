@@ -237,7 +237,8 @@ export default function ProfilePage() {
     { id: 5, name: "Parents' Consent", status: "pending", date: "Required before start" },
   ]);
 
-  const [dtrEntries, setDtrEntries] = useState<any[]>([]);
+  interface DtrEntry { id: number; date: string; timeIn: string; timeOut: string; status: string; task: string; hours: number; proofFile: string | null; }
+  const [dtrEntries, setDtrEntries] = useState<DtrEntry[]>([]);
 
   const [journals, setJournals] = useState([
     { id: 1, week: "Week 1", summary: "Completed onboarding, met with the supervisor, and familiarized myself with the codebase and tech stack.", dateRange: "May 20 - May 24" }

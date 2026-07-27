@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRole } from "../context/RoleContext";
-import { fetchApi } from "../lib/api";
+import { fetchApi } from "../../lib/api";
 
 /* ═══════════════════════════ Scroll reveal hook ════════════════════ */
 function useReveal() {
@@ -322,8 +322,9 @@ export default function AdminDashboard() {
       if (data.auth_url) {
         window.location.href = data.auth_url;
       }
-    } catch (err: any) {
-      alert("Failed to initiate Google OAuth: " + err.message);
+    } catch (err: unknown) {
+      const error = err as Error;
+      alert("Failed to initiate Google OAuth: " + error.message);
     }
   };
 
