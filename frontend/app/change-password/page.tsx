@@ -1,81 +1,77 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useRole } from '../context/RoleContext';
-
 import { fetchApi } from "../../lib/api";
+import { useRole } from "../context/RoleContext";
 
-function IconLock() {
+function IconKey() {
   return (
     <svg width={20} height={20} viewBox="0 0 24 24" fill="none"
       stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+      <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
     </svg>
   );
 }
 
-function IconMail() {
-  return (
-    <svg width={20} height={20} viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <rect x="2" y="4" width="20" height="16" rx="2" ry="2" />
-      <path d="M2 4l10 8 10-8" />
-    </svg>
-  );
-}
-
-export default function LoginPage() {
+export default function ChangePasswordPage() {
   const router = useRouter();
-  const { login } = useRole();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+  const { user, login } = useRole();
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) return;
+    if (!currentPassword || !newPassword || !confirmPassword) return;
+
+    if (newPassword !== confirmPassword) {
+      setErrorMsg("New passwords do not match.");
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      setErrorMsg("New password must be at least 8 characters long.");
+      return;
+    }
     
     setIsLoading(true);
     setErrorMsg("");
 
     try {
-      const response = await fetchApi('/login', {
+      await fetchApi('/change-password', {
         method: 'POST',
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ 
+          current_password: currentPassword, 
+          new_password: newPassword,
+          new_password_confirmation: confirmPassword 
+        }),
       });
 
-      // Save token in localStorage
-      localStorage.setItem('auth_token', response.token);
-
-      // Authenticate in RoleContext
-      login({
-        id: response.user.id,
-        name: response.user.name,
-        email: response.user.email,
-        role: response.user.role,
-        company_id: response.user.company_id,
-        company: response.user.company,
-        must_change_password: response.user.must_change_password
-      });
-
-      if (response.user.must_change_password) {
-        // We'll create a change-password page next
-        router.push("/change-password");
-        return;
+      // Update role context to remove must_change_password flag
+      if (user) {
+        login({
+          ...user,
+          must_change_password: false
+        });
       }
 
-      if (response.user.role === 'admin' || response.user.role === 'prof') {
+      // Redirect to correct dashboard
+      if (user?.role === 'admin' || user?.role === 'prof') {
         router.push("/admin");
       } else {
         router.push("/profile");
       }
     } catch (err: any) {
-      setErrorMsg(err.message || 'Invalid credentials');
+      if (err.errors) {
+        // Validation errors
+        const firstError = Object.values(err.errors)[0] as string[];
+        setErrorMsg(firstError[0]);
+      } else {
+        setErrorMsg(err.message || 'Failed to change password');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -89,7 +85,6 @@ export default function LoginPage() {
       display: "flex", alignItems: "center", justifyContent: "center",
       padding: "2rem", position: "relative"
     }}>
-      {/* Background pattern */}
       <div style={{ position: "absolute", inset: 0, opacity: 0.05, backgroundImage: "radial-gradient(circle at 2px 2px, white 1px, transparent 0)", backgroundSize: "32px 32px", pointerEvents: "none" }} />
       
       <div style={{
@@ -113,10 +108,10 @@ export default function LoginPage() {
             display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 1.5rem",
             color: "#3b82f6", boxShadow: "0 8px 16px rgba(59,130,246,0.15)"
           }}>
-            <IconLock />
+            <IconKey />
           </div>
-          <h1 style={{ fontSize: "1.5rem", fontWeight: 800, color: "#0f172a", margin: "0 0 0.5rem 0", letterSpacing: "-0.02em" }}>Welcome Back</h1>
-          <p style={{ fontSize: "0.9rem", color: "#64748b", margin: 0 }}>Log in to your OJT E-Portfolio</p>
+          <h1 style={{ fontSize: "1.5rem", fontWeight: 800, color: "#0f172a", margin: "0 0 0.5rem 0", letterSpacing: "-0.02em" }}>Change Password</h1>
+          <p style={{ fontSize: "0.9rem", color: "#64748b", margin: 0 }}>Please update your default password.</p>
         </div>
 
         {errorMsg && (
@@ -125,20 +120,20 @@ export default function LoginPage() {
           </div>
         )}
 
-        <form onSubmit={handleLogin}>
+        <form onSubmit={handleChangePassword}>
           <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem", marginBottom: "2rem" }}>
             
             <div className="input-group">
-              <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "0.5rem", textTransform: "uppercase", letterSpacing: "0.05em" }}>Email Address</label>
+              <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "0.5rem", textTransform: "uppercase", letterSpacing: "0.05em" }}>Current Password</label>
               <div style={{ position: "relative" }}>
                 <div style={{ position: "absolute", left: "1rem", top: "50%", transform: "translateY(-50%)", color: "#94a3b8", transition: "color 0.2s" }}>
-                  <IconMail />
+                  <IconKey />
                 </div>
                 <input 
-                  type="email" 
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="student@university.edu.ph"
+                  type="password" 
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  placeholder="••••••••"
                   style={{ width: "100%", padding: "0.85rem 1rem 0.85rem 3rem", borderRadius: "0.75rem", border: "1px solid #cbd5e1", fontSize: "0.95rem", outline: "none", transition: "border-color 0.2s, box-shadow 0.2s", background: "#f8fafc" }}
                   onFocus={(e) => { e.currentTarget.style.borderColor = "#3b82f6"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(59,130,246,0.1)"; }}
                   onBlur={(e) => { e.currentTarget.style.borderColor = "#cbd5e1"; e.currentTarget.style.boxShadow = "none"; }}
@@ -148,37 +143,41 @@ export default function LoginPage() {
             </div>
 
             <div className="input-group">
-              <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "0.5rem", textTransform: "uppercase", letterSpacing: "0.05em" }}>Password</label>
+              <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "0.5rem", textTransform: "uppercase", letterSpacing: "0.05em" }}>New Password</label>
               <div style={{ position: "relative" }}>
                 <div style={{ position: "absolute", left: "1rem", top: "50%", transform: "translateY(-50%)", color: "#94a3b8", transition: "color 0.2s" }}>
-                  <IconLock />
+                  <IconKey />
                 </div>
                 <input 
-                  type={showPassword ? "text" : "password"} 
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  type="password" 
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="••••••••"
-                  style={{ width: "100%", padding: "0.85rem 3rem", borderRadius: "0.75rem", border: "1px solid #cbd5e1", fontSize: "0.95rem", outline: "none", transition: "border-color 0.2s, box-shadow 0.2s", background: "#f8fafc" }}
+                  style={{ width: "100%", padding: "0.85rem 1rem 0.85rem 3rem", borderRadius: "0.75rem", border: "1px solid #cbd5e1", fontSize: "0.95rem", outline: "none", transition: "border-color 0.2s, box-shadow 0.2s", background: "#f8fafc" }}
                   onFocus={(e) => { e.currentTarget.style.borderColor = "#3b82f6"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(59,130,246,0.1)"; }}
                   onBlur={(e) => { e.currentTarget.style.borderColor = "#cbd5e1"; e.currentTarget.style.boxShadow = "none"; }}
                   required 
                 />
-                <button 
-                  type="button" 
-                  onClick={() => setShowPassword(!showPassword)}
-                  style={{ position: "absolute", right: "0.5rem", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "#64748b", cursor: "pointer", padding: "0.5rem" }}
-                >
-                  {showPassword ? "Hide" : "Show"}
-                </button>
               </div>
             </div>
 
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "0.5rem" }}>
-              <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.85rem", fontWeight: 500, color: "#64748b", cursor: "pointer" }}>
-                <input type="checkbox" style={{ transform: "scale(1.1)", cursor: "pointer" }} />
-                Remember me
-              </label>
-              <Link href="#" style={{ fontSize: "0.85rem", fontWeight: 600, color: "#3b82f6", textDecoration: "none" }}>Forgot password?</Link>
+            <div className="input-group">
+              <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "0.5rem", textTransform: "uppercase", letterSpacing: "0.05em" }}>Confirm New Password</label>
+              <div style={{ position: "relative" }}>
+                <div style={{ position: "absolute", left: "1rem", top: "50%", transform: "translateY(-50%)", color: "#94a3b8", transition: "color 0.2s" }}>
+                  <IconKey />
+                </div>
+                <input 
+                  type="password" 
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="••••••••"
+                  style={{ width: "100%", padding: "0.85rem 1rem 0.85rem 3rem", borderRadius: "0.75rem", border: "1px solid #cbd5e1", fontSize: "0.95rem", outline: "none", transition: "border-color 0.2s, box-shadow 0.2s", background: "#f8fafc" }}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = "#3b82f6"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(59,130,246,0.1)"; }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = "#cbd5e1"; e.currentTarget.style.boxShadow = "none"; }}
+                  required 
+                />
+              </div>
             </div>
 
           </div>
@@ -193,15 +192,8 @@ export default function LoginPage() {
               boxShadow: isLoading ? "none" : "0 4px 12px rgba(37,99,235,0.2)"
             }}
           >
-            {isLoading ? "Logging In..." : "Log In"}
+            {isLoading ? "Saving..." : "Change Password"}
           </button>
-          
-          <div style={{ textAlign: "center", marginTop: "2rem" }}>
-            <Link href="/" style={{ fontSize: "0.85rem", fontWeight: 600, color: "#64748b", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "0.4rem", transition: "color 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.color = "#0f172a"} onMouseLeave={(e) => e.currentTarget.style.color = "#64748b"}>
-              <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-              Back to Home
-            </Link>
-          </div>
         </form>
       </div>
     </div>
