@@ -3,37 +3,42 @@
 namespace App\Services;
 
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Storage;
 use App\Models\User;
-use Illuminate\Support\Str;
 
 class DocumentService
 {
+    protected GoogleDriveService $driveService;
+
+    public function __construct(GoogleDriveService $driveService)
+    {
+        $this->driveService = $driveService;
+    }
+
     /**
-     * Upload a document for a user.
-     * Uses Laravel's Storage facade which is the industry standard approach
-     * allowing seamless swapping between local, S3, or other filesystems.
-     *
-     * @param UploadedFile $file
-     * @param User $user
-     * @param string $documentType
-     * @return array
+     * Upload a document to Google Drive on behalf of the Admin via OAuth.
      */
     public function uploadDocument(UploadedFile $file, User $user, string $documentType): array
     {
-        $folderName = Str::slug($user->name);
-        $fileName = time() . '_' . Str::slug($file->getClientOriginalName()) . '.' . $file->getClientOriginalExtension();
+        $folderName = $user->email . ' - ' . $user->name;
+        $existingFolders = $this->driveService->listFiles();
+        $userFolder = null;
         
-        // Use the 'public' disk so files are accessible via URL
-        $path = $file->storeAs(
-            "documents/{$folderName}",
-            $fileName,
-            'public'
-        );
+        foreach ($existingFolders as $f) {
+            if ($f->name === $folderName && $f->mimeType === 'application/vnd.google-apps.folder') {
+                $userFolder = $f;
+                break;
+            }
+        }
+
+        if (!$userFolder) {
+            $userFolder = $this->driveService->createFolder($folderName);
+        }
+
+        $uploadedFile = $this->driveService->upload($file, $userFolder->id);
 
         return [
-            'file_id' => uniqid('doc_'),
-            'file_link' => url("storage/{$path}"),
+            'file_id' => $uploadedFile->id,
+            'file_link' => $uploadedFile->webViewLink,
             'document_type' => $documentType,
         ];
     }
