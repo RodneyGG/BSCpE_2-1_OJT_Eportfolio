@@ -103,7 +103,7 @@ function IconX() {
 
 /* ═══════════════════════════ Components ════════════════════════ */
 
-function DocumentRow({ doc, onUpload }: { doc: { id: number, name: string, status: string, date: string }, onUpload: (id: number, file: File) => void }) {
+function DocumentRow({ doc, onUpload, onRemove }: { doc: { id: number, name: string, status: string, date: string, fileLink?: string }, onUpload: (id: number, file: File) => void, onRemove: (id: number) => void }) {
   const [dragActive, setDragActive] = useState(false);
 
   const handleDrag = (e: React.DragEvent) => {
@@ -153,7 +153,13 @@ function DocumentRow({ doc, onUpload }: { doc: { id: number, name: string, statu
       </div>
       
       {doc.status === "submitted" && (
-        <span style={{ background: "#dcfce7", color: "#166534", padding: "0.3rem 0.8rem", borderRadius: "9999px", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Submitted</span>
+        <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+          {doc.fileLink && (
+            <a href={doc.fileLink} target="_blank" rel="noreferrer" style={{ background: "#e0f2fe", color: "#0369a1", padding: "0.3rem 0.8rem", borderRadius: "9999px", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", textDecoration: "none", transition: "opacity 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.opacity = "0.8"} onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}>View PDF</a>
+          )}
+          <button onClick={() => onRemove(doc.id)} style={{ background: "#fee2e2", color: "#b91c1c", border: "none", padding: "0.3rem 0.8rem", borderRadius: "9999px", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", cursor: "pointer", transition: "opacity 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.opacity = "0.8"} onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}>Remove</button>
+          <span style={{ background: "#dcfce7", color: "#166534", padding: "0.3rem 0.8rem", borderRadius: "9999px", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Submitted</span>
+        </div>
       )}
       
       {doc.status === "uploading" && (
@@ -224,18 +230,15 @@ export default function ProfilePage() {
 
   // Mock Data States
   const [documents, setDocuments] = useState([
-    { id: 1, name: "Resume / CV", status: "submitted", date: "May 10" },
-    { id: 2, name: "Endorsement Letter", status: "submitted", date: "May 12" },
-    { id: 3, name: "Memorandum of Agreement", status: "submitted", date: "May 15" },
+    { id: 1, name: "Resume / CV", status: "pending", date: "Required before start" },
+    { id: 2, name: "Endorsement Letter", status: "pending", date: "Required before start" },
+    { id: 3, name: "Memorandum of Agreement", status: "pending", date: "Required before start" },
     { id: 4, name: "Medical Certificate", status: "pending", date: "Required before start" },
     { id: 5, name: "Parents' Consent", status: "pending", date: "Required before start" },
   ]);
 
-  const [dtrEntries, setDtrEntries] = useState([
-    { id: 1, date: "May 16, 2026", timeIn: "08:00 AM", timeOut: "05:00 PM", status: "present", task: "Onboarding and Setup", hours: 8, proofFile: "dtr_proof_1.pdf" },
-    { id: 2, date: "May 17, 2026", timeIn: "08:30 AM", timeOut: "05:30 PM", status: "present", task: "Database Schema Design", hours: 8, proofFile: "dtr_proof_2.pdf" },
-    { id: 3, date: "May 18, 2026", timeIn: "-", timeOut: "-", status: "absent", task: "Sick Leave", hours: 0, proofFile: null as string | null },
-  ]);
+  interface DtrEntry { id: number; date: string; timeIn: string; timeOut: string; status: string; task: string; hours: number; proofFile: string | null; }
+  const [dtrEntries, setDtrEntries] = useState<DtrEntry[]>([]);
 
   const [journals, setJournals] = useState([
     { id: 1, week: "Week 1", summary: "Completed onboarding, met with the supervisor, and familiarized myself with the codebase and tech stack.", dateRange: "May 20 - May 24" }
@@ -253,13 +256,13 @@ export default function ProfilePage() {
       formData.append('document', file);
       formData.append('document_type', docToUpload.name);
 
-      await fetchApi('/documents/upload', {
+      const res = await fetchApi('/documents/upload', {
         method: 'POST',
         body: formData,
       });
 
       setDocuments(docs => docs.map(d => 
-        d.id === id ? { ...d, status: "submitted", date: "Just now" } : d
+        d.id === id ? { ...d, status: "submitted", date: "Just now", fileLink: res.file_link } : d
       ));
     } catch (err: unknown) {
       const error = err as Error;
@@ -268,6 +271,12 @@ export default function ProfilePage() {
         d.id === id ? { ...d, status: "pending" } : d
       ));
     }
+  };
+
+  const handleRemoveDocument = (id: number) => {
+    setDocuments(docs => docs.map(d => 
+      d.id === id ? { ...d, status: "pending", date: "Required before start", fileLink: undefined } : d
+    ));
   };
 
   // Profile Photo Upload
@@ -633,8 +642,17 @@ export default function ProfilePage() {
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.5rem" }}>
                   <div>
                     <div style={{ fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#3b82f6", marginBottom: "0.3rem" }}>Assigned Company</div>
-                    <div style={{ fontSize: "1.2rem", fontWeight: 700, color: "#0f172a" }}>{profile.company}</div>
-                    <div style={{ fontSize: "0.85rem", color: "#64748b", marginTop: "0.2rem" }}>{profile.location}</div>
+                    <div style={{ fontSize: "1.2rem", fontWeight: 700, color: "#0f172a", display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                      {profile.company_id ? profile.company : (
+                        <button 
+                          onClick={() => setShowEditModal(true)}
+                          style={{ background: "#f59e0b", color: "white", padding: "0.3rem 1rem", borderRadius: "9999px", fontSize: "0.8rem", border: "none", cursor: "pointer", fontWeight: 700, boxShadow: "0 2px 8px rgba(245,158,11,0.3)" }}
+                        >
+                          Pick Company
+                        </button>
+                      )}
+                    </div>
+                    <div style={{ fontSize: "0.85rem", color: "#64748b", marginTop: "0.4rem" }}>{profile.company_id ? profile.location : "Action Required"}</div>
                   </div>
                   <span style={{ background: "#dcfce7", color: "#166534", padding: "0.4rem 0.8rem", borderRadius: "9999px", fontSize: "0.75rem", fontWeight: 700, display: "flex", alignItems: "center", gap: "0.4rem" }}>
                     <IconCheck /> Active
@@ -661,19 +679,19 @@ export default function ProfilePage() {
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "1rem" }}>
                   <div>
                     <span style={{ fontSize: "2.5rem", fontWeight: 800, color: "#0f172a", lineHeight: 1 }}>
-                      {dtrEntries.reduce((sum, entry) => sum + entry.hours, 118)}
+                      {dtrEntries.reduce((sum, entry) => sum + entry.hours, 0)}
                     </span>
                     <span style={{ fontSize: "0.95rem", color: "#64748b", fontWeight: 600, marginLeft: "0.4rem" }}>/ 300 hrs</span>
                   </div>
                   <span style={{ fontSize: "1rem", fontWeight: 700, color: "#3b82f6" }}>
-                    {Math.round((dtrEntries.reduce((sum, entry) => sum + entry.hours, 118) / 300) * 100)}%
+                    {Math.round((dtrEntries.reduce((sum, entry) => sum + entry.hours, 0) / 300) * 100)}%
                   </span>
                 </div>
                 {/* Progress Bar */}
                 <div style={{ width: "100%", height: 10, background: "#f1f5f9", borderRadius: 9999, overflow: "hidden" }}>
-                  <div style={{ width: `${(dtrEntries.reduce((sum, entry) => sum + entry.hours, 118) / 300) * 100}%`, height: "100%", background: "linear-gradient(90deg, #3b82f6, #6366f1)", borderRadius: 9999, transition: "width 0.5s ease" }} />
+                  <div style={{ width: `${(dtrEntries.reduce((sum, entry) => sum + entry.hours, 0) / 300) * 100}%`, height: "100%", background: "linear-gradient(90deg, #3b82f6, #6366f1)", borderRadius: 9999, transition: "width 0.5s ease" }} />
                 </div>
-                <p style={{ fontSize: "0.85rem", color: "#64748b", margin: "1.25rem 0 0", textAlign: "center", fontWeight: 500 }}>Keep up the good work! {300 - dtrEntries.reduce((sum, entry) => sum + entry.hours, 118)} hours remaining.</p>
+                <p style={{ fontSize: "0.85rem", color: "#64748b", margin: "1.25rem 0 0", textAlign: "center", fontWeight: 500 }}>Keep up the good work! {300 - dtrEntries.reduce((sum, entry) => sum + entry.hours, 0)} hours remaining.</p>
               </div>
             </RevealBox>
           </div>
@@ -683,7 +701,7 @@ export default function ProfilePage() {
             <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#0f172a", marginBottom: "1.25rem" }}>Required Documents</h2>
             <div className="ui-card" style={{ padding: 0, overflow: "hidden" }}>
               {documents.map((doc) => (
-                <DocumentRow key={doc.id} doc={doc} onUpload={handleUpload} />
+                <DocumentRow key={doc.id} doc={doc} onUpload={handleUpload} onRemove={handleRemoveDocument} />
               ))}
             </div>
           </RevealBox>
@@ -842,9 +860,12 @@ export default function ProfilePage() {
                         </td>
                         <td>
                           {entry.proofFile ? (
-                            <span style={{ fontSize: "0.75rem", color: "#3b82f6", display: "flex", alignItems: "center", gap: "0.3rem" }}>
-                              <IconCheck /> PDF Attached
-                            </span>
+                            <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                              <span style={{ fontSize: "0.75rem", color: "#16a34a", display: "flex", alignItems: "center", gap: "0.2rem", fontWeight: 600 }}>
+                                <IconCheck /> Attached
+                              </span>
+                              <button onClick={() => alert("Simulating PDF view for: " + entry.proofFile)} style={{ background: "#e0f2fe", color: "#0369a1", border: "none", padding: "0.25rem 0.6rem", borderRadius: "9999px", fontSize: "0.65rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", cursor: "pointer", transition: "opacity 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.opacity = "0.8"} onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}>View</button>
+                            </div>
                           ) : <span style={{ fontSize: "0.75rem", color: "#94a3b8" }}>-</span>}
                         </td>
                         <td style={{ textAlign: "right", fontWeight: 700, color: "#0f172a", fontSize: "0.95rem" }}>{entry.hours}</td>

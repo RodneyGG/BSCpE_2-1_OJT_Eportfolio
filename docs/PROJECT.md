@@ -69,6 +69,7 @@ See individual feature docs in `docs/features/`.
 | Profile + DTR + Upload | feature/dtr-and-uploads       | Completed   |
 | Authentication & UI    | feature/auth-and-ui           | Completed   |
 | Admin Dashboard        | feature/admin-dashboard       | Completed   |
+| Company Auth System    | feature/company-auth-system   | Completed   |
 
 ---
 

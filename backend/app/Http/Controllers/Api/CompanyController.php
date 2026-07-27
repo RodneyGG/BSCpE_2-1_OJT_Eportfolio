@@ -14,9 +14,31 @@ class CompanyController extends Controller
      */
     public function index(): JsonResponse
     {
-        $companies = Company::withCount('users')->orderBy('name')->get();
+        $companies = Company::with('users:id,name,role,email,company_id')->orderBy('name')->get();
 
-        return response()->json($companies);
+        $formatted = $companies->map(function ($company) {
+            return [
+                'id' => $company->id,
+                'name' => $company->name,
+                'location' => $company->address ?: 'Location pending...',
+                'studentCount' => $company->users->count(),
+                'students' => $company->users->map(function ($user) {
+                    return [
+                        'id' => $user->id,
+                        'name' => $user->name,
+                        'email' => $user->email,
+                        'role' => 'IT Intern', // Dummy
+                        'program' => 'BSCpE 2-1', // Dummy
+                        'hours' => 0,
+                        'totalHours' => 300,
+                        'status' => 'Active',
+                        'dtrProofs' => []
+                    ];
+                })->values()
+            ];
+        });
+
+        return response()->json($formatted);
     }
 
     /**

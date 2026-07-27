@@ -6,6 +6,10 @@ use Illuminate\Support\Facades\Route;
 
 // Public routes
 Route::post('/login', [AuthController::class, 'login']);
+Route::get('/companies', [CompanyController::class, 'index']);
+
+// Google OAuth
+Route::get('/google/callback', [\App\Http\Controllers\Api\GoogleOAuthController::class, 'callback']);
 
 use App\Http\Controllers\Api\DocumentController;
 
@@ -17,8 +21,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/change-password', [AuthController::class, 'changePassword']);
     Route::post('/select-company', [AuthController::class, 'selectCompany']);
 
+    // Google Auth
+    Route::get('/google/auth', [\App\Http\Controllers\Api\GoogleOAuthController::class, 'redirect']);
+
     // Companies
-    Route::get('/companies', [CompanyController::class, 'index']);
     Route::get('/companies/{company}', [CompanyController::class, 'show']);
     Route::patch('/companies/{company}/address', [CompanyController::class, 'updateAddress']);
 

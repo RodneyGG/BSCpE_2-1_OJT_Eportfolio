@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRole } from "../context/RoleContext";
+import { fetchApi } from "../../lib/api";
 
 /* ═══════════════════════════ Scroll reveal hook ════════════════════ */
 function useReveal() {
@@ -123,24 +124,6 @@ interface Company {
   studentCount: number;
   students: Student[];
 }
-
-const COMPANIES: Company[] = [
-  {
-    id: 0, name: "TechCore Solutions Inc.", location: "Cebu City, Cebu", studentCount: 3,
-    students: [
-      { id: "s1", name: "Juan Dela Cruz", program: "BSCpE 2-1", role: "IT Intern", email: "jdelacruz@student.edu.ph", hours: 118, totalHours: 300, status: "Active", dtrProofs: ["week1_dtr.pdf", "week2_dtr.pdf"] },
-      { id: "s2", name: "Maria Santos", program: "BSCpE 2-1", role: "IT Intern", email: "msantos@student.edu.ph", hours: 250, totalHours: 300, status: "Active", dtrProofs: ["may_dtr_proof.pdf"] },
-      { id: "s3", name: "Carlos Reyes", program: "BSCpE 2-1", role: "Dev Intern", email: "creyes@student.edu.ph", hours: 300, totalHours: 300, status: "Completed", dtrProofs: ["final_dtr.pdf"] },
-    ],
-  },
-  {
-    id: 1, name: "InnovatePH Engineering", location: "Manila, Metro Manila", studentCount: 2,
-    students: [
-      { id: "s4", name: "Ana Lim", program: "BSCpE 2-1", role: "Eng. Intern", email: "alim@student.edu.ph", hours: 45, totalHours: 300, status: "Warning", dtrProofs: [] },
-      { id: "s5", name: "Rodel Gutierrez", program: "BSCpE 2-1", role: "Eng. Intern", email: "rgutierrez@student.edu.ph", hours: 0, totalHours: 300, status: "Pending Placement", dtrProofs: [] },
-    ],
-  },
-];
 
 
 /* ═══════════════════════════ Components ════════════════════════════ */
@@ -294,6 +277,19 @@ export default function AdminDashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
 
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchApi('/companies')
+      .then((data: Company[]) => {
+        setCompanies(data);
+        if (data.length > 0) setOpenId(data[0].id);
+      })
+      .catch((err: unknown) => console.error("Failed to load companies:", err))
+      .finally(() => setLoading(false));
+  }, []);
+
   const [recentDocs, setRecentDocs] = useState([
     { id: 101, student: "Juan Dela Cruz", docType: "Memorandum of Agreement", date: "Just now", status: "Needs Review" },
     { id: 102, student: "Maria Santos", docType: "Weekly Journal (Week 4)", date: "2 hours ago", status: "Needs Review" },
@@ -310,10 +306,22 @@ export default function AdminDashboard() {
     return { color: "#475569", bg: "#f1f5f9" };
   };
 
-  const filteredCompanies = COMPANIES.filter(c => 
+  const filteredCompanies = companies.filter(c => 
     c.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
     c.students.some(s => s.name.toLowerCase().includes(searchQuery.toLowerCase()))
   );
+
+  const handleConnectDrive = async () => {
+    try {
+      const data = await fetchApi('/google/auth');
+      if (data.auth_url) {
+        window.location.href = data.auth_url;
+      }
+    } catch (err: unknown) {
+      const error = err as Error;
+      alert("Failed to initiate Google OAuth: " + error.message);
+    }
+  };
 
   return (
     <div style={{
@@ -413,8 +421,32 @@ export default function AdminDashboard() {
               <h1 style={{ fontSize: "2.25rem", fontWeight: 800, color: "#0f172a", margin: "0 0 0.25rem 0", letterSpacing: "-0.02em" }}>Overview</h1>
               <p style={{ fontSize: "1rem", color: "#64748b", margin: 0, fontWeight: 500 }}>Manage companies, students, and review documents.</p>
             </div>
-            <div style={{ color: "#64748b", fontSize: "0.85rem", fontWeight: 600 }}>
-              Academic Year: <span style={{ color: "#0f172a" }}>2025-2026 (Summer)</span>
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", alignItems: "flex-end" }}>
+              <div style={{ color: "#64748b", fontSize: "0.85rem", fontWeight: 600 }}>
+                Academic Year: <span style={{ color: "#0f172a" }}>2025-2026 (Summer)</span>
+              </div>
+              {role === 'admin' && (
+                <button 
+                  onClick={handleConnectDrive}
+                  style={{
+                    background: "white", color: "#3c4043", border: "1px solid #dadce0", borderRadius: "0.5rem",
+                    padding: "0.5rem 1rem", fontSize: "0.85rem", fontWeight: 600,
+                    display: "flex", alignItems: "center", gap: "0.75rem", cursor: "pointer",
+                    boxShadow: "0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15)", transition: "all 0.2s ease-in-out"
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = "#f8f9fa"; e.currentTarget.style.boxShadow = "0 1px 3px 0 rgba(60,64,67,0.3), 0 4px 8px 3px rgba(60,64,67,0.15)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = "white"; e.currentTarget.style.boxShadow = "0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15)"; }}
+                >
+                  <svg width={18} height={18} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                    <path d="M1 1h22v22H1z" fill="none"/>
+                  </svg>
+                  Sign in with Google Drive
+                </button>
+              )}
             </div>
           </div>
         </RevealBox>
@@ -427,7 +459,9 @@ export default function AdminDashboard() {
                 <div className="stat-icon" style={{ background: "#eff6ff", color: "#3b82f6" }}><IconUsers /></div>
                 <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "#10b981", background: "#dcfce7", padding: "0.2rem 0.6rem", borderRadius: "999px" }}>100% Enrolled</span>
               </div>
-              <h3 style={{ fontSize: "2rem", fontWeight: 800, color: "#0f172a", margin: "0 0 0.25rem 0" }}>42</h3>
+              <h3 style={{ fontSize: "2rem", fontWeight: 800, color: "#0f172a", margin: "0 0 0.25rem 0" }}>
+                {loading ? "..." : companies.reduce((acc, curr) => acc + curr.studentCount, 0)}
+              </h3>
               <p style={{ fontSize: "0.85rem", color: "#64748b", margin: 0, fontWeight: 600 }}>Total Students</p>
             </div>
           </RevealBox>
@@ -468,20 +502,25 @@ export default function AdminDashboard() {
               </div>
               
               <div style={{ display: "flex", flexDirection: "column" }}>
-                {filteredCompanies.map((company, index) => (
-                  <CompanyRow
-                    key={company.id}
-                    company={company}
-                    index={index}
-                    isOpen={openId === company.id}
-                    onToggle={() => toggle(company.id)}
-                    onStudentClick={setSelectedStudent}
-                  />
-                ))}
-                {filteredCompanies.length === 0 && (
+                {loading ? (
+                  <div style={{ textAlign: "center", padding: "3rem", color: "#94a3b8", background: "white", borderRadius: "1rem" }}>
+                    Loading companies...
+                  </div>
+                ) : filteredCompanies.length === 0 ? (
                   <div style={{ textAlign: "center", padding: "3rem", color: "#94a3b8", background: "white", borderRadius: "1rem" }}>
                     No companies or students found matching your search.
                   </div>
+                ) : (
+                  filteredCompanies.map((company, index) => (
+                    <CompanyRow
+                      key={company.id}
+                      company={company}
+                      index={index}
+                      isOpen={openId === company.id}
+                      onToggle={() => toggle(company.id)}
+                      onStudentClick={setSelectedStudent}
+                    />
+                  ))
                 )}
               </div>
             </div>

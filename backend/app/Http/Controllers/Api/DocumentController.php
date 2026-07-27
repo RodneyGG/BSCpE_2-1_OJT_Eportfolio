@@ -3,68 +3,40 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Services\GoogleDriveService;
+use App\Http\Requests\UploadDocumentRequest;
+use App\Services\DocumentService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class DocumentController extends Controller
 {
-    protected GoogleDriveService $driveService;
+    protected DocumentService $documentService;
 
-    public function __construct(GoogleDriveService $driveService)
+    public function __construct(DocumentService $documentService)
     {
-        $this->driveService = $driveService;
+        $this->documentService = $documentService;
     }
 
     /**
-     * Upload a document to Google Drive.
+     * Upload a document using the DocumentService.
      */
-    public function upload(Request $request): JsonResponse
+    public function upload(UploadDocumentRequest $request): JsonResponse
     {
-        $request->validate([
-            'document' => 'required|file|mimes:pdf|max:10240', // Max 10MB PDF
-            'document_type' => 'required|string',
-        ]);
-
-        $file = $request->file('document');
-        $user = $request->user();
-
         try {
-            // First, ensure a folder for this student exists
-            // We'll create a folder named after the user's email or ID
-            $folderName = $user->email . ' - ' . $user->name;
-            
-            // Check if folder exists (we'd ideally store folder ID in DB, but for now we list)
-            $existingFolders = $this->driveService->listFiles();
-            $userFolder = null;
-            
-            foreach ($existingFolders as $f) {
-                if ($f->name === $folderName && $f->mimeType === 'application/vnd.google-apps.folder') {
-                    $userFolder = $f;
-                    break;
-                }
-            }
+            $result = $this->documentService->uploadDocument(
+                $request->file('document'),
+                $request->user(),
+                $request->input('document_type')
+            );
 
-            if (!$userFolder) {
-                $userFolder = $this->driveService->createFolder($folderName);
-            }
-
-            // Prefix file name with document type
-            $originalName = $file->getClientOriginalName();
-            // Optional: override name $file->getClientOriginalName() ...
-            
-            $uploadedFile = $this->driveService->upload($file, $userFolder->id);
-
-            return response()->json([
+            return response()->json(array_merge([
                 'message' => 'Document uploaded successfully',
-                'file_id' => $uploadedFile->id,
-                'file_link' => $uploadedFile->webViewLink,
-                'document_type' => $request->document_type
-            ]);
+            ], $result));
             
         } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Document Upload Failed: ' . $e->getMessage());
+            
             return response()->json([
-                'message' => 'Failed to upload document to Google Drive',
+                'message' => 'Failed to upload document',
                 'error' => $e->getMessage()
             ], 500);
         }

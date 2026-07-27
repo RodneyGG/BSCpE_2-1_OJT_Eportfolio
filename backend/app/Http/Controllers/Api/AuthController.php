@@ -3,49 +3,43 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Company;
-use App\Models\User;
+use App\Http\Requests\ChangePasswordRequest;
+use App\Http\Requests\LoginRequest;
+use App\Http\Requests\SelectCompanyRequest;
+use App\Services\AuthService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
+    protected AuthService $authService;
+
+    public function __construct(AuthService $authService)
+    {
+        $this->authService = $authService;
+    }
+
     /**
      * Login and return a Sanctum token.
      */
-    public function login(Request $request): JsonResponse
+    public function login(LoginRequest $request): JsonResponse
     {
-        $request->validate([
-            'email' => 'required|email',
-            'password' => 'required|string',
-        ]);
-
-        $user = User::where('email', $request->email)->first();
-
-        if (! $user || ! Hash::check($request->password, $user->password)) {
-            throw ValidationException::withMessages([
-                'email' => ['The provided credentials are incorrect.'],
-            ]);
-        }
-
-        // Revoke all existing tokens for this user
-        $user->tokens()->delete();
-
-        $token = $user->createToken('api-token')->plainTextToken;
+        $result = $this->authService->login(
+            $request->input('email'),
+            $request->input('password')
+        );
 
         return response()->json([
             'message' => 'Login successful',
-            'token' => $token,
+            'token' => $result['token'],
             'user' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'role' => $user->role,
-                'company_id' => $user->company_id,
-                'company' => $user->company?->name,
-                'must_change_password' => $user->must_change_password,
+                'id' => $result['user']->id,
+                'name' => $result['user']->name,
+                'email' => $result['user']->email,
+                'role' => $result['user']->role,
+                'company_id' => $result['user']->company_id,
+                'company' => $result['user']->company?->name,
+                'must_change_password' => $result['user']->must_change_password,
             ],
         ]);
     }
@@ -55,7 +49,7 @@ class AuthController extends Controller
      */
     public function logout(Request $request): JsonResponse
     {
-        $request->user()->currentAccessToken()->delete();
+        $this->authService->logout($request->user());
 
         return response()->json(['message' => 'Logged out successfully']);
     }
@@ -81,25 +75,13 @@ class AuthController extends Controller
     /**
      * Change password (used on first login or voluntarily).
      */
-    public function changePassword(Request $request): JsonResponse
+    public function changePassword(ChangePasswordRequest $request): JsonResponse
     {
-        $request->validate([
-            'current_password' => 'required|string',
-            'new_password' => 'required|string|min:8|confirmed',
-        ]);
-
-        $user = $request->user();
-
-        if (! Hash::check($request->current_password, $user->password)) {
-            throw ValidationException::withMessages([
-                'current_password' => ['The current password is incorrect.'],
-            ]);
-        }
-
-        $user->update([
-            'password' => $request->new_password,
-            'must_change_password' => false,
-        ]);
+        $this->authService->changePassword(
+            $request->user(),
+            $request->input('current_password'),
+            $request->input('new_password')
+        );
 
         return response()->json(['message' => 'Password changed successfully']);
     }
@@ -107,16 +89,12 @@ class AuthController extends Controller
     /**
      * Select/change the user's company assignment.
      */
-    public function selectCompany(Request $request): JsonResponse
+    public function selectCompany(SelectCompanyRequest $request): JsonResponse
     {
-        $request->validate([
-            'company_id' => 'required|exists:companies,id',
-        ]);
-
-        $user = $request->user();
-        $company = Company::findOrFail($request->company_id);
-
-        $user->update(['company_id' => $company->id]);
+        $company = $this->authService->selectCompany(
+            $request->user(),
+            $request->input('company_id')
+        );
 
         return response()->json([
             'message' => 'Company selected successfully',

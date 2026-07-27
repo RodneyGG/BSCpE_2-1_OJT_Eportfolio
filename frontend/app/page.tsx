@@ -7,33 +7,7 @@ import { useRole } from "./context/RoleContext";
 interface Student { id: string; name: string; role: string; }
 interface Company { id: number; name: string; location: string; studentCount: number; students: Student[]; }
 
-const COMPANIES: Company[] = [
-  { id: 0, name: "AA2000 Security and Technology Solutions Inc.", location: "", studentCount: 0, students: [] },
-  { id: 1, name: "Amsteel Structures INC.", location: "", studentCount: 0, students: [] },
-  { id: 2, name: "Barangay Hall Concepcion Uno", location: "", studentCount: 0, students: [] },
-  { id: 3, name: "Comfac IT", location: "", studentCount: 0, students: [] },
-  { id: 4, name: "Denso Ten Solutions Philippines Corporation", location: "", studentCount: 0, students: [] },
-  { id: 5, name: "ESCO Pte. Ltd.", location: "", studentCount: 0, students: [] },
-  { id: 6, name: "Espiritu Santo Parochial School, Inc.", location: "", studentCount: 0, students: [] },
-  { id: 7, name: "F.F. International Manufacturing Corporation", location: "", studentCount: 0, students: [] },
-  { id: 8, name: "Filinvest Business Services Corporation", location: "", studentCount: 0, students: [] },
-  { id: 9, name: "LBC Express, Inc.", location: "", studentCount: 0, students: [] },
-  { id: 10, name: "Marvill Web Development", location: "", studentCount: 0, students: [] },
-  { id: 11, name: "NASERIA Construction, OPC", location: "", studentCount: 0, students: [] },
-  { id: 12, name: "NDAS PHILS INC.", location: "", studentCount: 0, students: [] },
-  { id: 13, name: "One Point Contact Inc.", location: "", studentCount: 0, students: [] },
-  { id: 14, name: "People's Television Network Inc.", location: "", studentCount: 0, students: [] },
-  { id: 15, name: "Philippine Fiber Industry Development Authority (PHILFIDA)", location: "", studentCount: 0, students: [] },
-  { id: 16, name: "Seda Vertis North", location: "", studentCount: 0, students: [] },
-  { id: 17, name: "Tão Corporate Center", location: "", studentCount: 0, students: [] },
-  { id: 18, name: "Tão Foods Company Inc.", location: "", studentCount: 0, students: [] },
-  { id: 19, name: "Technavy Philippines", location: "", studentCount: 0, students: [] },
-  { id: 20, name: "Ten X Development", location: "", studentCount: 0, students: [] },
-  { id: 21, name: "Transnational E-Business Solutions, Inc. (TESI)", location: "", studentCount: 0, students: [] },
-  { id: 22, name: "World Citi Colleges Antipolo Inc.", location: "", studentCount: 0, students: [] },
-  { id: 23, name: "Yek Yeu Merchandising, Inc.", location: "", studentCount: 0, students: [] },
-  { id: 24, name: "BSCpE 2-1", location: "Test Address - Development Only", studentCount: 0, students: [] },
-];
+// Companies data is now fetched from the backend
 
 /* ═══════════════════════════ Icons ═══════════════════════════ */
 const IconChevron = ({ open }: { open: boolean }) => (
@@ -352,19 +326,35 @@ function MoaPill() {
   );
 }
 
+import { fetchApi } from "../lib/api";
+
 /* ═══════════════════════════ Page ════════════════════════════ */
 export default function Home() {
   const { isLoggedIn, role } = useRole();
   const [openId, setOpenId] = useState<number | null>(0);
   const [navScrolled, setNavScrolled] = useState(false);
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [loadingCompanies, setLoadingCompanies] = useState(true);
 
   const toggle = (id: number) => setOpenId(prev => prev === id ? null : id);
-  const totalStudents = COMPANIES.reduce((s, c) => s + c.studentCount, 0);
+  const totalStudents = companies.reduce((s, c) => s + c.studentCount, 0);
 
   useEffect(() => {
     const onScroll = () => setNavScrolled(window.scrollY > 10);
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => {
+    fetchApi('/companies')
+      .then(data => {
+        setCompanies(data);
+        setLoadingCompanies(false);
+      })
+      .catch(err => {
+        console.error("Failed to fetch companies:", err);
+        setLoadingCompanies(false);
+      });
   }, []);
 
   return (
@@ -551,7 +541,7 @@ export default function Home() {
                 animation: "fadeSlideUp 0.6s ease 0.25s both",
               }}>
                 {[
-                  { value: COMPANIES.length, label: "Companies", icon: <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="#93c5fd" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"><path d="M3 21h18M3 7v14M21 7v14M6 11h3M6 15h3M15 11h3M15 15h3M9 21V7l3-4 3 4v14" /></svg> },
+                  { value: companies.length, label: "Companies", icon: <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="#93c5fd" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"><path d="M3 21h18M3 7v14M21 7v14M6 11h3M6 15h3M15 11h3M15 15h3M9 21V7l3-4 3 4v14" /></svg> },
                   { value: totalStudents,    label: "Students",  icon: <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="#93c5fd" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> },
                   { value: "300",            label: "OJT Hrs",   icon: <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="#93c5fd" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> },
                 ].map((s, i) => (
@@ -596,13 +586,13 @@ export default function Home() {
               </span>
             </div>
             <span style={{ fontSize: "0.7rem", color: "#94a3b8", fontWeight: 500 }}>
-              {COMPANIES.length} companies · {totalStudents} students
+              {loadingCompanies ? 'Loading...' : `${companies.length} companies · ${totalStudents} students`}
             </span>
           </div>
 
           {/* Accordion list */}
           <div style={{ display: "flex", flexDirection: "column", gap: "0.65rem" }}>
-            {COMPANIES.map((company, index) => (
+            {companies.map((company, index) => (
               <CompanyRow
                 key={company.id}
                 company={company}
