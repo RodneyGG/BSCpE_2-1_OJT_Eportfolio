@@ -96,10 +96,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup PHP 8.2
+      - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.2'
+          php-version: '8.3'
           extensions: mbstring, xml, bcmath, mysql, redis, pdo_mysql
           coverage: pcov # Fast code coverage driver
 
