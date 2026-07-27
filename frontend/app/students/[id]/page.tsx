@@ -3,9 +3,15 @@ import { MOCK_COMPANIES } from "../../data/companies";
 
 // This is required for Next.js static export (output: 'export') with dynamic routes.
 export function generateStaticParams() {
-  return MOCK_COMPANIES.flatMap((c) => c.students).map((s) => ({
+  const students = MOCK_COMPANIES.flatMap((c) => c.students).map((s) => ({
     id: s.id,
   }));
+  
+  if (students.length === 0) {
+    return [{ id: 'dummy' }];
+  }
+  
+  return students;
 }
 
 export default function Page({ params }: { params: { id: string } }) {
