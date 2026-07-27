@@ -8,49 +8,31 @@ interface Student { id: string; name: string; role: string; }
 interface Company { id: number; name: string; location: string; studentCount: number; students: Student[]; }
 
 const COMPANIES: Company[] = [
-  {
-    id: 0, name: "TechCore Solutions Inc.", location: "Cebu City, Cebu", studentCount: 3,
-    students: [
-      { id: "s1", name: "JUAN D. CRUZ",    role: "IT Intern"  },
-      { id: "s2", name: "MARIA SANTOS",    role: "IT Intern"  },
-      { id: "s3", name: "CARLOS REYES",    role: "Dev Intern" },
-    ],
-  },
-  {
-    id: 1, name: "InnovatePH Engineering", location: "Manila, Metro Manila", studentCount: 2,
-    students: [
-      { id: "s4", name: "ANA LIM",         role: "Eng. Intern" },
-      { id: "s5", name: "RODEL GUTIERREZ", role: "Eng. Intern" },
-    ],
-  },
-  {
-    id: 2, name: "NexGen Electronics Corp.", location: "Lapu-Lapu City, Cebu", studentCount: 4,
-    students: [
-      { id: "s6",  name: "JESSA FERNANDEZ",  role: "Tech Intern" },
-      { id: "s7",  name: "MIGUEL TORRES",    role: "Tech Intern" },
-      { id: "s8",  name: "LOVELY PASCUAL",   role: "QA Intern"   },
-      { id: "s9",  name: "DANTE VILLANUEVA", role: "Tech Intern" },
-    ],
-  },
-  {
-    id: 3, name: "CloudBridge Systems", location: "Quezon City, NCR", studentCount: 1,
-    students: [{ id: "s10", name: "PATRICIA CRUZ",  role: "Cloud Intern" }],
-  },
-  {
-    id: 4, name: "Digital Minds PH", location: "Davao City, Davao", studentCount: 2,
-    students: [
-      { id: "s11", name: "GERALD ONG",   role: "UX Intern"  },
-      { id: "s12", name: "TRICIA LUNA",  role: "Dev Intern" },
-    ],
-  },
-  {
-    id: 5, name: "Sigma Tech Corporation", location: "Pasig City, NCR", studentCount: 3,
-    students: [
-      { id: "s13", name: "MARK DELA CRUZ", role: "IT Intern"  },
-      { id: "s14", name: "NINA BAUTISTA",  role: "Dev Intern" },
-      { id: "s15", name: "RYAN SANTOS",    role: "QA Intern"  },
-    ],
-  },
+  { id: 0, name: "AA2000 Security and Technology Solutions Inc.", location: "", studentCount: 0, students: [] },
+  { id: 1, name: "Amsteel Structures INC.", location: "", studentCount: 0, students: [] },
+  { id: 2, name: "Barangay Hall Concepcion Uno", location: "", studentCount: 0, students: [] },
+  { id: 3, name: "Comfac IT", location: "", studentCount: 0, students: [] },
+  { id: 4, name: "Denso Ten Solutions Philippines Corporation", location: "", studentCount: 0, students: [] },
+  { id: 5, name: "ESCO Pte. Ltd.", location: "", studentCount: 0, students: [] },
+  { id: 6, name: "Espiritu Santo Parochial School, Inc.", location: "", studentCount: 0, students: [] },
+  { id: 7, name: "F.F. International Manufacturing Corporation", location: "", studentCount: 0, students: [] },
+  { id: 8, name: "Filinvest Business Services Corporation", location: "", studentCount: 0, students: [] },
+  { id: 9, name: "LBC Express, Inc.", location: "", studentCount: 0, students: [] },
+  { id: 10, name: "Marvill Web Development", location: "", studentCount: 0, students: [] },
+  { id: 11, name: "NASERIA Construction, OPC", location: "", studentCount: 0, students: [] },
+  { id: 12, name: "NDAS PHILS INC.", location: "", studentCount: 0, students: [] },
+  { id: 13, name: "One Point Contact Inc.", location: "", studentCount: 0, students: [] },
+  { id: 14, name: "People's Television Network Inc.", location: "", studentCount: 0, students: [] },
+  { id: 15, name: "Philippine Fiber Industry Development Authority (PHILFIDA)", location: "", studentCount: 0, students: [] },
+  { id: 16, name: "Seda Vertis North", location: "", studentCount: 0, students: [] },
+  { id: 17, name: "Tão Corporate Center", location: "", studentCount: 0, students: [] },
+  { id: 18, name: "Tão Foods Company Inc.", location: "", studentCount: 0, students: [] },
+  { id: 19, name: "Technavy Philippines", location: "", studentCount: 0, students: [] },
+  { id: 20, name: "Ten X Development", location: "", studentCount: 0, students: [] },
+  { id: 21, name: "Transnational E-Business Solutions, Inc. (TESI)", location: "", studentCount: 0, students: [] },
+  { id: 22, name: "World Citi Colleges Antipolo Inc.", location: "", studentCount: 0, students: [] },
+  { id: 23, name: "Yek Yeu Merchandising, Inc.", location: "", studentCount: 0, students: [] },
+  { id: 24, name: "BSCpE 2-1", location: "Test Address - Development Only", studentCount: 0, students: [] },
 ];
 
 /* ═══════════════════════════ Icons ═══════════════════════════ */
