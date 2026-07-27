@@ -16,8 +16,8 @@ class GoogleDriveService
     public function __construct()
     {
         $this->client = new Client();
-        $this->client->setClientId(env('GOOGLE_CLIENT_ID'));
-        $this->client->setClientSecret(env('GOOGLE_CLIENT_SECRET'));
+        $this->client->setClientId(config('services.google_drive.client_id'));
+        $this->client->setClientSecret(config('services.google_drive.client_secret'));
         $this->client->addScope(Drive::DRIVE);
         $this->client->setAccessType('offline');
 

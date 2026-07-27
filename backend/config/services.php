@@ -37,6 +37,8 @@ return [
 
     'google_drive' => [
         'folder_id' => env('GOOGLE_DRIVE_FOLDER_ID'),
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
         'credentials' => [
             'type' => env('GOOGLE_DRIVE_TYPE', 'service_account'),
             'project_id' => env('GOOGLE_DRIVE_PROJECT_ID'),

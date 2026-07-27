@@ -15,9 +15,9 @@ class GoogleOAuthController extends Controller
     public function __construct()
     {
         $this->client = new Client();
-        $this->client->setClientId(env('GOOGLE_CLIENT_ID'));
-        $this->client->setClientSecret(env('GOOGLE_CLIENT_SECRET'));
-        $this->client->setRedirectUri(env('APP_URL') . '/api/google/callback');
+        $this->client->setClientId(config('services.google_drive.client_id'));
+        $this->client->setClientSecret(config('services.google_drive.client_secret'));
+        $this->client->setRedirectUri(config('app.url') . '/api/google/callback');
         $this->client->addScope(\Google\Service\Drive::DRIVE);
         $this->client->setAccessType('offline');
         $this->client->setPrompt('consent');
