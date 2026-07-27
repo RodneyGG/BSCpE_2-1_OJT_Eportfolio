@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 
 // Public routes
 Route::post('/login', [AuthController::class, 'login']);
+Route::get('/companies', [CompanyController::class, 'index']);
 
 use App\Http\Controllers\Api\DocumentController;
 
@@ -18,7 +19,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/select-company', [AuthController::class, 'selectCompany']);
 
     // Companies
-    Route::get('/companies', [CompanyController::class, 'index']);
     Route::get('/companies/{company}', [CompanyController::class, 'show']);
     Route::patch('/companies/{company}/address', [CompanyController::class, 'updateAddress']);
 

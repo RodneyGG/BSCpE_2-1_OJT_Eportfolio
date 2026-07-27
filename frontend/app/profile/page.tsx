@@ -224,9 +224,9 @@ export default function ProfilePage() {
 
   // Mock Data States
   const [documents, setDocuments] = useState([
-    { id: 1, name: "Resume / CV", status: "submitted", date: "May 10" },
-    { id: 2, name: "Endorsement Letter", status: "submitted", date: "May 12" },
-    { id: 3, name: "Memorandum of Agreement", status: "submitted", date: "May 15" },
+    { id: 1, name: "Resume / CV", status: "pending", date: "Required before start" },
+    { id: 2, name: "Endorsement Letter", status: "pending", date: "Required before start" },
+    { id: 3, name: "Memorandum of Agreement", status: "pending", date: "Required before start" },
     { id: 4, name: "Medical Certificate", status: "pending", date: "Required before start" },
     { id: 5, name: "Parents' Consent", status: "pending", date: "Required before start" },
   ]);
@@ -633,8 +633,17 @@ export default function ProfilePage() {
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.5rem" }}>
                   <div>
                     <div style={{ fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#3b82f6", marginBottom: "0.3rem" }}>Assigned Company</div>
-                    <div style={{ fontSize: "1.2rem", fontWeight: 700, color: "#0f172a" }}>{profile.company}</div>
-                    <div style={{ fontSize: "0.85rem", color: "#64748b", marginTop: "0.2rem" }}>{profile.location}</div>
+                    <div style={{ fontSize: "1.2rem", fontWeight: 700, color: "#0f172a", display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                      {profile.company_id ? profile.company : (
+                        <button 
+                          onClick={() => setShowEditModal(true)}
+                          style={{ background: "#f59e0b", color: "white", padding: "0.3rem 1rem", borderRadius: "9999px", fontSize: "0.8rem", border: "none", cursor: "pointer", fontWeight: 700, boxShadow: "0 2px 8px rgba(245,158,11,0.3)" }}
+                        >
+                          Pick Company
+                        </button>
+                      )}
+                    </div>
+                    <div style={{ fontSize: "0.85rem", color: "#64748b", marginTop: "0.4rem" }}>{profile.company_id ? profile.location : "Action Required"}</div>
                   </div>
                   <span style={{ background: "#dcfce7", color: "#166534", padding: "0.4rem 0.8rem", borderRadius: "9999px", fontSize: "0.75rem", fontWeight: 700, display: "flex", alignItems: "center", gap: "0.4rem" }}>
                     <IconCheck /> Active
@@ -661,19 +670,19 @@ export default function ProfilePage() {
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "1rem" }}>
                   <div>
                     <span style={{ fontSize: "2.5rem", fontWeight: 800, color: "#0f172a", lineHeight: 1 }}>
-                      {dtrEntries.reduce((sum, entry) => sum + entry.hours, 118)}
+                      {dtrEntries.reduce((sum, entry) => sum + entry.hours, 0)}
                     </span>
                     <span style={{ fontSize: "0.95rem", color: "#64748b", fontWeight: 600, marginLeft: "0.4rem" }}>/ 300 hrs</span>
                   </div>
                   <span style={{ fontSize: "1rem", fontWeight: 700, color: "#3b82f6" }}>
-                    {Math.round((dtrEntries.reduce((sum, entry) => sum + entry.hours, 118) / 300) * 100)}%
+                    {Math.round((dtrEntries.reduce((sum, entry) => sum + entry.hours, 0) / 300) * 100)}%
                   </span>
                 </div>
                 {/* Progress Bar */}
                 <div style={{ width: "100%", height: 10, background: "#f1f5f9", borderRadius: 9999, overflow: "hidden" }}>
-                  <div style={{ width: `${(dtrEntries.reduce((sum, entry) => sum + entry.hours, 118) / 300) * 100}%`, height: "100%", background: "linear-gradient(90deg, #3b82f6, #6366f1)", borderRadius: 9999, transition: "width 0.5s ease" }} />
+                  <div style={{ width: `${(dtrEntries.reduce((sum, entry) => sum + entry.hours, 0) / 300) * 100}%`, height: "100%", background: "linear-gradient(90deg, #3b82f6, #6366f1)", borderRadius: 9999, transition: "width 0.5s ease" }} />
                 </div>
-                <p style={{ fontSize: "0.85rem", color: "#64748b", margin: "1.25rem 0 0", textAlign: "center", fontWeight: 500 }}>Keep up the good work! {300 - dtrEntries.reduce((sum, entry) => sum + entry.hours, 118)} hours remaining.</p>
+                <p style={{ fontSize: "0.85rem", color: "#64748b", margin: "1.25rem 0 0", textAlign: "center", fontWeight: 500 }}>Keep up the good work! {300 - dtrEntries.reduce((sum, entry) => sum + entry.hours, 0)} hours remaining.</p>
               </div>
             </RevealBox>
           </div>

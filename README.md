@@ -10,16 +10,20 @@ A full-stack OJT (On-the-Job Training) E-Portfolio web application for BSCpE 2-1
 - **Mock Authentication System**: Dedicated login portal with specific roles (Student vs. Admin).
 - **Company Assignment & Security**: Assign students to companies, enforce first-login password changes, and manage company details.
 - **Automated CI/CD**: Seamless automated deployments to GitHub Pages using GitHub Actions.
-## Testing / Dummy Accounts
-To test the login portal and routing, please use the following dummy credentials:
+## Testing / Default Accounts
+To test the login portal and routing, please use the following default credentials (created by the database seeder):
+
+**Admin Account:**
+- **Email**: `admin@ojt.dev`
+- **Password**: `Admin@2026`
+
+**Professor Account:**
+- **Email**: `prof@ojt.dev`
+- **Password**: `Prof@2026`
 
 **Student Account:**
-- **Email**: `student@university.edu.ph`
-- **Password**: `password123`
-
-**Admin / Professor Account:**
-- **Email**: `admin@university.edu.ph`
-- **Password**: `admin123`
+- **Email**: `student@ojt.dev`
+- **Password**: `Student@2026`
 
 ## Running Locally (Docker)
 
