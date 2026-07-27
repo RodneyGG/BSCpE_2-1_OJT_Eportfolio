@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRole } from "../context/RoleContext";
+import { fetchApi } from "../lib/api";
 
 /* ═══════════════════════════ Scroll reveal hook ════════════════════ */
 function useReveal() {
@@ -315,6 +316,17 @@ export default function AdminDashboard() {
     c.students.some(s => s.name.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
+  const handleConnectDrive = async () => {
+    try {
+      const data = await fetchApi('/google/auth');
+      if (data.auth_url) {
+        window.location.href = data.auth_url;
+      }
+    } catch (err: any) {
+      alert("Failed to initiate Google OAuth: " + err.message);
+    }
+  };
+
   return (
     <div style={{
       minHeight: "100vh",
@@ -413,8 +425,26 @@ export default function AdminDashboard() {
               <h1 style={{ fontSize: "2.25rem", fontWeight: 800, color: "#0f172a", margin: "0 0 0.25rem 0", letterSpacing: "-0.02em" }}>Overview</h1>
               <p style={{ fontSize: "1rem", color: "#64748b", margin: 0, fontWeight: 500 }}>Manage companies, students, and review documents.</p>
             </div>
-            <div style={{ color: "#64748b", fontSize: "0.85rem", fontWeight: 600 }}>
-              Academic Year: <span style={{ color: "#0f172a" }}>2025-2026 (Summer)</span>
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", alignItems: "flex-end" }}>
+              <div style={{ color: "#64748b", fontSize: "0.85rem", fontWeight: 600 }}>
+                Academic Year: <span style={{ color: "#0f172a" }}>2025-2026 (Summer)</span>
+              </div>
+              {role === 'admin' && (
+                <button 
+                  onClick={handleConnectDrive}
+                  style={{
+                    background: "#10b981", color: "white", border: "none", borderRadius: "0.5rem",
+                    padding: "0.6rem 1.2rem", fontSize: "0.85rem", fontWeight: 700,
+                    display: "flex", alignItems: "center", gap: "0.5rem", cursor: "pointer",
+                    boxShadow: "0 4px 12px rgba(16, 185, 129, 0.25)", transition: "all 0.2s"
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.transform = "translateY(-2px)"}
+                  onMouseLeave={(e) => e.currentTarget.style.transform = "translateY(0)"}
+                >
+                  <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M21.2 15c.7-1.2 1-2.5.7-3.9-.6-2-2.4-3.5-4.4-3.5h-1.2c-.7-3-3.2-5.2-6.2-5.6-3-.3-5.9 1.3-7.3 4-1.2 2.5-1 6.5.5 8.8m8.7-1.6V21"/><path d="M16 16l-4-4-4 4"/></svg>
+                  Connect Google Drive
+                </button>
+              )}
             </div>
           </div>
         </RevealBox>

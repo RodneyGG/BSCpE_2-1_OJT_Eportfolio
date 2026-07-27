@@ -8,6 +8,9 @@ use Illuminate\Support\Facades\Route;
 Route::post('/login', [AuthController::class, 'login']);
 Route::get('/companies', [CompanyController::class, 'index']);
 
+// Google OAuth
+Route::get('/google/callback', [\App\Http\Controllers\Api\GoogleOAuthController::class, 'callback']);
+
 use App\Http\Controllers\Api\DocumentController;
 
 // Protected routes (require Sanctum token)
@@ -17,6 +20,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
     Route::post('/change-password', [AuthController::class, 'changePassword']);
     Route::post('/select-company', [AuthController::class, 'selectCompany']);
+
+    // Google Auth
+    Route::get('/google/auth', [\App\Http\Controllers\Api\GoogleOAuthController::class, 'redirect']);
 
     // Companies
     Route::get('/companies/{company}', [CompanyController::class, 'show']);

@@ -16,8 +16,35 @@ class GoogleDriveService
     public function __construct()
     {
         $this->client = new Client();
-        $this->client->setAuthConfig(config('services.google_drive.credentials'));
+        $this->client->setClientId(env('GOOGLE_CLIENT_ID'));
+        $this->client->setClientSecret(env('GOOGLE_CLIENT_SECRET'));
         $this->client->addScope(Drive::DRIVE);
+        $this->client->setAccessType('offline');
+
+        $token = \App\Models\GoogleOAuthToken::first();
+        if ($token) {
+            $this->client->setAccessToken([
+                'access_token' => $token->access_token,
+                'refresh_token' => $token->refresh_token,
+                'expires_in' => $token->expires_in,
+                'created' => $token->created,
+            ]);
+
+            if ($this->client->isAccessTokenExpired()) {
+                $this->client->fetchAccessTokenWithRefreshToken($this->client->getRefreshToken());
+                $newToken = $this->client->getAccessToken();
+                if (isset($newToken['access_token'])) {
+                    $token->update([
+                        'access_token' => $newToken['access_token'],
+                        'expires_in' => $newToken['expires_in'],
+                        'created' => $newToken['created'],
+                    ]);
+                }
+            }
+        } else {
+            // Throw exception or let it fail gracefully if called without token
+            throw new \Exception("Google Drive is not authorized. The Administrator must authorize the application first.");
+        }
 
         $this->driveService = new Drive($this->client);
         $this->folderId = config('services.google_drive.folder_id');
