@@ -30,4 +30,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Documents
     Route::post('/documents/upload', [DocumentController::class, 'upload']);
+    Route::get('/documents/pending', [DocumentController::class, 'pending'])->middleware('role:prof');
+    Route::patch('/documents/{document}/review', [DocumentController::class, 'review'])->middleware('role:prof');
 });
