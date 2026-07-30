@@ -103,7 +103,7 @@ function IconX() {
 
 /* ═══════════════════════════ Components ════════════════════════ */
 
-function DocumentRow({ doc, onUpload, onRemove }: { doc: { id: number, name: string, status: string, date: string, fileLink?: string }, onUpload: (id: number, file: File) => void, onRemove: (id: number) => void }) {
+function DocumentRow({ doc, onUpload, onRemove }: { doc: { id: number, name: string, status: string, date: string, fileLink?: string, reviewStatus?: "pending" | "approved" | "rejected", rejectionReason?: string | null }, onUpload: (id: number, file: File) => void, onRemove: (id: number) => void }) {
   const [dragActive, setDragActive] = useState(false);
 
   const handleDrag = (e: React.DragEvent) => {
@@ -142,6 +142,21 @@ function DocumentRow({ doc, onUpload, onRemove }: { doc: { id: number, name: str
     }
   };
 
+  const reviewBadge = (() => {
+    if (!doc.reviewStatus) return null;
+    const map = {
+      pending: { bg: "#fef9c3", color: "#a16207", label: "Pending Review" },
+      approved: { bg: "#dcfce7", color: "#166534", label: "Approved" },
+      rejected: { bg: "#fee2e2", color: "#b91c1c", label: "Rejected" },
+    } as const;
+    const s = map[doc.reviewStatus];
+    return (
+      <span style={{ background: s.bg, color: s.color, padding: "0.3rem 0.8rem", borderRadius: "9999px", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+        {s.label}
+      </span>
+    );
+  })();
+
   return (
     <div style={{
       display: "flex", alignItems: "center", justifyContent: "space-between",
@@ -150,6 +165,11 @@ function DocumentRow({ doc, onUpload, onRemove }: { doc: { id: number, name: str
       <div>
         <div style={{ fontSize: "0.9rem", fontWeight: 600, color: "#0f172a" }}>{doc.name}</div>
         <div style={{ fontSize: "0.75rem", color: "#94a3b8", marginTop: "0.25rem" }}>{doc.date}</div>
+        {doc.reviewStatus === "rejected" && doc.rejectionReason && (
+          <div style={{ fontSize: "0.75rem", color: "#b91c1c", marginTop: "0.35rem", fontStyle: "italic" }}>
+            Reason: {doc.rejectionReason}
+          </div>
+        )}
       </div>
       
       {doc.status === "submitted" && (
@@ -158,7 +178,7 @@ function DocumentRow({ doc, onUpload, onRemove }: { doc: { id: number, name: str
             <a href={doc.fileLink} target="_blank" rel="noreferrer" style={{ background: "#e0f2fe", color: "#0369a1", padding: "0.3rem 0.8rem", borderRadius: "9999px", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", textDecoration: "none", transition: "opacity 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.opacity = "0.8"} onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}>View PDF</a>
           )}
           <button onClick={() => onRemove(doc.id)} style={{ background: "#fee2e2", color: "#b91c1c", border: "none", padding: "0.3rem 0.8rem", borderRadius: "9999px", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", cursor: "pointer", transition: "opacity 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.opacity = "0.8"} onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}>Remove</button>
-          <span style={{ background: "#dcfce7", color: "#166534", padding: "0.3rem 0.8rem", borderRadius: "9999px", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Submitted</span>
+          {reviewBadge}
         </div>
       )}
       
@@ -228,14 +248,70 @@ export default function ProfilePage() {
     };
   }, [profilePic]);
 
-  // Mock Data States
-  const [documents, setDocuments] = useState([
+  // Document catalog — the fixed set of requirement slots shown on this page.
+  // `status` here is LOCAL UI state (pending = nothing uploaded yet, uploading,
+  // submitted = a file exists). `reviewStatus` is the SEPARATE backend review
+  // state (pending/approved/rejected) once something has actually been uploaded.
+  interface DocSlot {
+    id: number;
+    name: string;
+    status: string;
+    date: string;
+    fileLink?: string;
+    reviewStatus?: "pending" | "approved" | "rejected";
+    rejectionReason?: string | null;
+  }
+
+  const [documents, setDocuments] = useState<DocSlot[]>([
     { id: 1, name: "Resume / CV", status: "pending", date: "Required before start" },
     { id: 2, name: "Endorsement Letter", status: "pending", date: "Required before start" },
     { id: 3, name: "Memorandum of Agreement", status: "pending", date: "Required before start" },
     { id: 4, name: "Medical Certificate", status: "pending", date: "Required before start" },
     { id: 5, name: "Parents' Consent", status: "pending", date: "Required before start" },
   ]);
+  const [documentsLoading, setDocumentsLoading] = useState(true);
+
+  interface RealDocument {
+    id: number;
+    document_type: string;
+    file_link: string;
+    status: "pending" | "approved" | "rejected";
+    rejection_reason: string | null;
+    created_at: string;
+  }
+
+  // Load the student's real uploaded documents on mount and merge them into
+  // the fixed catalog above by matching document_type === doc.name. This is
+  // what makes uploads survive a refresh/logout — previously `documents` was
+  // never re-fetched from the backend at all, so it silently reset to the
+  // hardcoded "pending" state every time the page reloaded, even though the
+  // real files were saved fine in the database the whole time.
+  useEffect(() => {
+    fetchApi('/documents/mine')
+      .then((data: { documents: RealDocument[] }) => {
+        const real = data.documents || [];
+
+        setDocuments(prev => prev.map(slot => {
+          // real docs are already newest-first from the backend, so the
+          // first match for a given type is the most recent submission
+          const match = real.find(d => d.document_type === slot.name);
+          if (!match) return slot;
+
+          return {
+            ...slot,
+            status: "submitted",
+            date: new Date(match.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+            fileLink: match.file_link,
+            reviewStatus: match.status,
+            rejectionReason: match.rejection_reason,
+          };
+        }));
+      })
+      .catch((err: unknown) => {
+        console.error("Failed to load existing documents:", err);
+      })
+      .finally(() => setDocumentsLoading(false));
+  }, []);
 
   interface DtrEntry { id: number; date: string; timeIn: string; timeOut: string; status: string; task: string; hours: number; proofFile: string | null; }
   const [dtrEntries, setDtrEntries] = useState<DtrEntry[]>([]);
@@ -262,7 +338,7 @@ export default function ProfilePage() {
       });
 
       setDocuments(docs => docs.map(d => 
-        d.id === id ? { ...d, status: "submitted", date: "Just now", fileLink: res.file_link } : d
+        d.id === id ? { ...d, status: "submitted", date: "Just now", fileLink: res.document?.file_link, reviewStatus: "pending", rejectionReason: null } : d
       ));
     } catch (err: unknown) {
       const error = err as Error;
@@ -273,9 +349,14 @@ export default function ProfilePage() {
     }
   };
 
+  // NOTE: there is currently no DELETE /documents/{id} endpoint on the backend.
+  // This only clears local UI state — since documents/mine is now fetched on
+  // mount, the "removed" document will reappear on next page load/refresh
+  // because nothing was actually deleted server-side. A real delete endpoint
+  // is needed before this button does what it visually implies.
   const handleRemoveDocument = (id: number) => {
     setDocuments(docs => docs.map(d => 
-      d.id === id ? { ...d, status: "pending", date: "Required before start", fileLink: undefined } : d
+      d.id === id ? { ...d, status: "pending", date: "Required before start", fileLink: undefined, reviewStatus: undefined, rejectionReason: undefined } : d
     ));
   };
 
@@ -700,9 +781,15 @@ export default function ProfilePage() {
           <RevealBox delay={0.1}>
             <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#0f172a", marginBottom: "1.25rem" }}>Required Documents</h2>
             <div className="ui-card" style={{ padding: 0, overflow: "hidden" }}>
-              {documents.map((doc) => (
-                <DocumentRow key={doc.id} doc={doc} onUpload={handleUpload} onRemove={handleRemoveDocument} />
-              ))}
+              {documentsLoading ? (
+                <div style={{ padding: "2.5rem", textAlign: "center", color: "#94a3b8", fontSize: "0.9rem" }}>
+                  Loading your documents...
+                </div>
+              ) : (
+                documents.map((doc) => (
+                  <DocumentRow key={doc.id} doc={doc} onUpload={handleUpload} onRemove={handleRemoveDocument} />
+                ))
+              )}
             </div>
           </RevealBox>
 

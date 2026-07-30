@@ -73,8 +73,10 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - OCTANE_SERVER=frankenphp
+      - FRANKENPHP_BINARY=/usr/local/bin/frankenphp
     volumes:
       - ./backend:/app
+      - /app/vendor
     depends_on:
       db:
         condition: service_healthy
