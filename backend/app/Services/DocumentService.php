@@ -57,6 +57,19 @@ class DocumentService
     }
 
     /**
+     * Get all documents belonging to a single user (student's own uploads),
+     * with reviewer info attached so rejection/approval context is visible.
+     * Ordered newest-first so the student sees their latest submission at a glance.
+     */
+    public function getMyDocuments(int $userId)
+    {
+        return Document::with('reviewer')
+            ->where('user_id', $userId)
+            ->orderBy('created_at', 'desc')
+            ->get();
+    }
+
+    /**
      * Approve or reject a document.
      */
     public function reviewDocument(Document $document, User $reviewer, string $status, ?string $reason = null): Document

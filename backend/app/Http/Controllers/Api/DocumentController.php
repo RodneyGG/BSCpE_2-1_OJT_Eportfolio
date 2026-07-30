@@ -53,6 +53,19 @@ class DocumentController extends Controller
     }
 
     /**
+     * List all documents belonging to the currently authenticated user
+     * (student's own uploads, any role can hit this — it's always self-scoped).
+     */
+    public function mine(): JsonResponse
+    {
+        $documents = $this->documentService->getMyDocuments(auth()->id());
+
+        return response()->json([
+            'documents' => $documents,
+        ]);
+    }
+
+    /**
      * Approve or reject a document (Prof only, via route middleware).
      */
     public function review(ReviewDocumentRequest $request, Document $document): JsonResponse
