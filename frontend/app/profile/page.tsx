@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRole } from "../context/RoleContext";
 import { fetchApi } from "../../lib/api";
 import CompanySelect from "./CompanySelect";
+import DocumentViewerModal from "../components/DocumentViewerModal";
 
 /* ═══════════════════════════ Scroll reveal hook ════════════════════ */
 function useReveal() {
@@ -103,7 +104,7 @@ function IconX() {
 
 /* ═══════════════════════════ Components ════════════════════════ */
 
-function DocumentRow({ doc, onUpload, onRemove }: { doc: { id: number, name: string, status: string, date: string, fileLink?: string, reviewStatus?: "pending" | "approved" | "rejected", rejectionReason?: string | null }, onUpload: (id: number, file: File) => void, onRemove: (id: number) => void }) {
+function DocumentRow({ doc, onUpload, onRemove, onView }: { doc: { id: number, name: string, status: string, date: string, fileLink?: string, reviewStatus?: "pending" | "approved" | "rejected", rejectionReason?: string | null }, onUpload: (id: number, file: File) => void, onRemove: (id: number) => void, onView: (title: string, fileLink: string) => void }) {
   const [dragActive, setDragActive] = useState(false);
 
   const handleDrag = (e: React.DragEvent) => {
@@ -175,7 +176,7 @@ function DocumentRow({ doc, onUpload, onRemove }: { doc: { id: number, name: str
       {doc.status === "submitted" && (
         <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
           {doc.fileLink && (
-            <a href={doc.fileLink} target="_blank" rel="noreferrer" style={{ background: "#e0f2fe", color: "#0369a1", padding: "0.3rem 0.8rem", borderRadius: "9999px", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", textDecoration: "none", transition: "opacity 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.opacity = "0.8"} onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}>View PDF</a>
+            <button onClick={() => onView(doc.name, doc.fileLink!)} style={{ background: "#e0f2fe", color: "#0369a1", border: "none", padding: "0.3rem 0.8rem", borderRadius: "9999px", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", cursor: "pointer", transition: "opacity 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.opacity = "0.8"} onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}>View PDF</button>
           )}
           <button onClick={() => onRemove(doc.id)} style={{ background: "#fee2e2", color: "#b91c1c", border: "none", padding: "0.3rem 0.8rem", borderRadius: "9999px", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", cursor: "pointer", transition: "opacity 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.opacity = "0.8"} onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}>Remove</button>
           {reviewBadge}
@@ -270,6 +271,7 @@ export default function ProfilePage() {
     { id: 5, name: "Parents' Consent", status: "pending", date: "Required before start" },
   ]);
   const [documentsLoading, setDocumentsLoading] = useState(true);
+  const [selectedDoc, setSelectedDoc] = useState<{ title: string; fileLink: string } | null>(null);
 
   interface RealDocument {
     id: number;
@@ -787,7 +789,13 @@ export default function ProfilePage() {
                 </div>
               ) : (
                 documents.map((doc) => (
-                  <DocumentRow key={doc.id} doc={doc} onUpload={handleUpload} onRemove={handleRemoveDocument} />
+                  <DocumentRow
+                    key={doc.id}
+                    doc={doc}
+                    onUpload={handleUpload}
+                    onRemove={handleRemoveDocument}
+                    onView={(title, fileLink) => setSelectedDoc({ title, fileLink })}
+                  />
                 ))
               )}
             </div>
@@ -1040,6 +1048,15 @@ export default function ProfilePage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* ══ DOCUMENT VIEWER MODAL ══ */}
+      {selectedDoc && (
+        <DocumentViewerModal
+          title={selectedDoc.title}
+          fileLink={selectedDoc.fileLink}
+          onClose={() => setSelectedDoc(null)}
+        />
       )}
     </div>
   );
