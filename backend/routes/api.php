@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CompanyController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\UserController;
 
 // Public routes
 Route::post('/login', [AuthController::class, 'login']);
@@ -33,4 +34,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/documents/mine', [DocumentController::class, 'mine']);
     Route::get('/documents/pending', [DocumentController::class, 'pending'])->middleware('role:prof');
     Route::patch('/documents/{document}/review', [DocumentController::class, 'review'])->middleware('role:prof');
+
+    // User management (admin + prof)
+    Route::get('/admin/users', [UserController::class, 'index'])->middleware('role:admin,prof');
+    Route::post('/admin/users', [UserController::class, 'store'])->middleware('role:admin,prof');
+    Route::patch('/admin/users/{user}/reset-password', [UserController::class, 'resetPassword'])->middleware('role:admin,prof');
+    Route::patch('/admin/users/{user}/toggle-review', [UserController::class, 'toggleReview'])->middleware('role:prof');
+    Route::patch('/admin/users/{user}/deactivate', [UserController::class, 'deactivate'])->middleware('role:admin,prof');
+    Route::patch('/admin/users/{user}/reactivate', [UserController::class, 'reactivate'])->middleware('role:admin,prof');
 });
