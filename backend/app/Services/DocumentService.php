@@ -126,7 +126,7 @@ class DocumentService
 
         if ($document->document_type === 'dtr' && $status === 'approved' && $document->claimed_hours !== null) {
             $document->user->update([
-                'hours_rendered' => $document->claimed_hours,
+                'hours_rendered' => $document->user->hours_rendered + $document->claimed_hours,
             ]);
         }
 

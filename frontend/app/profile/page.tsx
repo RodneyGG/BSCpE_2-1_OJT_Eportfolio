@@ -147,7 +147,9 @@ function DocumentCardItem({ doc, onUpload, onRemove, onView }: { doc: { id: stri
               {doc.fileLink && (
                 <button onClick={() => onView(doc.name, doc.fileLink!)} style={{ flex: 1, background: "#e0f2fe", color: "#0369a1", border: "none", padding: "0.75rem", borderRadius: "0.5rem", fontSize: "0.9rem", fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}>Preview File</button>
               )}
-              <button onClick={() => onRemove(doc.id)} style={{ flex: 1, background: "#fee2e2", color: "#b91c1c", border: "none", padding: "0.75rem", borderRadius: "0.5rem", fontSize: "0.9rem", fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}>Replace File</button>
+              <button onClick={() => onRemove(doc.id)} style={{ flex: 1, background: doc.reviewStatus === "rejected" ? "#ef4444" : "#fee2e2", color: doc.reviewStatus === "rejected" ? "white" : "#b91c1c", border: "none", padding: "0.75rem", borderRadius: "0.5rem", fontSize: "0.9rem", fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}>
+                {doc.reviewStatus === "rejected" ? "Re-upload Document" : "Replace File"}
+              </button>
             </div>
           </div>
         ) : doc.status === "uploading" ? (
@@ -324,7 +326,7 @@ export default function ProfilePage() {
 
   const hoursRendered = profileData ? (parseFloat(profileData.hours_rendered) || 0) : 0;
   const displayName = profileData?.name || "—";
-  const displayProgram = profileData?.program || "Program not set";
+  const displayProgram = profileData?.program || "BSCpE 2-1";
 
   return (
     <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)", fontFamily: "var(--font-geist-sans, system-ui, sans-serif)", display: "flex", flexDirection: "column" }}>
