@@ -22,6 +22,8 @@ class User extends Authenticatable
         'role',
         'company_id',
         'must_change_password',
+        'can_review',
+        'is_active',
     ];
 
     protected $hidden = [
@@ -35,6 +37,9 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'must_change_password' => 'boolean',
+            'can_review' => 'boolean',
+            'is_active' => 'boolean',
+
         ];
     }
 
@@ -55,7 +60,7 @@ class User extends Authenticatable
 
     public function isStudent(): bool
     {
-        return $this->role === 'student';
+        return $this->role === 'normal';
     }
     public function documents(): \Illuminate\Database\Eloquent\Relations\HasMany
     {

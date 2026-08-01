@@ -5,7 +5,8 @@ import Link from "next/link";
 import { useRole } from "../context/RoleContext";
 import { fetchApi } from "../../lib/api";
 import CompanySelect from "./CompanySelect";
-
+import DocumentViewerModal from "../components/DocumentViewerModal";
+import AppNavbar from "../components/AppNavbar";
 /* ═══════════════════════════ Scroll reveal hook ════════════════════ */
 function useReveal() {
   const ref = useRef<HTMLDivElement>(null);
@@ -103,7 +104,7 @@ function IconX() {
 
 /* ═══════════════════════════ Components ════════════════════════ */
 
-function DocumentRow({ doc, onUpload, onRemove }: { doc: { id: number, name: string, status: string, date: string, fileLink?: string, reviewStatus?: "pending" | "approved" | "rejected", rejectionReason?: string | null }, onUpload: (id: number, file: File) => void, onRemove: (id: number) => void }) {
+function DocumentRow({ doc, onUpload, onRemove, onView }: { doc: { id: number, name: string, status: string, date: string, fileLink?: string, reviewStatus?: "pending" | "approved" | "rejected", rejectionReason?: string | null }, onUpload: (id: number, file: File) => void, onRemove: (id: number) => void, onView: (title: string, fileLink: string) => void }) {
   const [dragActive, setDragActive] = useState(false);
 
   const handleDrag = (e: React.DragEvent) => {
@@ -175,7 +176,7 @@ function DocumentRow({ doc, onUpload, onRemove }: { doc: { id: number, name: str
       {doc.status === "submitted" && (
         <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
           {doc.fileLink && (
-            <a href={doc.fileLink} target="_blank" rel="noreferrer" style={{ background: "#e0f2fe", color: "#0369a1", padding: "0.3rem 0.8rem", borderRadius: "9999px", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", textDecoration: "none", transition: "opacity 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.opacity = "0.8"} onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}>View PDF</a>
+            <button onClick={() => onView(doc.name, doc.fileLink!)} style={{ background: "#e0f2fe", color: "#0369a1", border: "none", padding: "0.3rem 0.8rem", borderRadius: "9999px", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", cursor: "pointer", transition: "opacity 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.opacity = "0.8"} onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}>View PDF</button>
           )}
           <button onClick={() => onRemove(doc.id)} style={{ background: "#fee2e2", color: "#b91c1c", border: "none", padding: "0.3rem 0.8rem", borderRadius: "9999px", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", cursor: "pointer", transition: "opacity 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.opacity = "0.8"} onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}>Remove</button>
           {reviewBadge}
@@ -270,6 +271,7 @@ export default function ProfilePage() {
     { id: 5, name: "Parents' Consent", status: "pending", date: "Required before start" },
   ]);
   const [documentsLoading, setDocumentsLoading] = useState(true);
+  const [selectedDoc, setSelectedDoc] = useState<{ title: string; fileLink: string } | null>(null);
 
   interface RealDocument {
     id: number;
@@ -567,66 +569,8 @@ export default function ProfilePage() {
       `}</style>
 
       {/* ══ TOP NAV ══ */}
-      <nav style={{
-        background: "linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%)",
-        boxShadow: "0 2px 12px rgba(15,23,42,0.4)",
-        position: "sticky", top: 0, zIndex: 40,
-      }}>
-        <div className="profile-nav-inner" style={{
-          maxWidth: 1100, margin: "0 auto", padding: "0 2rem", height: 64,
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
-            <Link href="/" className="back-link" style={{
-              display: "flex", alignItems: "center", gap: "0.5rem",
-              color: "#93c5fd", textDecoration: "none", fontSize: "0.85rem",
-              fontWeight: 600, transition: "opacity 0.2s ease"
-            }}>
-              <IconBack />
-              Return to Dashboard
-            </Link>
-            {role === 'admin' && (
-              <>
-                <div style={{ width: 1, height: 20, backgroundColor: "rgba(255,255,255,0.12)" }} />
-                <Link href="/admin" className="back-link" style={{
-                  color: "#93c5fd", textDecoration: "none", fontSize: "0.85rem",
-                  fontWeight: 600, transition: "opacity 0.2s ease"
-                }}>
-                  Return to Admin Dashboard
-                </Link>
-              </>
-            )}
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-            <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "white", letterSpacing: "0.1em", textTransform: "uppercase" }}>
-              Student Profile
-            </div>
-            <button
-              onClick={() => { logout(); window.location.href = "/"; }}
-              style={{
-                display: "flex", alignItems: "center", gap: "0.4rem",
-                background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.3)",
-                borderRadius: "9999px", padding: "0.35rem 0.85rem",
-                color: "#fca5a5", fontSize: "0.7rem", fontWeight: 700,
-                letterSpacing: "0.06em", textTransform: "uppercase",
-                cursor: "pointer", transition: "all 0.2s ease",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "rgba(239,68,68,0.25)";
-                e.currentTarget.style.color = "white";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "rgba(239,68,68,0.15)";
-                e.currentTarget.style.color = "#fca5a5";
-              }}
-            >
-              <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
-              Log Out
-            </button>
-          </div>
-        </div>
-      </nav>
-
+      <AppNavbar />
+      
       {/* ══ MAIN LAYOUT ══ */}
       <main className="profile-main" style={{ maxWidth: 1100, margin: "0 auto", padding: "3rem 2rem", flex: 1, width: "100%" }}>
         
@@ -787,7 +731,13 @@ export default function ProfilePage() {
                 </div>
               ) : (
                 documents.map((doc) => (
-                  <DocumentRow key={doc.id} doc={doc} onUpload={handleUpload} onRemove={handleRemoveDocument} />
+                  <DocumentRow
+                    key={doc.id}
+                    doc={doc}
+                    onUpload={handleUpload}
+                    onRemove={handleRemoveDocument}
+                    onView={(title, fileLink) => setSelectedDoc({ title, fileLink })}
+                  />
                 ))
               )}
             </div>
@@ -1040,6 +990,15 @@ export default function ProfilePage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* ══ DOCUMENT VIEWER MODAL ══ */}
+      {selectedDoc && (
+        <DocumentViewerModal
+          title={selectedDoc.title}
+          fileLink={selectedDoc.fileLink}
+          onClose={() => setSelectedDoc(null)}
+        />
       )}
     </div>
   );
