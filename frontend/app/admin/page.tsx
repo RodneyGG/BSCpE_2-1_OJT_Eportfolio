@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRole } from "../context/RoleContext";
 import { fetchApi } from "../../lib/api";
+import AppNavbar from "../components/AppNavbar";
 import PendingApprovalSection from "../components/PendingApprovalSection";
 import ManageUsersSection, { ManagedUser } from "../components/ManageUsersSection";
 
@@ -40,13 +40,6 @@ function RevealBox({ children, delay = 0, style = {} }: { children: React.ReactN
 }
 
 /* ═══════════════════════════ Icons ═══════════════════════════ */
-function IconBack() {
-  return (
-    <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M19 12H5M12 19l-7-7 7-7"/>
-    </svg>
-  );
-}
 function IconUsers() {
   return (
     <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
@@ -71,7 +64,7 @@ function IconX() {
 
 /* ═══════════════════════════ Page ════════════════════════════ */
 export default function AdminDashboard() {
-  const { logout, role, isLoggedIn } = useRole();
+  const { role, isLoggedIn } = useRole();
   const router = useRouter();
   const [selectedStudent, setSelectedStudent] = useState<ManagedUser | null>(null);
   const [pendingCount, setPendingCount] = useState<number | null>(null);
@@ -160,39 +153,7 @@ export default function AdminDashboard() {
       `}</style>
 
       {/* ══ TOP NAV ══ */}
-      <nav style={{
-        background: "linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%)",
-        boxShadow: "0 2px 12px rgba(15,23,42,0.4)",
-        position: "sticky", top: 0, zIndex: 50,
-      }}>
-        <div style={{
-          maxWidth: 1400, margin: "0 auto", padding: "0 2rem", height: 64,
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-        }}>
-          <Link href="/" className="back-link" style={{
-            display: "flex", alignItems: "center", gap: "0.5rem",
-            color: "#93c5fd", textDecoration: "none", fontSize: "0.85rem",
-            fontWeight: 600, transition: "opacity 0.2s ease"
-          }}>
-            <IconBack />
-            Return to Homepage
-          </Link>
-          <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
-            <div style={{ fontSize: "0.8rem", fontWeight: 800, color: "white", letterSpacing: "0.05em", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-              <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#ef4444" }}></div>
-              {role === 'prof' ? 'OJT PROFESSOR DASHBOARD' : 'OJT ADMIN DASHBOARD'}
-            </div>
-            <div style={{ width: 1, height: 20, backgroundColor: "rgba(255,255,255,0.12)" }} />
-            <button onClick={() => { logout(); router.push('/login'); }} style={{
-              background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "9999px",
-              padding: "0.4rem 0.8rem", color: "white", fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.05em",
-              textTransform: "uppercase", cursor: "pointer", transition: "background 0.2s ease"
-            }} onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.2)"} onMouseLeave={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.1)"}>
-              Log Out
-            </button>
-          </div>
-        </div>
-      </nav>
+      <AppNavbar />
 
       {/* ══ MAIN DASHBOARD ══ */}
       <main className="admin-main" style={{ maxWidth: 1400, margin: "0 auto", padding: "2.5rem 2rem", flex: 1, width: "100%" }}>
@@ -202,6 +163,12 @@ export default function AdminDashboard() {
         <RevealBox>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "2.5rem", flexWrap: "wrap", gap: "1rem" }}>
             <div>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
+                <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#ef4444" }} />
+                <span style={{ fontSize: "0.7rem", fontWeight: 800, color: "#64748b", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+                  {role === 'prof' ? 'OJT Professor Dashboard' : 'OJT Admin Dashboard'}
+                </span>
+              </div>
               <h1 style={{ fontSize: "2.25rem", fontWeight: 800, color: "#0f172a", margin: "0 0 0.25rem 0", letterSpacing: "-0.02em" }}>Overview</h1>
               <p style={{ fontSize: "1rem", color: "#64748b", margin: 0, fontWeight: 500 }}>Manage students, accounts, and review documents.</p>
             </div>
@@ -238,7 +205,11 @@ export default function AdminDashboard() {
         {/* ── STATS ROW ── */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "1.5rem", marginBottom: "2.5rem" }}>
           <RevealBox delay={0.1}>
-            <div className="admin-card">
+            <div
+              className="admin-card"
+              onClick={() => router.push("/students")}
+              style={{ cursor: "pointer" }}
+            >
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1rem" }}>
                 <div className="stat-icon" style={{ background: "#eff6ff", color: "#3b82f6" }}><IconUsers /></div>
               </div>
@@ -250,7 +221,7 @@ export default function AdminDashboard() {
           </RevealBox>
 
           <RevealBox delay={0.3}>
-            <div className="admin-card">f
+            <div className="admin-card">
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1rem" }}>
                 <div className="stat-icon" style={{ background: "#fee2e2", color: "#ef4444" }}><IconFileText /></div>
                 {pendingCount !== null && pendingCount > 0 && (

@@ -1,5 +1,7 @@
 <?php
+
 namespace App\Services;
+
 use Illuminate\Http\UploadedFile;
 use App\Models\User;
 use App\Models\Document;
@@ -7,16 +9,28 @@ use App\Models\Document;
 class DocumentService
 {
     protected GoogleDriveService $driveService;
+
     public function __construct(GoogleDriveService $driveService)
     {
         $this->driveService = $driveService;
     }
+
     /**
      * Upload a document to Google Drive on behalf of the Admin via OAuth,
      * and persist a record of it for review tracking.
+     *
+     * DTR documents are cumulative: uploading a new one supersedes
+     * (deletes) any previous DTR record the student had, so there is
+     * never more than one DTR document in the review queue per student.
      */
-    public function uploadDocument(UploadedFile $file, User $user, string $documentType): array
+    public function uploadDocument(UploadedFile $file, User $user, string $documentType, ?float $claimedHours = null): array
     {
+        if ($documentType === 'dtr') {
+            Document::where('user_id', $user->id)
+                ->where('document_type', 'dtr')
+                ->delete();
+        }
+
         $folderName = $user->email . ' - ' . $user->name;
         $existingFolders = $this->driveService->listFiles();
         $userFolder = null;
@@ -27,14 +41,17 @@ class DocumentService
                 break;
             }
         }
+
         if (!$userFolder) {
             $userFolder = $this->driveService->createFolder($folderName);
         }
+
         $uploadedFile = $this->driveService->upload($file, $userFolder->id);
 
         $document = Document::create([
             'user_id' => $user->id,
             'document_type' => $documentType,
+            'claimed_hours' => $documentType === 'dtr' ? $claimedHours : null,
             'file_id' => $uploadedFile->id,
             'file_link' => $uploadedFile->webViewLink,
             'status' => 'pending',
@@ -71,6 +88,9 @@ class DocumentService
 
     /**
      * Approve or reject a document.
+     *
+     * When approving a DTR document, the student's claimed_hours becomes
+     * their official hours_rendered on the user record.
      */
     public function reviewDocument(Document $document, User $reviewer, string $status, ?string $reason = null): Document
     {
@@ -80,6 +100,12 @@ class DocumentService
             'reviewed_at' => now(),
             'rejection_reason' => $status === 'rejected' ? $reason : null,
         ]);
+
+        if ($document->document_type === 'dtr' && $status === 'approved' && $document->claimed_hours !== null) {
+            $document->user->update([
+                'hours_rendered' => $document->claimed_hours,
+            ]);
+        }
 
         return $document->fresh(['user', 'reviewer']);
     }

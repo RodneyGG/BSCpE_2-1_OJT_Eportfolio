@@ -13,6 +13,7 @@ class Document extends Model
     protected $fillable = [
         'user_id',
         'document_type',
+        'claimed_hours',
         'file_id',
         'file_link',
         'status',
@@ -25,6 +26,7 @@ class Document extends Model
     {
         return [
             'reviewed_at' => 'datetime',
+            'claimed_hours' => 'decimal:2',
         ];
     }
 

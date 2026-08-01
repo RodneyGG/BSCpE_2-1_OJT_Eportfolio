@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import Link from "next/link";
 import { useRole } from "./context/RoleContext";
+import AppNavbar from "./components/AppNavbar";
+import { fetchApi } from "../lib/api";
+import { useRouter } from "next/navigation";
 /* ═══════════════════════════ Data ═══════════════════════════ */
 interface Student { id: string; name: string; role: string; }
 interface Company { id: number; name: string; location: string; studentCount: number; students: Student[]; }
@@ -232,88 +234,6 @@ function CompanyRow({ company, isOpen, onToggle, index }: {
   );
 }
 
-/* ══════════════════════ Auth-aware Nav Pill ════════════════════ */
-function NavUserPill() {
-  const { isLoggedIn, user, logout } = useRole();
-  
-  if (!isLoggedIn) {
-    return (
-      <Link href="/login" style={{
-        display: "flex", alignItems: "center", gap: "0.5rem",
-        background: "rgba(255,255,255,0.1)",
-        border: "1px solid rgba(255,255,255,0.15)",
-        borderRadius: "9999px",
-        padding: "0.4rem 1rem",
-        textDecoration: "none",
-        transition: "background 0.2s ease, transform 0.2s ease",
-        fontSize: "0.75rem", fontWeight: 700, color: "white",
-        letterSpacing: "0.06em", textTransform: "uppercase",
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.background = "rgba(255,255,255,0.18)";
-        e.currentTarget.style.transform = "translateY(-1px)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.background = "rgba(255,255,255,0.1)";
-        e.currentTarget.style.transform = "translateY(0)";
-      }}>
-        <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>
-        Log In
-      </Link>
-    );
-  }
-
-  const initials = user!.name.split(" ").map(w => w[0]).slice(0, 2).join("");
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-      <Link href="/profile" style={{
-        display: "flex", alignItems: "center", gap: "0.5rem",
-        background: "rgba(255,255,255,0.1)",
-        border: "1px solid rgba(255,255,255,0.15)",
-        borderRadius: "9999px",
-        padding: "0.28rem 0.85rem 0.28rem 0.35rem",
-        textDecoration: "none",
-        transition: "background 0.2s ease, transform 0.2s ease",
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.background = "rgba(255,255,255,0.15)";
-        e.currentTarget.style.transform = "translateY(-1px)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.background = "rgba(255,255,255,0.1)";
-        e.currentTarget.style.transform = "translateY(0)";
-      }}>
-        <div style={{
-          width: 26, height: 26, borderRadius: "50%",
-          background: "linear-gradient(135deg, #f59e0b 0%, #ef4444 100%)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: "0.6rem", fontWeight: 800, color: "white", flexShrink: 0,
-        }}>{initials}</div>
-        <span style={{ fontSize: "0.7rem", fontWeight: 700, color: "white",
-          letterSpacing: "0.05em", textTransform: "uppercase",
-          whiteSpace: "nowrap" }}>{user!.name.toUpperCase()}</span>
-      </Link>
-      <button onClick={() => { logout(); window.location.href = '/'; }} style={{
-        display: "flex", alignItems: "center", justifyContent: "center",
-        background: "rgba(255,255,255,0.1)",
-        border: "1px solid rgba(255,255,255,0.15)",
-        borderRadius: "9999px",
-        padding: "0.4rem 0.8rem",
-        cursor: "pointer",
-        color: "white",
-        fontSize: "0.7rem", fontWeight: 700,
-        letterSpacing: "0.05em", textTransform: "uppercase",
-        transition: "background 0.2s ease",
-      }}
-      onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.2)"}
-      onMouseLeave={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.1)"}
-      >
-        Logout
-      </button>
-    </div>
-  );
-}
-
 /* ══════════════════════ MOA Pill (auth-gated) ════════════════════ */
 function MoaPill() {
   const { isLoggedIn } = useRole();
@@ -326,24 +246,15 @@ function MoaPill() {
   );
 }
 
-import { fetchApi } from "../lib/api";
-
 /* ═══════════════════════════ Page ════════════════════════════ */
 export default function Home() {
-  const { isLoggedIn, role } = useRole();
+  const router = useRouter();
   const [openId, setOpenId] = useState<number | null>(0);
-  const [navScrolled, setNavScrolled] = useState(false);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loadingCompanies, setLoadingCompanies] = useState(true);
 
   const toggle = (id: number) => setOpenId(prev => prev === id ? null : id);
   const totalStudents = companies.reduce((s, c) => s + c.studentCount, 0);
-
-  useEffect(() => {
-    const onScroll = () => setNavScrolled(window.scrollY > 10);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
 
   useEffect(() => {
     fetchApi('/companies')
@@ -396,7 +307,6 @@ export default function Home() {
           .footer-grid { grid-template-columns: 1fr !important; }
         }
         @media (max-width: 640px) {
-          .nav-inner { padding: 0 1rem !important; }
           .page-inner { padding: 1rem !important; }
           .hero-stats { gap: 0.5rem !important; }
           .stat-tile { min-width: 75px !important; padding: 0.75rem 0.85rem !important; }
@@ -411,74 +321,7 @@ export default function Home() {
       }}>
 
         {/* ══ NAVBAR ══ */}
-        <nav style={{
-          background: navScrolled
-            ? "rgba(15,23,42,0.97)"
-            : "linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%)",
-          backdropFilter: navScrolled ? "blur(12px)" : "none",
-          boxShadow: navScrolled ? "0 4px 24px rgba(0,0,0,0.4)" : "0 2px 12px rgba(15,23,42,0.4)",
-          position: "sticky", top: 0, zIndex: 50,
-          transition: "all 0.3s ease",
-          animation: "fadeSlideDown 0.5s ease forwards",
-        }}>
-          <div className="nav-inner" style={{
-            maxWidth: 1280, margin: "0 auto",
-            padding: "0 2rem", height: 60,
-            display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem",
-          }}>
-            {/* Brand */}
-            <div style={{ display: "flex", alignItems: "center", gap: "0.65rem" }}>
-              <div style={{
-                width: 34, height: 34, borderRadius: "0.5rem",
-                background: "linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                boxShadow: "0 0 0 2px rgba(99,102,241,0.35)",
-                flexShrink: 0,
-              }}>
-                <svg width={16} height={16} viewBox="0 0 24 24" fill="none"
-                  stroke="white" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>
-                </svg>
-              </div>
-              <div>
-                <div style={{ fontSize: "0.88rem", fontWeight: 800, color: "white",
-                  letterSpacing: "0.05em", lineHeight: 1 }}>BSCPE 2-1</div>
-                <div style={{ fontSize: "0.55rem", color: "#93c5fd", letterSpacing: "0.14em",
-                  textTransform: "uppercase", lineHeight: 1, marginTop: 2 }}>OJT Tracker</div>
-              </div>
-            </div>
-
-            {/* Right */}
-            <div style={{ display: "flex", alignItems: "center", gap: "1.25rem" }}>
-              <a href="#companies" style={{ fontSize: "0.75rem", fontWeight: 600,
-                color: "#93c5fd", textDecoration: "none", letterSpacing: "0.06em",
-                textTransform: "uppercase", transition: "color 0.2s" }}
-                onClick={(e) => {
-                  e.preventDefault();
-                  document.getElementById('companies')?.scrollIntoView({ behavior: 'smooth' });
-                }}>
-                Companies
-              </a>
-              {isLoggedIn && (
-                <Link href="/profile" style={{ fontSize: "0.75rem", fontWeight: 600,
-                  color: "#93c5fd", textDecoration: "none", letterSpacing: "0.06em",
-                  textTransform: "uppercase", transition: "color 0.2s" }}>
-                  Profile
-                </Link>
-              )}
-              {isLoggedIn && role === 'admin' && (
-                <Link href="/admin" style={{ fontSize: "0.75rem", fontWeight: 600,
-                  color: "#93c5fd", textDecoration: "none", letterSpacing: "0.06em",
-                  textTransform: "uppercase", transition: "color 0.2s" }}>
-                  Admin
-                </Link>
-              )}
-              <div style={{ width: 1, height: 20, backgroundColor: "rgba(255,255,255,0.12)" }} />
-              {/* Auth-aware user pill */}
-              <NavUserPill />
-            </div>
-          </div>
-        </nav>
+        <AppNavbar />
 
         {/* ══ HERO ══ */}
         <div style={{
@@ -541,18 +384,26 @@ export default function Home() {
                 animation: "fadeSlideUp 0.6s ease 0.25s both",
               }}>
                 {[
-                  { value: companies.length, label: "Companies", icon: <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="#93c5fd" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"><path d="M3 21h18M3 7v14M21 7v14M6 11h3M6 15h3M15 11h3M15 15h3M9 21V7l3-4 3 4v14" /></svg> },
-                  { value: totalStudents,    label: "Students",  icon: <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="#93c5fd" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> },
-                  { value: "300",            label: "OJT Hrs",   icon: <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="#93c5fd" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> },
+                  { value: companies.length, label: "Companies", href: null as string | null, icon: <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="#93c5fd" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"><path d="M3 21h18M3 7v14M21 7v14M6 11h3M6 15h3M15 11h3M15 15h3M9 21V7l3-4 3 4v14" /></svg> },
+                  { value: totalStudents,    label: "Students",  href: "/students" as string | null, icon: <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="#93c5fd" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> },
+                  { value: "300",            label: "OJT Hrs",   href: null as string | null, icon: <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="#93c5fd" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> },
                 ].map((s, i) => (
-                  <div key={s.label} className="stat-tile" style={{
-                    background: "rgba(255,255,255,0.08)",
-                    border: "1px solid rgba(255,255,255,0.12)",
-                    borderRadius: "0.875rem", padding: "1rem 1.25rem",
-                    textAlign: "center", minWidth: 90,
-                    transition: "all 0.25s ease", cursor: "default",
-                    animation: `fadeSlideUp 0.5s ease ${0.3 + i * 0.1}s both`,
-                  }}>
+                  <div
+                    key={s.label}
+                    className="stat-tile"
+                    role={s.href ? "button" : undefined}
+                    tabIndex={s.href ? 0 : undefined}
+                    onClick={() => { if (s.href) router.push(s.href); }}
+                    onKeyDown={(e) => { if (s.href && (e.key === "Enter" || e.key === " ")) router.push(s.href); }}
+                    style={{
+                      background: "rgba(255,255,255,0.08)",
+                      border: "1px solid rgba(255,255,255,0.12)",
+                      borderRadius: "0.875rem", padding: "1rem 1.25rem",
+                      textAlign: "center", minWidth: 90,
+                      transition: "all 0.25s ease", cursor: s.href ? "pointer" : "default",
+                      animation: `fadeSlideUp 0.5s ease ${0.3 + i * 0.1}s both`,
+                    }}
+                  >
                     <div style={{ fontSize: "1.1rem", marginBottom: "0.3rem" }}>{s.icon}</div>
                     <div style={{ fontSize: "1.6rem", fontWeight: 900, color: "white",
                       letterSpacing: "-0.03em", lineHeight: 1 }}>{s.value}</div>
