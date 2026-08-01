@@ -14,6 +14,7 @@ Route::get('/block', [BlockController::class, 'show']);
 Route::get('/google/callback', [\App\Http\Controllers\Api\GoogleOAuthController::class, 'callback']);
 
 use App\Http\Controllers\Api\DocumentController;
+use App\Http\Controllers\Api\NotificationController;
 
 // Protected routes (require Sanctum token)
 Route::middleware('auth:sanctum')->group(function () {
@@ -32,19 +33,25 @@ Route::middleware('auth:sanctum')->group(function () {
     // Companies
     Route::get('/companies/{company}', [CompanyController::class, 'show']);
     Route::patch('/companies/{company}/address', [CompanyController::class, 'updateAddress']);
+    Route::delete('/admin/companies/{company}', [CompanyController::class, 'destroy'])->middleware('role:admin');
 
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    
     // Documents
     Route::post('/documents/upload', [DocumentController::class, 'upload']);
     Route::get('/documents/mine', [DocumentController::class, 'mine']);
-    Route::get('/documents/pending', [DocumentController::class, 'pending'])->middleware('role:prof');
+    Route::get('/documents/pending', [DocumentController::class, 'pending'])->middleware('role:admin,prof');
     Route::patch('/documents/{document}/review', [DocumentController::class, 'review'])->middleware('role:admin,prof');
 
-    // User management (admin + prof)
-    Route::get('/admin/users', [UserController::class, 'index'])->middleware('role:admin,prof');
-    Route::post('/admin/users', [UserController::class, 'store'])->middleware('role:admin,prof');
-    Route::patch('/admin/users/{user}/reset-password', [UserController::class, 'resetPassword'])->middleware('role:admin,prof');
-    Route::patch('/admin/users/{user}/toggle-review', [UserController::class, 'toggleReview'])->middleware('role:prof');
-    Route::patch('/admin/users/{user}/deactivate', [UserController::class, 'deactivate'])->middleware('role:admin,prof');
-    Route::patch('/admin/users/{user}/reactivate', [UserController::class, 'reactivate'])->middleware('role:admin,prof');
+    // OJT Submission Checklist (admin + prof)
+    Route::get('/admin/checklist', [UserController::class, 'checklist'])->middleware('role:admin,prof');
+
+    // User management (admin only)
+    Route::get('/admin/users', [UserController::class, 'index'])->middleware('role:admin');
+    Route::post('/admin/users', [UserController::class, 'store'])->middleware('role:admin');
+    Route::patch('/admin/users/{user}/reset-password', [UserController::class, 'resetPassword'])->middleware('role:admin');
+    Route::patch('/admin/users/{user}/toggle-review', [UserController::class, 'toggleReview'])->middleware('role:admin');
+    Route::patch('/admin/users/{user}/deactivate', [UserController::class, 'deactivate'])->middleware('role:admin');
+    Route::patch('/admin/users/{user}/reactivate', [UserController::class, 'reactivate'])->middleware('role:admin');
     Route::get('/admin/users/{user}', [UserController::class, 'show'])->middleware('role:admin,prof');
 });

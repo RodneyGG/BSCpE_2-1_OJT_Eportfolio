@@ -13,6 +13,8 @@ class Document extends Model
     protected $fillable = [
         'user_id',
         'document_type',
+        'week',
+        'submitted_date',
         'claimed_hours',
         'file_id',
         'file_link',

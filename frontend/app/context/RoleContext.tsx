@@ -21,6 +21,7 @@ interface AuthContextValue {
   login: (user: User) => void;
   logout: () => void;
   isLoggedIn: boolean;
+  isInitialized: boolean;
 }
 
 const AuthContext = createContext<AuthContextValue>({
@@ -30,6 +31,7 @@ const AuthContext = createContext<AuthContextValue>({
   login: () => {},
   logout: () => {},
   isLoggedIn: false,
+  isInitialized: false,
 });
 
 export function RoleProvider({ children }: { children: ReactNode }) {
@@ -42,6 +44,7 @@ export function RoleProvider({ children }: { children: ReactNode }) {
       const storedUser = localStorage.getItem("ojt_user");
       if (storedUser) {
         const parsedUser = JSON.parse(storedUser);
+        if (parsedUser.role === "student") parsedUser.role = "normal";
         setUser(parsedUser);
         setRole(parsedUser.role);
       }
@@ -71,10 +74,8 @@ export function RoleProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  if (!isInitialized) return null; // Prevent hydration mismatch by waiting for mount
-
   return (
-    <AuthContext.Provider value={{ role, setRole, user, login, logout, isLoggedIn: !!user }}>
+    <AuthContext.Provider value={{ role, setRole, user, login, logout, isLoggedIn: !!user, isInitialized }}>
       {children}
     </AuthContext.Provider>
   );

@@ -66,8 +66,22 @@ class GoogleOAuthController extends Controller
             'created' => $accessToken['created'],
         ]);
 
-        return response()->json([
-            'message' => 'Google Drive authorized successfully! You can close this tab and return to the dashboard.',
-        ]);
+        // Return an HTML response that communicates back to the popup opener
+        return response(<<<HTML
+        <!DOCTYPE html>
+        <html>
+        <head><title>Authentication Success</title></head>
+        <body>
+            <script>
+                if (window.opener) {
+                    window.opener.postMessage('google_auth_success', '*');
+                    window.close();
+                } else {
+                    document.write('Google Drive authorized successfully! You can close this tab and return to the dashboard.');
+                }
+            </script>
+        </body>
+        </html>
+        HTML)->header('Content-Type', 'text/html');
     }
 }

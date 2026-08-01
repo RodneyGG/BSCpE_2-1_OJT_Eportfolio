@@ -71,7 +71,7 @@ export default function PendingApprovalSection({ onCountChange }: PendingApprova
     setLoading(true);
     setError(null);
     fetchApi("/documents/pending")
-      .then((data: { documents: PendingDocument[] }) => setDocuments(data.documents))
+      .then((data: any) => setDocuments(data.documents?.data || data.documents || []))
       .catch((err: { status?: number }) => {
         if (err.status === 403) {
           setForbidden(true);

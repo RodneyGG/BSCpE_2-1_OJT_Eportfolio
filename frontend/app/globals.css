@@ -132,3 +132,26 @@ body {
   background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
   border-radius: 9999px; margin: 1.25rem 0 2rem;
 }
+
+/* ═══════ Print ═══════ */
+@media print {
+  @page {
+    size: landscape;
+    margin: 0.4in;
+  }
+  body {
+    background: white !important;
+    color: black !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  nav,
+  .no-print,
+  .cl-no-print {
+    display: none !important;
+  }
+  .cl-print-header {
+    display: block !important;
+  }
+}
+

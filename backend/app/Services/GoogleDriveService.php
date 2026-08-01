@@ -41,9 +41,6 @@ class GoogleDriveService
                     ]);
                 }
             }
-        } else {
-            // Throw exception or let it fail gracefully if called without token
-            throw new \Exception("Google Drive is not authorized. The Administrator must authorize the application first.");
         }
 
         $this->driveService = new Drive($this->client);
@@ -53,12 +50,12 @@ class GoogleDriveService
     /**
      * Upload a file to Google Drive.
      */
-    public function upload(UploadedFile $file, string $folder = ''): DriveFile
+    public function upload(UploadedFile $file, string $folder = '', ?string $customFileName = null): DriveFile
     {
         $folderId = $folder ?: $this->folderId;
 
         $driveFile = new DriveFile([
-            'name' => $file->getClientOriginalName(),
+            'name' => $customFileName ?: $file->getClientOriginalName(),
             'parents' => [$folderId],
         ]);
 

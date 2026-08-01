@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useRole } from "../context/RoleContext";
 import { fetchApi } from "../../lib/api";
 import AppNavbar from "../components/AppNavbar";
+import ProtectedRoute from "../components/ProtectedRoute";
 import PendingApprovalSection from "../components/PendingApprovalSection";
 import ManageUsersSection, { ManagedUser } from "../components/ManageUsersSection";
 
@@ -64,32 +65,11 @@ function IconX() {
 
 /* ═══════════════════════════ Page ════════════════════════════ */
 export default function AdminDashboard() {
-  const { role, isLoggedIn } = useRole();
+  const { role } = useRole();
   const router = useRouter();
   const [selectedStudent, setSelectedStudent] = useState<ManagedUser | null>(null);
   const [pendingCount, setPendingCount] = useState<number | null>(null);
   const [studentCount, setStudentCount] = useState<number | null>(null);
-  const [authChecked, setAuthChecked] = useState(false);
-
-  useEffect(() => {
-    if (!isLoggedIn) {
-      router.replace("/login");
-      return;
-    }
-    if (role !== "admin" && role !== "prof") {
-      router.replace("/profile");
-      return;
-    }
-    setAuthChecked(true);
-  }, [isLoggedIn, role, router]);
-
-  if (!authChecked) {
-    return (
-      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#f1f5f9", color: "#64748b", fontSize: "0.9rem" }}>
-        Checking access...
-      </div>
-    );
-  }
 
   const getStatusColor = (isActive: boolean) => {
     return isActive
@@ -101,7 +81,16 @@ export default function AdminDashboard() {
     try {
       const data = await fetchApi('/google/auth');
       if (data.auth_url) {
-        window.location.href = data.auth_url;
+        const popup = window.open(data.auth_url, 'Google OAuth', 'width=600,height=700');
+        
+        // Listen for success message from popup
+        const handleMessage = (event: MessageEvent) => {
+          if (event.data === 'google_auth_success') {
+            alert('Google Drive authorized successfully!');
+            window.removeEventListener('message', handleMessage);
+          }
+        };
+        window.addEventListener('message', handleMessage);
       }
     } catch (err: unknown) {
       const error = err as Error;
@@ -110,8 +99,9 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div style={{
-      minHeight: "100vh",
+    <ProtectedRoute allowedRoles={['admin']}>
+      <div style={{
+        minHeight: "100vh",
       background: "#f1f5f9",
       fontFamily: "var(--font-geist-sans, system-ui, sans-serif)",
       display: "flex", flexDirection: "column",
@@ -320,5 +310,6 @@ export default function AdminDashboard() {
       </main>{/* closes admin-main */}
 
     </div>
+    </ProtectedRoute>
   );
 }
