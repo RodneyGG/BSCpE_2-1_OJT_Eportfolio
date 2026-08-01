@@ -69,11 +69,8 @@ export default function LoginPage() {
         return;
       }
 
-      if (response.user.role === 'admin' || response.user.role === 'prof') {
-        router.push("/admin");
-      } else {
-        router.push("/profile");
-      }
+      // All roles land on the homepage after login, not a role-specific page
+      router.push("/");
     } catch (err: unknown) {
       const error = err as Error;
       setErrorMsg(error.message || 'Invalid credentials');

@@ -19,16 +19,6 @@ function IconClose() {
   );
 }
 
-function IconExternal() {
-  return (
-    <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-      <polyline points="15 3 21 3 21 9" />
-      <line x1="10" y1="14" x2="21" y2="3" />
-    </svg>
-  );
-}
-
 interface DocumentViewerModalProps {
   title: string;
   fileLink: string;
@@ -40,7 +30,6 @@ export default function DocumentViewerModal({ title, fileLink, onClose }: Docume
   const [mounted, setMounted] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [closeHover, setCloseHover] = useState(false);
-  const [linkHover, setLinkHover] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -88,25 +77,6 @@ export default function DocumentViewerModal({ title, fileLink, onClose }: Docume
             {title}
           </h3>
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexShrink: 0, marginLeft: "1rem" }}>
-            <a
-              href={fileLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              onMouseEnter={() => setLinkHover(true)}
-              onMouseLeave={() => setLinkHover(false)}
-              style={{
-                display: "flex", alignItems: "center", gap: "0.35rem",
-                fontSize: "0.78rem", fontWeight: 500,
-                color: linkHover ? "#1d4ed8" : "#3b82f6",
-                textDecoration: "none",
-                padding: "0.4rem 0.6rem", borderRadius: "0.4rem",
-                background: linkHover ? "#eff6ff" : "transparent",
-                transition: "background 0.15s, color 0.15s",
-              }}
-            >
-              <IconExternal />
-              Open in Drive
-            </a>
             <button
               onClick={onClose}
               onMouseEnter={() => setCloseHover(true)}

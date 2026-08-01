@@ -16,6 +16,8 @@ class UploadDocumentRequest extends FormRequest
         return [
             'document' => ['required', 'file', 'mimes:pdf', 'max:10240'],
             'document_type' => ['required', 'string'],
+            'claimed_hours' => ['required_if:document_type,dtr', 'nullable', 'numeric', 'min:0', 'max:9999.99'],
+
         ];
     }
 }
