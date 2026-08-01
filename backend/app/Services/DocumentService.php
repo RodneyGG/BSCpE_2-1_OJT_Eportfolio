@@ -5,6 +5,7 @@ namespace App\Services;
 use Illuminate\Http\UploadedFile;
 use App\Models\User;
 use App\Models\Document;
+use App\Models\Notification;
 
 class DocumentService
 {
@@ -23,9 +24,11 @@ class DocumentService
      * (deletes) any previous DTR record the student had, so there is
      * never more than one DTR document in the review queue per student.
      */
-    public function uploadDocument(UploadedFile $file, User $user, string $documentType, ?float $claimedHours = null): array
+    public function uploadDocument(UploadedFile $file, User $user, string $documentType, ?float $claimedHours = null, ?int $week = null, ?string $submittedDate = null): array
     {
-        if ($documentType === 'dtr') {
+        // For DTR or other weekly documents, we might not want to delete the old one if they are for a different week,
+        // but if no week is provided, assume legacy behavior.
+        if ($documentType === 'dtr' && !$week) {
             Document::where('user_id', $user->id)
                 ->where('document_type', 'dtr')
                 ->delete();
@@ -46,16 +49,36 @@ class DocumentService
             $userFolder = $this->driveService->createFolder($folderName);
         }
 
-        $uploadedFile = $this->driveService->upload($file, $userFolder->id);
+        $extension = $file->getClientOriginalExtension();
+        $baseName = $documentType;
+        if ($week) {
+            $baseName .= "-week-{$week}";
+        }
+        $timestamp = now()->format('YmdHis');
+        $customFileName = "{$baseName}-{$timestamp}.{$extension}";
+
+        $uploadedFile = $this->driveService->upload($file, $userFolder->id, $customFileName);
 
         $document = Document::create([
             'user_id' => $user->id,
             'document_type' => $documentType,
             'claimed_hours' => $documentType === 'dtr' ? $claimedHours : null,
+            'week' => $week,
+            'submitted_date' => $submittedDate,
             'file_id' => $uploadedFile->id,
             'file_link' => $uploadedFile->webViewLink,
             'status' => 'pending',
         ]);
+
+        // Notify profs/admins (assuming anyone who can review is notified, or just all profs)
+        $reviewers = User::whereIn('role', ['admin', 'prof'])->get();
+        foreach ($reviewers as $reviewer) {
+            Notification::create([
+                'user_id' => $reviewer->id,
+                'title' => 'New Document Submission',
+                'message' => "{$user->name} has submitted a {$documentType} document for review.",
+            ]);
+        }
 
         return [
             'document' => $document,
@@ -67,7 +90,7 @@ class DocumentService
      */
     public function getPendingDocuments()
     {
-        return Document::with('user')
+        return Document::with('user.company')
             ->where('status', 'pending')
             ->orderBy('created_at', 'asc')
             ->get();
@@ -103,9 +126,15 @@ class DocumentService
 
         if ($document->document_type === 'dtr' && $status === 'approved' && $document->claimed_hours !== null) {
             $document->user->update([
-                'hours_rendered' => $document->claimed_hours,
+                'hours_rendered' => $document->user->hours_rendered + $document->claimed_hours,
             ]);
         }
+
+        Notification::create([
+            'user_id' => $document->user_id,
+            'title' => 'Document ' . ucfirst($status),
+            'message' => "Your {$document->document_type} document was {$status}." . ($reason ? " Reason: {$reason}" : ""),
+        ]);
 
         return $document->fresh(['user', 'reviewer']);
     }

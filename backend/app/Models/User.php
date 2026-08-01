@@ -23,6 +23,8 @@ class User extends Authenticatable
         'emergency_contact_number',
         'hours_rendered',
         'required_hours',
+        'ojt_start_date',
+        'ojt_end_date',
         'must_change_password',
         'can_review',
         'is_active',

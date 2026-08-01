@@ -81,4 +81,15 @@ class CompanyController extends Controller
             'company' => $company->fresh(),
         ]);
     }
+
+    /**
+     * Delete a company (Admin only).
+     */
+    public function destroy(Company $company): JsonResponse
+    {
+        $company->delete();
+        return response()->json([
+            'message' => 'Company deleted successfully'
+        ]);
+    }
 }

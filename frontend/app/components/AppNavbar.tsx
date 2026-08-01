@@ -81,13 +81,14 @@ function roleBadge(role: string) {
 }
 
 function dashboardLabel(role: string) {
-  if (role === "admin") return "Admin Dashboard";
-  if (role === "prof") return "Prof Dashboard";
-  return "Student Dashboard";
+  if (role === "admin") return "User Management";
+  if (role === "prof") return "Document Review";
+  return "My Profile";
 }
 
 function dashboardHref(role: string) {
-  if (role === "admin" || role === "prof") return "/admin";
+  if (role === "admin") return "/admin";
+  if (role === "prof") return "/prof/review";
   return "/profile";
 }
 
@@ -192,11 +193,22 @@ export default function AppNavbar() {
             <Link
               href={dashboardHref(role)}
               style={{
-                fontSize: "0.75rem", fontWeight: 600, color: "#93c5fd", textDecoration: "none",
+                fontSize: "0.75rem", fontWeight: 600, color: "white", textDecoration: "none",
                 letterSpacing: "0.06em", textTransform: "uppercase", transition: "color 0.2s",
               }}
             >
               {dashboardLabel(role)}
+            </Link>
+          )}
+          {isLoggedIn && (role === "prof" || role === "admin") && (
+            <Link
+              href="/admin/checklist"
+              style={{
+                fontSize: "0.75rem", fontWeight: 600, color: "#93c5fd", textDecoration: "none",
+                letterSpacing: "0.06em", textTransform: "uppercase", transition: "color 0.2s",
+              }}
+            >
+              Checklist
             </Link>
           )}
         </div>

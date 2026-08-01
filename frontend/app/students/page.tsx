@@ -4,9 +4,18 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useRole } from "../context/RoleContext";
 import { fetchApi } from "../../lib/api";
+import dynamic from 'next/dynamic';
 import AppNavbar from "../components/AppNavbar";
-import StudentPreviewModal from "../components/StudentPreviewModal";
-import AdminStudentPanel from "../components/AdminStudentPanel";
+import ProtectedRoute from "../components/ProtectedRoute";
+
+const StudentPreviewModal = dynamic(() => import("../components/StudentPreviewModal"), {
+  ssr: false,
+  loading: () => <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", background: "rgba(15, 23, 42, 0.6)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", color: "white", backdropFilter: "blur(4px)" }}>Loading preview...</div>
+});
+const AdminStudentPanel = dynamic(() => import("../components/AdminStudentPanel"), {
+  ssr: false,
+  loading: () => <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", background: "rgba(15, 23, 42, 0.6)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", color: "white", backdropFilter: "blur(4px)" }}>Loading panel...</div>
+});
 
 interface StudentCompany {
   id: number;
@@ -38,42 +47,24 @@ function getStatusBadge(student: StudentListItem) {
 }
 
 export default function StudentsPage() {
-  const { role, isLoggedIn } = useRole();
-  const router = useRouter();
+  const { role } = useRole();
   const isStaff = role === "admin" || role === "prof";
 
   const [students, setStudents] = useState<StudentListItem[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [authChecked, setAuthChecked] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<StudentListItem | null>(null);
 
   useEffect(() => {
-    if (!isLoggedIn) {
-      router.replace("/login");
-      return;
-    }
-    setAuthChecked(true);
-  }, [isLoggedIn, router]);
-
-  useEffect(() => {
-    if (!authChecked) return;
     // Backend returns a bare array. ?role=normal filters out staff accounts
     // so the roster only shows actual students (confirmed via curl — the
     // unfiltered endpoint returns admin/prof rows too).
     fetchApi("/students?role=normal")
       .then((data: StudentListItem[]) => setStudents(data))
       .catch(() => setError("Failed to load students."));
-  }, [authChecked]);
-
-  if (!authChecked) {
-    return (
-      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#f1f5f9", color: "#64748b", fontSize: "0.9rem" }}>
-        Checking access...
-      </div>
-    );
-  }
+  }, []);
 
   return (
+    <ProtectedRoute>
     <div style={{ minHeight: "100vh", background: "#f1f5f9", fontFamily: "var(--font-geist-sans, system-ui, sans-serif)" }}>
       <style>{`
         .student-card {
@@ -142,8 +133,16 @@ export default function StudentsPage() {
         <StudentPreviewModal student={selectedStudent} onClose={() => setSelectedStudent(null)} />
       )}
       {selectedStudent && isStaff && (
-        <AdminStudentPanel student={selectedStudent} onClose={() => setSelectedStudent(null)} />
+        <AdminStudentPanel 
+          student={selectedStudent} 
+          onClose={() => setSelectedStudent(null)} 
+          onStudentUpdated={(updates) => {
+            setStudents(prev => prev ? prev.map(s => s.id === selectedStudent.id ? { ...s, ...updates } : s) : null);
+            setSelectedStudent(prev => prev ? { ...prev, ...updates } : null);
+          }}
+        />
       )}
     </div>
+    </ProtectedRoute>
   );
 }

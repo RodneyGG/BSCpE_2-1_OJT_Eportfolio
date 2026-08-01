@@ -50,6 +50,26 @@ class UserController extends Controller
     }
 
     /**
+     * OJT Submission Checklist — returns every active student with their
+     * company and documents so professors can track document completion.
+     * Admin/prof only (route middleware).
+     */
+    public function checklist(Request $request)
+    {
+        $students = User::where('role', 'normal')
+            ->where('is_active', true)
+            ->with([
+                'company:id,name',
+                'documents:id,user_id,document_type,status',
+            ])
+            ->select('id', 'name', 'email', 'company_id')
+            ->orderBy('name')
+            ->get();
+
+        return response()->json(['students' => $students]);
+    }
+
+    /**
      * Full detail for a single student, including their documents —
      * powers the admin/prof review side panel. Admin/prof only (route middleware).
      */

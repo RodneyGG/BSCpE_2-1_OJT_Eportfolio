@@ -25,6 +25,7 @@ interface DocumentReviewListProps {
   fallbackUser?: { name: string; hours_rendered: string | null };
   emptyMessage?: string;
   showUserName?: boolean;
+  onAfterAction?: (doc: ReviewableDocument, action: "approved" | "rejected") => void;
 }
 
 function timeAgo(dateString: string): string {
@@ -75,6 +76,7 @@ export default function DocumentReviewList({
   fallbackUser,
   emptyMessage = "Nothing pending right now.",
   showUserName = true,
+  onAfterAction,
 }: DocumentReviewListProps) {
   const [processingId, setProcessingId] = useState<number | null>(null);
   const [rejectingId, setRejectingId] = useState<number | null>(null);
@@ -89,7 +91,9 @@ export default function DocumentReviewList({
         method: "PATCH",
         body: JSON.stringify({ status: "approved" }),
       });
+      const targetDoc = documents.find(d => d.id === id);
       onDocumentsChange((docs) => docs.filter((d) => d.id !== id));
+      if (onAfterAction && targetDoc) onAfterAction(targetDoc, "approved");
       setConfirmingApproveId(null);
     } catch {
       alert("Failed to approve document. Please try again.");
@@ -125,7 +129,9 @@ export default function DocumentReviewList({
         method: "PATCH",
         body: JSON.stringify({ status: "rejected", reason: rejectReason.trim() }),
       });
+      const targetDoc = documents.find(d => d.id === rejectingId);
       onDocumentsChange((docs) => docs.filter((d) => d.id !== rejectingId));
+      if (onAfterAction && targetDoc) onAfterAction(targetDoc, "rejected");
       setRejectingId(null);
     } catch {
       alert("Failed to reject document. Please try again.");

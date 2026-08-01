@@ -58,9 +58,11 @@ function IconX() {
 export default function AdminStudentPanel({
   student,
   onClose,
+  onStudentUpdated,
 }: {
   student: AdminStudentListItem;
   onClose: () => void;
+  onStudentUpdated?: (updatedStudent: Partial<AdminStudentListItem>) => void;
 }) {
   const [detail, setDetail] = useState<AdminStudentFullDetail | null>(null);
   const [detailError, setDetailError] = useState(false);
@@ -86,35 +88,36 @@ export default function AdminStudentPanel({
 
   const pendingDocs = detail?.documents.filter((d) => d.status === "pending") ?? [];
 
-  // DocumentReviewList only knows "remove this id from the list" — it can't
-  // tell us whether that removal was an approve or a reject. To keep the
-  // hours summary in sync we diff before/after ourselves: if the doc that
-  // disappeared was a DTR, we treat its claimed_hours as the new total.
-  // NOTE: this is still ambiguous for a rejected DTR — see caveat below.
   const handleDocumentsChange = (
     updater: (docs: ReviewableDocument[]) => ReviewableDocument[]
   ) => {
     setDetail((prev) => {
       if (!prev) return prev;
-      const beforeIds = new Set(prev.documents.filter((d) => d.status === "pending").map((d) => d.id));
-
       const beforePending = prev.documents.filter((d) => d.status === "pending") as unknown as ReviewableDocument[];
       const afterPending = updater(beforePending);
       const afterIds = new Set(afterPending.map((d) => d.id));
-      const removedId = [...beforeIds].find((id) => !afterIds.has(id));
-
-      let nextDocuments = prev.documents;
-      if (removedId !== undefined) {
-        const removedDoc = prev.documents.find((d) => d.id === removedId);
-        nextDocuments = prev.documents.map((d) =>
-          d.id === removedId ? { ...d, status: "reviewed" } : d
-        );
-        if (removedDoc && removedDoc.document_type === "dtr") {
-          setRenderedHoursOverride(removedDoc.claimed_hours);
-        }
-      }
+      
+      const nextDocuments = prev.documents.map((d) =>
+        d.status === "pending" && !afterIds.has(d.id) ? { ...d, status: "reviewed" } : d
+      );
       return { ...prev, documents: nextDocuments };
     });
+  };
+
+  const handleAfterAction = (doc: ReviewableDocument, action: "approved" | "rejected") => {
+    if (action === "approved" && doc.document_type === "dtr" && doc.claimed_hours) {
+      setRenderedHoursOverride(doc.claimed_hours);
+      if (onStudentUpdated) {
+        onStudentUpdated({ hours_rendered: doc.claimed_hours, pending_documents_count: Math.max(0, (student.pending_documents_count || 1) - 1) });
+      }
+    } else {
+      if (onStudentUpdated) {
+        onStudentUpdated({
+          pending_documents_count: Math.max(0, (student.pending_documents_count || 1) - 1),
+          ...(action === "rejected" ? { rejected_documents_count: (student.rejected_documents_count || 0) + 1 } : {})
+        });
+      }
+    }
   };
 
   return (
@@ -227,6 +230,7 @@ export default function AdminStudentPanel({
             <DocumentReviewList
               documents={pendingDocs as unknown as ReviewableDocument[]}
               onDocumentsChange={handleDocumentsChange}
+              onAfterAction={handleAfterAction}
               fallbackUser={{ name: student.name, hours_rendered: renderedHoursOverride ?? student.hours_rendered }}
               showUserName={false}
               emptyMessage="Nothing pending for this student right now."

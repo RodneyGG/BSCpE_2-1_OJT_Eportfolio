@@ -24,7 +24,9 @@ class DocumentController extends Controller
                 $request->file('document'),
                 $request->user(),
                 $request->input('document_type'),
-                $request->input('claimed_hours')
+                $request->input('claimed_hours'),
+                $request->input('week'),
+                $request->input('submitted_date')
             );
             return response()->json(array_merge([
                 'message' => 'Document uploaded successfully',
