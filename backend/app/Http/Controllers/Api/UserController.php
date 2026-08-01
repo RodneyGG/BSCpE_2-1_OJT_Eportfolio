@@ -10,14 +10,57 @@ use Illuminate\Validation\Rule;
 class UserController extends Controller
 {
     /**
-     * List all user accounts.
+     * List user accounts.
+     *
+     * Optional ?role=normal filters to students only (used by the /students roster page).
+     * Response shape depends on the REQUESTER's role, not the target user's:
+     *   - admin/prof requesters get full detail plus hours + document-status counts,
+     *     needed for the review grid's status badges.
+     *   - student requesters get a stripped-down, safe-for-classmates subset only.
      */
     public function index(Request $request)
     {
-        $users = User::select('id', 'name', 'email', 'role', 'company_id', 'must_change_password', 'can_review', 'is_active', 'created_at')            ->orderBy('created_at', 'desc')
-            ->get();
+        $requester = $request->user();
+        $query = User::query();
+
+        if ($request->filled('role')) {
+            $query->where('role', $request->input('role'));
+        }
+
+        if (in_array($requester->role, ['admin', 'prof'])) {
+            $users = $query
+                ->select('id', 'name', 'email', 'role', 'company_id', 'hours_rendered', 'required_hours', 'must_change_password', 'can_review', 'is_active', 'created_at')
+                ->with('company:id,name')
+                ->withCount([
+                    'documents as approved_documents_count' => fn ($q) => $q->where('status', 'approved')->where('document_type', '!=', 'dtr'),
+                    'documents as pending_documents_count' => fn ($q) => $q->where('status', 'pending')->where('document_type', '!=', 'dtr'),
+                    'documents as rejected_documents_count' => fn ($q) => $q->where('status', 'rejected')->where('document_type', '!=', 'dtr'),
+                ])
+                ->orderBy('created_at', 'desc')
+                ->get();
+        } else {
+            $users = $query
+                ->select('id', 'name', 'company_id', 'hours_rendered', 'required_hours')
+                ->with('company:id,name')
+                ->orderBy('name')
+                ->get();
+        }
+
         return response()->json($users);
     }
+
+    /**
+     * Full detail for a single student, including their documents —
+     * powers the admin/prof review side panel. Admin/prof only (route middleware).
+     */
+    public function show(Request $request, User $user)
+    {
+        $user->load('company');
+        $user->load(['documents' => fn ($q) => $q->orderBy('created_at', 'desc')]);
+
+        return response()->json($user);
+    }
+
     /**
      * Create a new account (student or admin). Prof and admin can both call this.
      */
@@ -89,9 +132,6 @@ class UserController extends Controller
             'can_review' => $user->can_review,
         ]);
     }
-    /**
-     * Deactivate (soft-disable) a user account. Preserves document history.
-     */
     /**
      * Deactivate (soft-disable) a user account. Preserves document history.
      */

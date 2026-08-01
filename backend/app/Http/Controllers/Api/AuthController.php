@@ -9,6 +9,7 @@ use App\Http\Requests\SelectCompanyRequest;
 use App\Services\AuthService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class AuthController extends Controller
 {
@@ -69,6 +70,50 @@ class AuthController extends Controller
             'company_id' => $user->company_id,
             'company' => $user->company,
             'must_change_password' => $user->must_change_password,
+            'ojt_role' => $user->ojt_role,
+            'ojt_supervisor' => $user->ojt_supervisor,
+            'emergency_contact_name' => $user->emergency_contact_name,
+            'emergency_contact_number' => $user->emergency_contact_number,
+            'phone' => $user->phone,
+            'program' => $user->program,
+            'hours_rendered' => $user->hours_rendered,
+        ]);
+    }
+
+    /**
+     * Update the authenticated user's own profile fields.
+     *
+     * Allows name/email (with uniqueness check against other users),
+     * phone/program, OJT deployment details, and emergency contact info.
+     * Still does NOT allow touching role, password, hours_rendered,
+     * company_id (company selection goes through selectCompany), or any
+     * admin-only fields here.
+     */
+    public function updateProfile(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'name' => ['sometimes', 'string', 'max:255'],
+            'email' => [
+                'sometimes',
+                'email',
+                'max:255',
+                Rule::unique('users', 'email')->ignore($user->id),
+            ],
+            'phone' => ['nullable', 'string', 'max:30'],
+            'program' => ['nullable', 'string', 'max:255'],
+            'ojt_role' => ['nullable', 'string', 'max:255'],
+            'ojt_supervisor' => ['nullable', 'string', 'max:255'],
+            'emergency_contact_name' => ['nullable', 'string', 'max:255'],
+            'emergency_contact_number' => ['nullable', 'string', 'max:30'],
+        ]);
+
+        $user->update($validated);
+
+        return response()->json([
+            'message' => 'Profile updated successfully',
+            'user' => $user->fresh(),
         ]);
     }
 
