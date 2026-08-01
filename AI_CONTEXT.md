@@ -1,10 +1,10 @@
 # AI_CONTEXT.md — Newly Added Features (BSCpE 2-1 OJT E-Portfolio)
 
-Purpose: this file summarizes work added on top of the original fork
-(`RodneyGG/BSCpE_2-1_OJT_Eportfolio`) across `feature/document-review-workflow`,
-`feature/admin-user-management`, and `feature/dashboard-redesign`. Read this
-before scanning the repo — it tells you what exists, where it lives, and what
-NOT to redo.
+Purpose: this file summarizes work merged into `main` on top of the original
+fork (`RodneyGG/BSCpE_2-1_OJT_Eportfolio`) — originally developed across
+`feature/document-review-workflow`, `feature/admin-user-management`, and
+`feature/dashboard-redesign`. Read this before scanning the repo — it tells
+you what exists, where it lives, and what NOT to redo.
 
 ## Stack / Architecture (unchanged from upstream, restated for grounding)
 
@@ -150,11 +150,11 @@ NOT to redo.
 1. Frontend hot-reload can serve stale code after `docker compose restart`
    or `stop`+`start` due to an anonymous `.next` volume persisting. If an
    edit "isn't taking effect," don't assume the edit is wrong — first run:
-   ```
-   docker compose stop frontend
-   docker compose rm -f -v frontend
-   docker compose up -d frontend
-   ```
+
+docker compose stop frontend
+docker compose rm -f -v frontend
+docker compose up -d frontend
+
 2. Backend edits require `docker compose exec backend php artisan octane:reload`
    before they're live — Octane, not the standard PHP dev server.
 3. Sanctum tokens expire between sessions/containers restarts — re-login
@@ -162,9 +162,11 @@ NOT to redo.
 4. Pre-existing, intentionally out of scope right now: no SMTP/email infra;
    `nginx_proxy` shows `(unhealthy)` in `docker compose ps` despite working
    correctly — known false-positive healthcheck, not a real issue.
-5. Branch stacking: `feature/dashboard-redesign` is built on top of
-   `feature/admin-user-management`, which is built on top of
-   `feature/document-review-workflow`. None of these had merged to `main`
-   as of this document's writing. If you're an agent opening or reviewing a
-   PR, check current merge status before assuming a diff represents only
-   "new" work — it may include all three branches' combined history.
+5. Merge status: `feature/document-review-workflow`, `feature/admin-user-management`,
+   and `feature/dashboard-redesign` have all been merged into `main` on the
+   `theoctopusgit` fork. `feature/document-review-workflow` has also landed
+   on upstream `main` (`RodneyGG/BSCpE_2-1_OJT_Eportfolio`, PR #34).
+   `feature/admin-user-management` (PR #35) and `feature/dashboard-redesign`
+   (PR #36) are open against upstream `main` awaiting review/merge as of
+   this document's writing — check their status before assuming this work
+   is live on the canonical upstream repo.
