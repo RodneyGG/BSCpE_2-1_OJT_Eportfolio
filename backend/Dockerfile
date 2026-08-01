@@ -1,7 +1,7 @@
 # ============================================================
 # Stage 1 — Base & Dependencies
 # ============================================================
-FROM dunglas/frankenphp:1.4-php8.4-alpine AS base
+FROM dunglas/frankenphp:1.5-php8.4-alpine AS base
 
 # Install system dependencies
 RUN apk add --no-cache \
@@ -76,7 +76,7 @@ EXPOSE 8000
 
 # Set environment variables for Octane/FrankenPHP
 ENV OCTANE_SERVER=frankenphp
-ENV FRANKENPHP_CONFIG="worker ./public/index.php"
+ENV FRANKENPHP_CONFIG="worker ./public/frankenphp-worker.php"
 
 # Healthcheck for Docker Compose
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
