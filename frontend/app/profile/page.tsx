@@ -1,12 +1,12 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import Link from "next/link";
-import { useRole } from "../context/RoleContext";
+import { useRole, Role } from "../context/RoleContext";
 import { fetchApi } from "../../lib/api";
 import CompanySelect from "./CompanySelect";
 import DocumentViewerModal from "../components/DocumentViewerModal";
 import AppNavbar from "../components/AppNavbar";
+
 /* ═══════════════════════════ Scroll reveal hook ════════════════════ */
 function useReveal() {
   const ref = useRef<HTMLDivElement>(null);
@@ -39,38 +39,11 @@ function RevealBox({ children, delay = 0, style = {} }: { children: React.ReactN
 }
 
 /* ═══════════════════════════ Icons ═══════════════════════════ */
-function IconBack() {
-  return (
-    <svg width={16} height={16} viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M19 12H5M12 19l-7-7 7-7"/>
-    </svg>
-  );
-}
-
 function IconCheck() {
   return (
     <svg width={14} height={14} viewBox="0 0 24 24" fill="none"
       stroke="#10b981" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round">
       <polyline points="20 6 9 17 4 12"/>
-    </svg>
-  );
-}
-
-function IconMail() {
-  return (
-    <svg width={14} height={14} viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 4l10 8 10-8"/>
-    </svg>
-  );
-}
-
-function IconPhone() {
-  return (
-    <svg width={14} height={14} viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
     </svg>
   );
 }
@@ -84,26 +57,31 @@ function IconUpload() {
   );
 }
 
-function IconPlus() {
+/* ═══════════════════════════ Shared field components ═══════════ */
+function FieldDisplay({ label, value }: { label: string; value: string }) {
   return (
-    <svg width={14} height={14} viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 5v14M5 12h14"/>
-    </svg>
+    <div>
+      <div style={{ fontSize: "0.75rem", color: "#94a3b8", textTransform: "uppercase", fontWeight: 600, marginBottom: "0.25rem" }}>{label}</div>
+      <div style={{ fontSize: "0.9rem", fontWeight: 600, color: "#475569" }}>{value || "—"}</div>
+    </div>
   );
 }
 
-function IconX() {
+function FieldInput({ label, value, onChange, type = "text" }: { label: string; value: string; onChange: (v: string) => void; type?: string }) {
   return (
-    <svg width={20} height={20} viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M18 6L6 18M6 6l12 12"/>
-    </svg>
+    <div>
+      <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "0.4rem" }}>{label}</label>
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        style={{ width: "100%", padding: "0.6rem 0.75rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1", fontSize: "0.85rem", outline: "none", boxSizing: "border-box" }}
+      />
+    </div>
   );
 }
 
-/* ═══════════════════════════ Components ════════════════════════ */
-
+/* ═══════════════════════════ Document row ══════════════════════ */
 function DocumentRow({ doc, onUpload, onRemove, onView }: { doc: { id: number, name: string, status: string, date: string, fileLink?: string, reviewStatus?: "pending" | "approved" | "rejected", rejectionReason?: string | null }, onUpload: (id: number, file: File) => void, onRemove: (id: number) => void, onView: (title: string, fileLink: string) => void }) {
   const [dragActive, setDragActive] = useState(false);
 
@@ -172,7 +150,7 @@ function DocumentRow({ doc, onUpload, onRemove, onView }: { doc: { id: number, n
           </div>
         )}
       </div>
-      
+
       {doc.status === "submitted" && (
         <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
           {doc.fileLink && (
@@ -182,13 +160,13 @@ function DocumentRow({ doc, onUpload, onRemove, onView }: { doc: { id: number, n
           {reviewBadge}
         </div>
       )}
-      
+
       {doc.status === "uploading" && (
         <span style={{ color: "#3b82f6", fontSize: "0.75rem", fontWeight: 700, animation: "pulse 1s infinite", textTransform: "uppercase", letterSpacing: "0.05em" }}>Uploading...</span>
       )}
-      
+
       {doc.status === "pending" && (
-        <div 
+        <div
           className="pdf-upload-box"
           onDragEnter={handleDrag}
           onDragLeave={handleDrag}
@@ -203,8 +181,8 @@ function DocumentRow({ doc, onUpload, onRemove, onView }: { doc: { id: number, n
             cursor: "pointer", transition: "all 0.2s", minWidth: 160
           }}
         >
-          <input 
-            type="file" 
+          <input
+            type="file"
             accept="application/pdf"
             onChange={handleChange}
             style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer", width: "100%" }}
@@ -219,27 +197,57 @@ function DocumentRow({ doc, onUpload, onRemove, onView }: { doc: { id: number, n
   );
 }
 
+/* ═══════════════════════════ Data shapes ═══════════════════════ */
+interface Company {
+  id: number;
+  name: string;
+  address: string | null;
+}
+
+interface MeResponse {
+  id: number;
+  name: string;
+  email: string;
+  role: Role;
+  company_id: number | null;
+  company: Company | null;
+  must_change_password: boolean;
+  ojt_role: string | null;
+  ojt_supervisor: string | null;
+  emergency_contact_name: string | null;
+  emergency_contact_number: string | null;
+  phone: string | null;
+  program: string | null;
+  hours_rendered: string;
+}
+
+function toNum(v: string | null | undefined): number {
+  if (v === null || v === undefined) return 0;
+  const n = parseFloat(v);
+  return Number.isNaN(n) ? 0 : n;
+}
+
 /* ═══════════════════════════ Page ════════════════════════════ */
 export default function ProfilePage() {
-  const { role, logout, user, login } = useRole();
-  const [profile, setProfile] = useState({
-    name: user?.name || "Juan Dela Cruz",
-    program: "BS Computer Engineering · 2nd Year",
-    email: user?.email || "student@university.edu.ph",
-    phone: "+63 912 345 6789",
-    company_id: user?.company_id || "",
-    company: user?.company?.name || "No Company Selected",
-    location: user?.company?.address || "Location pending...",
-    role: "IT Intern",
-    supervisor: "Coco Martin",
-    guardian: "Maria Dela Cruz",
-    guardianContact: "+63 917 123 4567"
-  });
+  const { logout, login } = useRole();
+
+  const [profileData, setProfileData] = useState<MeResponse | null>(null);
+  const [profileLoading, setProfileLoading] = useState(true);
 
   const [profilePic, setProfilePic] = useState<string | null>(null);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [editForm, setEditForm] = useState(profile);
-  const [isSaving, setIsSaving] = useState(false);
+
+  // General Info card (name, email, phone, program, emergency contact)
+  const [editingGeneral, setEditingGeneral] = useState(false);
+  const [savingGeneral, setSavingGeneral] = useState(false);
+  const [generalForm, setGeneralForm] = useState({
+    name: "", email: "", phone: "", program: "",
+    emergency_contact_name: "", emergency_contact_number: "",
+  });
+
+  // OJT Deployment card (company, ojt_role, ojt_supervisor)
+  const [editingOjt, setEditingOjt] = useState(false);
+  const [savingOjt, setSavingOjt] = useState(false);
+  const [ojtForm, setOjtForm] = useState({ company_id: "", ojt_role: "", ojt_supervisor: "" });
 
   useEffect(() => {
     return () => {
@@ -249,10 +257,32 @@ export default function ProfilePage() {
     };
   }, [profilePic]);
 
+  // Load real profile data from /me on mount.
+  useEffect(() => {
+    fetchApi('/me')
+      .then((data: MeResponse) => {
+        setProfileData(data);
+        setGeneralForm({
+          name: data.name || "",
+          email: data.email || "",
+          phone: data.phone || "",
+          program: data.program || "",
+          emergency_contact_name: data.emergency_contact_name || "",
+          emergency_contact_number: data.emergency_contact_number || "",
+        });
+        setOjtForm({
+          company_id: data.company_id ? String(data.company_id) : "",
+          ojt_role: data.ojt_role || "",
+          ojt_supervisor: data.ojt_supervisor || "",
+        });
+      })
+      .catch((err: unknown) => {
+        console.error("Failed to load profile:", err);
+      })
+      .finally(() => setProfileLoading(false));
+  }, []);
+
   // Document catalog — the fixed set of requirement slots shown on this page.
-  // `status` here is LOCAL UI state (pending = nothing uploaded yet, uploading,
-  // submitted = a file exists). `reviewStatus` is the SEPARATE backend review
-  // state (pending/approved/rejected) once something has actually been uploaded.
   interface DocSlot {
     id: number;
     name: string;
@@ -273,6 +303,14 @@ export default function ProfilePage() {
   const [documentsLoading, setDocumentsLoading] = useState(true);
   const [selectedDoc, setSelectedDoc] = useState<{ title: string; fileLink: string } | null>(null);
 
+  // The student's current DTR submission (separate from the fixed Required
+  // Documents catalog above — DTR is cumulative/superseding, so there is at
+  // most one at a time, tracked by document_type === "dtr").
+  const [dtrDoc, setDtrDoc] = useState<RealDocument | null>(null);
+  const [dtrClaimedHours, setDtrClaimedHours] = useState("");
+  const [dtrUploading, setDtrUploading] = useState(false);
+  const [dtrDragActive, setDtrDragActive] = useState(false);
+
   interface RealDocument {
     id: number;
     document_type: string;
@@ -280,22 +318,15 @@ export default function ProfilePage() {
     status: "pending" | "approved" | "rejected";
     rejection_reason: string | null;
     created_at: string;
+    claimed_hours: string | null;
   }
 
-  // Load the student's real uploaded documents on mount and merge them into
-  // the fixed catalog above by matching document_type === doc.name. This is
-  // what makes uploads survive a refresh/logout — previously `documents` was
-  // never re-fetched from the backend at all, so it silently reset to the
-  // hardcoded "pending" state every time the page reloaded, even though the
-  // real files were saved fine in the database the whole time.
   useEffect(() => {
     fetchApi('/documents/mine')
       .then((data: { documents: RealDocument[] }) => {
         const real = data.documents || [];
 
         setDocuments(prev => prev.map(slot => {
-          // real docs are already newest-first from the backend, so the
-          // first match for a given type is the most recent submission
           const match = real.find(d => d.document_type === slot.name);
           if (!match) return slot;
 
@@ -308,6 +339,11 @@ export default function ProfilePage() {
             rejectionReason: match.rejection_reason,
           };
         }));
+
+        // documents/mine is already ordered newest-first, and DTRs supersede
+        // each other on upload, so at most one dtr entry should ever exist.
+        const dtr = real.find(d => d.document_type === "dtr") || null;
+        setDtrDoc(dtr);
       })
       .catch((err: unknown) => {
         console.error("Failed to load existing documents:", err);
@@ -315,17 +351,9 @@ export default function ProfilePage() {
       .finally(() => setDocumentsLoading(false));
   }, []);
 
-  interface DtrEntry { id: number; date: string; timeIn: string; timeOut: string; status: string; task: string; hours: number; proofFile: string | null; }
-  const [dtrEntries, setDtrEntries] = useState<DtrEntry[]>([]);
-
-  const [journals, setJournals] = useState([
-    { id: 1, week: "Week 1", summary: "Completed onboarding, met with the supervisor, and familiarized myself with the codebase and tech stack.", dateRange: "May 20 - May 24" }
-  ]);
-
-  // Real Upload via API
   const handleUpload = async (id: number, file: File) => {
     setDocuments(docs => docs.map(d => d.id === id ? { ...d, status: "uploading" } : d));
-    
+
     const docToUpload = documents.find(d => d.id === id);
     if (!docToUpload) return;
 
@@ -339,30 +367,93 @@ export default function ProfilePage() {
         body: formData,
       });
 
-      setDocuments(docs => docs.map(d => 
+      setDocuments(docs => docs.map(d =>
         d.id === id ? { ...d, status: "submitted", date: "Just now", fileLink: res.document?.file_link, reviewStatus: "pending", rejectionReason: null } : d
       ));
     } catch (err: unknown) {
       const error = err as Error;
       alert(error.message || 'Failed to upload document.');
-      setDocuments(docs => docs.map(d => 
+      setDocuments(docs => docs.map(d =>
         d.id === id ? { ...d, status: "pending" } : d
       ));
     }
   };
 
-  // NOTE: there is currently no DELETE /documents/{id} endpoint on the backend.
-  // This only clears local UI state — since documents/mine is now fetched on
-  // mount, the "removed" document will reappear on next page load/refresh
-  // because nothing was actually deleted server-side. A real delete endpoint
-  // is needed before this button does what it visually implies.
+  const submitDtr = async (file: File) => {
+    const hoursNum = parseFloat(dtrClaimedHours);
+    if (!dtrClaimedHours.trim() || Number.isNaN(hoursNum) || hoursNum <= 0) {
+      alert("Enter the total hours you're claiming (a number greater than 0) before uploading.");
+      return;
+    }
+    if (file.type !== "application/pdf") {
+      alert("Only PDF files are allowed.");
+      return;
+    }
+
+    setDtrUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('document', file);
+      formData.append('document_type', 'dtr');
+      formData.append('claimed_hours', String(hoursNum));
+
+      const res = await fetchApi('/documents/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      setDtrDoc({
+        id: res.document?.id,
+        document_type: 'dtr',
+        file_link: res.document?.file_link,
+        status: 'pending',
+        rejection_reason: null,
+        created_at: res.document?.created_at || new Date().toISOString(),
+        claimed_hours: String(hoursNum),
+      });
+      setDtrClaimedHours("");
+    } catch (err: unknown) {
+      const error = err as Error;
+      alert(error.message || 'Failed to submit DTR.');
+    } finally {
+      setDtrUploading(false);
+    }
+  };
+
+  const handleDtrDrag = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDtrDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDtrDragActive(false);
+    }
+  };
+
+  const handleDtrDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDtrDragActive(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      submitDtr(e.dataTransfer.files[0]);
+    }
+  };
+
+  const handleDtrFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    if (e.target.files && e.target.files[0]) {
+      submitDtr(e.target.files[0]);
+    }
+  };
+
+  // NOTE: no DELETE /documents/{id} endpoint yet — this only clears local UI
+  // state, the document reappears on refresh since nothing is deleted server-side.
   const handleRemoveDocument = (id: number) => {
-    setDocuments(docs => docs.map(d => 
+    setDocuments(docs => docs.map(d =>
       d.id === id ? { ...d, status: "pending", date: "Required before start", fileLink: undefined, reviewStatus: undefined, rejectionReason: undefined } : d
     ));
   };
 
-  // Profile Photo Upload
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       if (profilePic) {
@@ -380,117 +471,100 @@ export default function ProfilePage() {
     setProfilePic(null);
   };
 
-  const handleSaveProfile = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSaving(true);
+  const handleSaveGeneral = async () => {
+    setSavingGeneral(true);
     try {
-      if (editForm.company_id && editForm.company_id !== profile.company_id) {
-        const response = await fetchApi('/select-company', {
-          method: 'POST',
-          body: JSON.stringify({ company_id: editForm.company_id })
-        });
-        
-        // Update user context with new company
-        if (user) {
-          login({
-            ...user,
-            company_id: response.company.id,
-            company: response.company
-          });
-        }
-        
-        editForm.company = response.company.name;
-        editForm.location = response.company.address || "Location pending...";
-      }
-      setProfile(editForm);
-      setShowEditModal(false);
+      const res = await fetchApi('/profile', {
+        method: 'PATCH',
+        body: JSON.stringify(generalForm),
+      });
+      setProfileData(prev => prev ? { ...prev, ...res.user } : prev);
+      setEditingGeneral(false);
     } catch (err: unknown) {
       const error = err as Error;
       alert(error.message || "Failed to update profile.");
     } finally {
-      setIsSaving(false);
+      setSavingGeneral(false);
     }
   };
 
-  // Add DTR Simulation
-  const [showDtrForm, setShowDtrForm] = useState(false);
-  const [newDate, setNewDate] = useState("");
-  const [newTimeIn, setNewTimeIn] = useState("");
-  const [newTimeOut, setNewTimeOut] = useState("");
-  const [isAbsent, setIsAbsent] = useState(false);
-  const [newTask, setNewTask] = useState("");
-  const [newProofFile, setNewProofFile] = useState<File | null>(null);
-
-  const calculateHours = (inTime: string, outTime: string) => {
-    if (!inTime || !outTime) return 0;
-    const [inH, inM] = inTime.split(':').map(Number);
-    const [outH, outM] = outTime.split(':').map(Number);
-    let diff = (outH + outM / 60) - (inH + inM / 60);
-    if (diff > 4) diff -= 1; // 1 hour lunch break deduction
-    return diff > 0 ? Math.round(diff * 10) / 10 : 0;
+  const cancelGeneralEdit = () => {
+    if (profileData) {
+      setGeneralForm({
+        name: profileData.name || "",
+        email: profileData.email || "",
+        phone: profileData.phone || "",
+        program: profileData.program || "",
+        emergency_contact_name: profileData.emergency_contact_name || "",
+        emergency_contact_number: profileData.emergency_contact_number || "",
+      });
+    }
+    setEditingGeneral(false);
   };
 
-  const formatTime = (time24: string) => {
-    if (!time24) return "-";
-    const [h, m] = time24.split(':');
-    let hours = parseInt(h);
-    const ampm = hours >= 12 ? 'PM' : 'AM';
-    hours = hours % 12 || 12;
-    return `${hours}:${m} ${ampm}`;
+  const handleSaveOjt = async () => {
+    setSavingOjt(true);
+    try {
+      let updatedCompany: Company | null = profileData?.company ?? null;
+      let updatedCompanyId: number | null = profileData?.company_id ?? null;
+
+      const companyChanged = ojtForm.company_id && ojtForm.company_id !== String(profileData?.company_id ?? "");
+      if (companyChanged) {
+        const companyRes = await fetchApi('/select-company', {
+          method: 'POST',
+          body: JSON.stringify({ company_id: ojtForm.company_id }),
+        });
+        updatedCompany = companyRes.company;
+        updatedCompanyId = companyRes.company?.id ?? null;
+        login({
+          id: profileData!.id,
+          name: profileData!.name,
+          email: profileData!.email,
+          role: profileData!.role,
+          company_id: updatedCompanyId,
+          company: updatedCompany
+            ? { id: updatedCompany.id, name: updatedCompany.name, address: updatedCompany.address ?? undefined }
+            : null,
+        });
+      }
+
+      const profileRes = await fetchApi('/profile', {
+        method: 'PATCH',
+        body: JSON.stringify({
+          ojt_role: ojtForm.ojt_role,
+          ojt_supervisor: ojtForm.ojt_supervisor,
+        }),
+      });
+
+      setProfileData(prev => prev ? {
+        ...prev,
+        ...profileRes.user,
+        company: updatedCompany,
+        company_id: updatedCompanyId,
+      } : prev);
+      setEditingOjt(false);
+    } catch (err: unknown) {
+      const error = err as Error;
+      alert(error.message || "Failed to update OJT deployment details.");
+    } finally {
+      setSavingOjt(false);
+    }
   };
 
-  const handleAddDtr = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!isAbsent && (!newTimeIn || !newTimeOut)) return;
-    
-    const hours = isAbsent ? 0 : calculateHours(newTimeIn, newTimeOut);
-    
-    const newEntry = {
-      id: Date.now(),
-      date: newDate || new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-      timeIn: isAbsent ? "-" : formatTime(newTimeIn),
-      timeOut: isAbsent ? "-" : formatTime(newTimeOut),
-      status: isAbsent ? "absent" : "present",
-      task: newTask || (isAbsent ? "Absent" : "Regular Task"),
-      hours: hours,
-      proofFile: newProofFile ? newProofFile.name : null
-    };
-    setDtrEntries([newEntry, ...dtrEntries]);
-    setNewTask("");
-    setNewTimeIn("");
-    setNewTimeOut("");
-    setIsAbsent(false);
-    setNewProofFile(null);
-    setShowDtrForm(false);
+  const cancelOjtEdit = () => {
+    if (profileData) {
+      setOjtForm({
+        company_id: profileData.company_id ? String(profileData.company_id) : "",
+        ojt_role: profileData.ojt_role || "",
+        ojt_supervisor: profileData.ojt_supervisor || "",
+      });
+    }
+    setEditingOjt(false);
   };
 
-  // Add Journal Simulation
-  const [showJournalForm, setShowJournalForm] = useState(false);
-  const [journalStartDate, setJournalStartDate] = useState("");
-  const [journalEndDate, setJournalEndDate] = useState("");
-  const [newJournalSummary, setNewJournalSummary] = useState("");
-
-  const handleAddJournal = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newJournalSummary || !journalStartDate || !journalEndDate) return;
-    
-    const formatShortDate = (dString: string) => {
-      const d = new Date(dString);
-      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    };
-    const formattedRange = `${formatShortDate(journalStartDate)} - ${formatShortDate(journalEndDate)}`;
-
-    setJournals([{
-      id: Date.now(),
-      week: `Week ${journals.length + 1}`,
-      summary: newJournalSummary,
-      dateRange: formattedRange
-    }, ...journals]);
-    setNewJournalSummary("");
-    setJournalStartDate("");
-    setJournalEndDate("");
-    setShowJournalForm(false);
-  };
+  const hoursRendered = profileData ? toNum(profileData.hours_rendered) : null;
+  const displayName = profileData?.name || "—";
+  const displayProgram = profileData?.program || "Program not set";
 
   return (
     <div style={{
@@ -505,83 +579,68 @@ export default function ProfilePage() {
           0%, 100% { opacity: 1; }
           50% { opacity: 0.5; }
         }
-        @keyframes modalEnter {
-          from { opacity: 0; transform: scale(0.95); }
-          to { opacity: 1; transform: scale(1); }
-        }
         .ui-card {
-          background: white; border-radius: 1.25rem; padding: 1.75rem; 
+          background: white; border-radius: 1.25rem; padding: 1.75rem;
           box-shadow: 0 10px 30px rgba(0,0,0,0.04); border: 1px solid rgba(255,255,255,0.8);
         }
         .stat-card:hover {
           transform: translateY(-2px);
           box-shadow: 0 12px 24px rgba(0,0,0,0.06);
         }
-        .back-link:hover { opacity: 0.8; }
-        .dtr-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; text-align: left; }
-        .dtr-table th { background: #f8fafc; padding: 1rem 1.25rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid #e2e8f0; }
-        .dtr-table td { padding: 1rem 1.25rem; color: #0f172a; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
-        .dtr-table tr:last-child td { border-bottom: none; }
-        .dtr-table tr:hover td { background: #f8fafc; }
-
         .photo-upload-wrapper { position: relative; overflow: hidden; display: inline-block; }
-        
         .photo-btn {
           background: rgba(255,255,255,0.9); border: 1px solid #e2e8f0; border-radius: 999px; padding: 0.4rem 0.8rem; font-size: 0.7rem; font-weight: 600; color: #475569; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
-      
         .photo-upload-wrapper input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
         .pdf-upload-box:hover { background: #e2e8f0 !important; border-color: #94a3b8 !important; transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
-        .proof-upload-btn:hover, .proof-upload-btn:has(input:hover) { background: #e2e8f0 !important; color: #0f172a; transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
-        .proof-upload-btn { background: white; color: #475569; border: 1px solid #cbd5e1; border-radius: 0.75rem; padding: 0.6rem 1.25rem; font-size: 0.85rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.4rem; transition: all 0.2s; position: relative; overflow: hidden; }
         .hover-lift:hover, .hover-lift:has(input:hover) { background: #e2e8f0; color: #0f172a; transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
         .photo-upload-wrapper:hover .photo-btn,
         .photo-upload-wrapper:has(input:hover) .photo-btn { background: #e2e8f0; color: #0f172a; transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
+        .card-edit-btn {
+          background: none; border: 1px solid #cbd5e1; color: #475569; border-radius: 0.5rem;
+          padding: 0.4rem 0.9rem; font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all 0.15s;
+        }
+        .card-edit-btn:hover { background: #f1f5f9; }
+        .card-save-btn {
+          background: #2563eb; color: white; border: none; border-radius: 0.5rem;
+          padding: 0.45rem 1.1rem; font-size: 0.8rem; font-weight: 600; cursor: pointer;
+        }
+        .card-save-btn:disabled { background: #94a3b8; cursor: not-allowed; }
+        .card-cancel-btn {
+          background: transparent; color: #64748b; border: 1px solid #cbd5e1; border-radius: 0.5rem;
+          padding: 0.45rem 1.1rem; font-size: 0.8rem; font-weight: 600; cursor: pointer;
+        }
+        .field-grid {
+          display: grid; grid-template-columns: 1fr 1fr; gap: 1.1rem;
+        }
         @media (max-width: 768px) {
-          .dtr-table th, .dtr-table td { padding: 0.6rem 0.75rem; font-size: 0.75rem; }
           .profile-header-inner { padding: 0 1.5rem 1.5rem !important; }
-          .profile-info-row { flex-direction: column !important; align-items: flex-start !important; }
           .profile-avatar-wrap { margin-top: -45px !important; }
           .profile-avatar-wrap > div:first-child { width: 100px !important; height: 100px !important; font-size: 2.2rem !important; }
-          .profile-contact-row { gap: 1rem !important; }
           .profile-top-grid { grid-template-columns: 1fr !important; }
-          .dtr-form-grid { grid-template-columns: 1fr 1fr !important; }
-          .dtr-task-row { flex-direction: column !important; align-items: stretch !important; }
-          .edit-modal-grid { grid-template-columns: 1fr !important; }
+          .field-grid { grid-template-columns: 1fr !important; }
           .profile-main { padding: 2rem 1rem !important; }
         }
         @media (max-width: 480px) {
           .ui-card { padding: 1rem !important; }
-          .dtr-form-grid { grid-template-columns: 1fr !important; }
-          .profile-nav-inner { padding: 0 1rem !important; }
           .profile-cover { height: 120px !important; }
           .profile-avatar-wrap { margin-top: -35px !important; }
           .profile-avatar-wrap > div:first-child { width: 80px !important; height: 80px !important; font-size: 1.8rem !important; border-width: 4px !important; }
           .profile-name { font-size: 1.4rem !important; }
-          .profile-contact-row { gap: 0.75rem !important; font-size: 0.8rem !important; }
-          .dtr-header { flex-direction: column !important; align-items: stretch !important; }
-          .dtr-header > div { width: 100% !important; }
-          .dtr-header button, .dtr-header label { width: 100% !important; justify-content: center !important; }
-          .journal-header { flex-direction: column !important; align-items: stretch !important; gap: 0.75rem !important; }
-          .journal-form-grid { grid-template-columns: 1fr !important; }
         }
-
       `}</style>
 
-      {/* ══ TOP NAV ══ */}
       <AppNavbar />
-      
-      {/* ══ MAIN LAYOUT ══ */}
+
       <main className="profile-main" style={{ maxWidth: 1100, margin: "0 auto", padding: "3rem 2rem", flex: 1, width: "100%" }}>
-        
-        {/* Profile Header Card */}
+
+        {/* Profile Header — avatar + name only, editing now lives in the cards below */}
         <RevealBox>
           <div style={{
             background: "white", borderRadius: "1.5rem",
             boxShadow: "0 15px 40px -5px rgba(0,0,0,0.08)", overflow: "hidden",
             marginBottom: "2.5rem", border: "1px solid rgba(255,255,255,0.5)"
           }}>
-            {/* Cover Photo Area */}
             <div className="profile-cover" style={{
               height: 160,
               background: "linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)",
@@ -590,11 +649,8 @@ export default function ProfilePage() {
               <div style={{ position: "absolute", inset: 0, opacity: 0.2, backgroundImage: "radial-gradient(circle at 2px 2px, white 1px, transparent 0)", backgroundSize: "24px 24px" }} />
             </div>
 
-            {/* User Info Area */}
             <div className="profile-header-inner" style={{ padding: "0 2.5rem 2.5rem", position: "relative" }}>
-              <div className="profile-info-row" style={{ display: "flex", flexWrap: "wrap", gap: "2rem", marginBottom: "2rem" }}>
-                
-                {/* Avatar with offset */}
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "2rem", alignItems: "flex-end" }}>
                 <div className="profile-avatar-wrap" style={{ marginTop: "-60px", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.75rem" }}>
                   <div style={{
                     width: 130, height: 130, borderRadius: "50%",
@@ -603,9 +659,9 @@ export default function ProfilePage() {
                     boxShadow: "0 8px 16px rgba(0,0,0,0.1)", flexShrink: 0,
                     fontSize: "3rem", fontWeight: 800, color: "white"
                   }}>
-                    {!profilePic && profile.name.split(" ").map(w => w[0]).slice(0, 2).join("")}
+                    {!profilePic && displayName.split(" ").map(w => w[0]).slice(0, 2).join("")}
                   </div>
-                  
+
                   <div style={{ display: "flex", gap: "0.5rem" }}>
                     <div className="photo-upload-wrapper">
                       <button className="photo-btn hover-lift">Upload</button>
@@ -616,40 +672,12 @@ export default function ProfilePage() {
                     )}
                   </div>
                 </div>
-                
-                <div style={{ flex: 1, minWidth: 200, paddingTop: "0.5rem", display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "1rem" }}>
-                  <div>
-                    <h1 className="profile-name" style={{ fontSize: "2rem", fontWeight: 800, color: "#0f172a", margin: "0 0 0.25rem 0", letterSpacing: "normal" }}>{profile.name}</h1>
-                    <p style={{ fontSize: "1rem", color: "#64748b", margin: 0, fontWeight: 500 }}>{profile.program}</p>
-                  </div>
-                  
-                  {/* Action Button */}
-                  <button onClick={() => setShowEditModal(true)} className="hover-lift" style={{
-                    background: "#0f172a", border: "none", borderRadius: "0.75rem",
-                    padding: "0.75rem 1.5rem", fontSize: "0.85rem", fontWeight: 600, color: "white",
-                    cursor: "pointer", transition: "all 0.2s", boxShadow: "0 4px 12px rgba(15,23,42,0.15)"
-                  }} onMouseEnter={(e) => e.currentTarget.style.transform = "translateY(-2px)"} onMouseLeave={(e) => e.currentTarget.style.transform = "translateY(0)"}>
-                    Edit Profile Details
-                  </button>
-                </div>
-              </div>
 
-              {/* Contact & Meta Row */}
-              <div className="profile-contact-row" style={{ display: "flex", flexWrap: "wrap", gap: "2rem", borderTop: "1px solid #e2e8f0", paddingTop: "1.75rem" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", color: "#475569", fontSize: "0.9rem", fontWeight: 500 }}>
-                  <IconMail /> {profile.email}
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", color: "#475569", fontSize: "0.9rem", fontWeight: 500 }}>
-                  <IconPhone /> {profile.phone}
-                </div>
-                <div style={{ display: "flex", flexBasis: "100%", flexDirection: "column", gap: "0.5rem" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", color: "#475569", fontSize: "0.9rem", fontWeight: 500 }}>
-                    <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                    Guardian: {profile.guardian}
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", color: "#475569", fontSize: "0.9rem", fontWeight: 500 }}>
-                    <IconPhone /> {profile.guardianContact}
-                  </div>
+                <div style={{ flex: 1, minWidth: 200, paddingBottom: "0.5rem" }}>
+                  <h1 className="profile-name" style={{ fontSize: "2rem", fontWeight: 800, color: "#0f172a", margin: "0 0 0.25rem 0" }}>
+                    {profileLoading ? "Loading..." : displayName}
+                  </h1>
+                  <p style={{ fontSize: "1rem", color: "#64748b", margin: 0, fontWeight: 500 }}>{displayProgram}</p>
                 </div>
               </div>
             </div>
@@ -657,342 +685,239 @@ export default function ProfilePage() {
         </RevealBox>
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "2.5rem" }}>
-          
-          {/* ── Top Row (Status & Tracker) ── */}
-          <div className="profile-top-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "2.5rem" }}>
-            {/* OJT Status */}
-            <RevealBox delay={0.1}>
-              <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#0f172a", marginBottom: "1.25rem" }}>OJT Deployment Details</h2>
+
+          <div className="profile-top-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "2.5rem" }}>
+
+            {/* ── General Info ── */}
+            <RevealBox delay={0.05}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem" }}>
+                <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#0f172a", margin: 0 }}>General Info</h2>
+                {!editingGeneral && !profileLoading && (
+                  <button className="card-edit-btn" onClick={() => setEditingGeneral(true)}>Edit</button>
+                )}
+              </div>
               <div className="ui-card">
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.5rem" }}>
-                  <div>
-                    <div style={{ fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#3b82f6", marginBottom: "0.3rem" }}>Assigned Company</div>
-                    <div style={{ fontSize: "1.2rem", fontWeight: 700, color: "#0f172a", display: "flex", alignItems: "center", gap: "0.75rem" }}>
-                      {profile.company_id ? profile.company : (
-                        <button 
-                          onClick={() => setShowEditModal(true)}
-                          style={{ background: "#f59e0b", color: "white", padding: "0.3rem 1rem", borderRadius: "9999px", fontSize: "0.8rem", border: "none", cursor: "pointer", fontWeight: 700, boxShadow: "0 2px 8px rgba(245,158,11,0.3)" }}
-                        >
-                          Pick Company
-                        </button>
-                      )}
+                {profileLoading ? (
+                  <div style={{ color: "#94a3b8", fontSize: "0.9rem", textAlign: "center", padding: "1rem 0" }}>Loading...</div>
+                ) : editingGeneral ? (
+                  <>
+                    <div className="field-grid">
+                      <FieldInput label="Full Name" value={generalForm.name} onChange={(v) => setGeneralForm({ ...generalForm, name: v })} />
+                      <FieldInput label="Email Address" type="email" value={generalForm.email} onChange={(v) => setGeneralForm({ ...generalForm, email: v })} />
+                      <FieldInput label="Phone Number" value={generalForm.phone} onChange={(v) => setGeneralForm({ ...generalForm, phone: v })} />
+                      <FieldInput label="Program & Year" value={generalForm.program} onChange={(v) => setGeneralForm({ ...generalForm, program: v })} />
+                      <FieldInput label="Emergency Contact Name" value={generalForm.emergency_contact_name} onChange={(v) => setGeneralForm({ ...generalForm, emergency_contact_name: v })} />
+                      <FieldInput label="Emergency Contact Number" value={generalForm.emergency_contact_number} onChange={(v) => setGeneralForm({ ...generalForm, emergency_contact_number: v })} />
                     </div>
-                    <div style={{ fontSize: "0.85rem", color: "#64748b", marginTop: "0.4rem" }}>{profile.company_id ? profile.location : "Action Required"}</div>
+                    <div style={{ display: "flex", gap: "0.6rem", justifyContent: "flex-end", marginTop: "1.25rem" }}>
+                      <button className="card-cancel-btn" onClick={cancelGeneralEdit} disabled={savingGeneral}>Cancel</button>
+                      <button className="card-save-btn" onClick={handleSaveGeneral} disabled={savingGeneral}>
+                        {savingGeneral ? "Saving..." : "Save"}
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="field-grid">
+                    <FieldDisplay label="Full Name" value={profileData?.name || ""} />
+                    <FieldDisplay label="Email Address" value={profileData?.email || ""} />
+                    <FieldDisplay label="Phone Number" value={profileData?.phone || ""} />
+                    <FieldDisplay label="Program & Year" value={profileData?.program || ""} />
+                    <FieldDisplay label="Emergency Contact Name" value={profileData?.emergency_contact_name || ""} />
+                    <FieldDisplay label="Emergency Contact Number" value={profileData?.emergency_contact_number || ""} />
                   </div>
-                  <span style={{ background: "#dcfce7", color: "#166534", padding: "0.4rem 0.8rem", borderRadius: "9999px", fontSize: "0.75rem", fontWeight: 700, display: "flex", alignItems: "center", gap: "0.4rem" }}>
-                    <IconCheck /> Active
-                  </span>
-                </div>
-                
-                <div style={{ borderTop: "1px solid #f1f5f9", paddingTop: "1.25rem", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
-                  <div>
-                    <div style={{ fontSize: "0.75rem", color: "#94a3b8", textTransform: "uppercase", fontWeight: 600, marginBottom: "0.25rem" }}>Role</div>
-                    <div style={{ fontSize: "0.9rem", fontWeight: 600, color: "#475569" }}>{profile.role}</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: "0.75rem", color: "#94a3b8", textTransform: "uppercase", fontWeight: 600, marginBottom: "0.25rem" }}>OJT Supervisor</div>
-                    <div style={{ fontSize: "0.9rem", fontWeight: 600, color: "#475569" }}>{profile.supervisor}</div>
-                  </div>
-                </div>
+                )}
               </div>
             </RevealBox>
 
-            {/* Hours Progress */}
-            <RevealBox delay={0.2}>
-              <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#0f172a", marginBottom: "1.25rem" }}>Hours Tracker</h2>
+            {/* ── OJT Deployment ── */}
+            <RevealBox delay={0.1}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem" }}>
+                <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#0f172a", margin: 0 }}>OJT Deployment Details</h2>
+                {!editingOjt && !profileLoading && (
+                  <button className="card-edit-btn" onClick={() => setEditingOjt(true)}>Edit</button>
+                )}
+              </div>
+              <div className="ui-card">
+                {profileLoading ? (
+                  <div style={{ color: "#94a3b8", fontSize: "0.9rem", textAlign: "center", padding: "1rem 0" }}>Loading...</div>
+                ) : editingOjt ? (
+                  <>
+                    <div style={{ marginBottom: "1.1rem" }}>
+                      <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "0.4rem" }}>Company</label>
+                      <CompanySelect value={ojtForm.company_id} onChange={(val) => setOjtForm({ ...ojtForm, company_id: val })} />
+                    </div>
+                    <div className="field-grid">
+                      <FieldInput label="OJT Role" value={ojtForm.ojt_role} onChange={(v) => setOjtForm({ ...ojtForm, ojt_role: v })} />
+                      <FieldInput label="OJT Supervisor" value={ojtForm.ojt_supervisor} onChange={(v) => setOjtForm({ ...ojtForm, ojt_supervisor: v })} />
+                    </div>
+                    <div style={{ display: "flex", gap: "0.6rem", justifyContent: "flex-end", marginTop: "1.25rem" }}>
+                      <button className="card-cancel-btn" onClick={cancelOjtEdit} disabled={savingOjt}>Cancel</button>
+                      <button className="card-save-btn" onClick={handleSaveOjt} disabled={savingOjt}>
+                        {savingOjt ? "Saving..." : "Save"}
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.5rem" }}>
+                      <div>
+                        <div style={{ fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#3b82f6", marginBottom: "0.3rem" }}>Assigned Company</div>
+                        <div style={{ fontSize: "1.2rem", fontWeight: 700, color: "#0f172a", display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                          {profileData?.company ? profileData.company.name : (
+                            <button
+                              onClick={() => setEditingOjt(true)}
+                              style={{ background: "#f59e0b", color: "white", padding: "0.3rem 1rem", borderRadius: "9999px", fontSize: "0.8rem", border: "none", cursor: "pointer", fontWeight: 700, boxShadow: "0 2px 8px rgba(245,158,11,0.3)" }}
+                            >
+                              Pick Company
+                            </button>
+                          )}
+                        </div>
+                        <div style={{ fontSize: "0.85rem", color: "#64748b", marginTop: "0.4rem" }}>
+                          {profileData?.company ? (profileData.company.address || "Location pending...") : "Action Required"}
+                        </div>
+                      </div>
+                      {profileData?.company && (
+                        <span style={{ background: "#dcfce7", color: "#166534", padding: "0.4rem 0.8rem", borderRadius: "9999px", fontSize: "0.75rem", fontWeight: 700, display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                          <IconCheck /> Active
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ borderTop: "1px solid #f1f5f9", paddingTop: "1.25rem" }} className="field-grid">
+                      <FieldDisplay label="OJT Role" value={profileData?.ojt_role || ""} />
+                      <FieldDisplay label="OJT Supervisor" value={profileData?.ojt_supervisor || ""} />
+                    </div>
+                  </>
+                )}
+              </div>
+            </RevealBox>
+
+            {/* ── Hours Rendered ── */}
+            <RevealBox delay={0.15}>
+              <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#0f172a", marginBottom: "1.25rem" }}>Hours Rendered</h2>
               <div className="ui-card stat-card" style={{ transition: "all 0.3s ease" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "1rem" }}>
                   <div>
                     <span style={{ fontSize: "2.5rem", fontWeight: 800, color: "#0f172a", lineHeight: 1 }}>
-                      {dtrEntries.reduce((sum, entry) => sum + entry.hours, 0)}
+                      {hoursRendered === null ? "..." : hoursRendered.toFixed(2)}
                     </span>
                     <span style={{ fontSize: "0.95rem", color: "#64748b", fontWeight: 600, marginLeft: "0.4rem" }}>/ 300 hrs</span>
                   </div>
                   <span style={{ fontSize: "1rem", fontWeight: 700, color: "#3b82f6" }}>
-                    {Math.round((dtrEntries.reduce((sum, entry) => sum + entry.hours, 0) / 300) * 100)}%
+                    {Math.round(((hoursRendered ?? 0) / 300) * 100)}%
                   </span>
                 </div>
-                {/* Progress Bar */}
                 <div style={{ width: "100%", height: 10, background: "#f1f5f9", borderRadius: 9999, overflow: "hidden" }}>
-                  <div style={{ width: `${(dtrEntries.reduce((sum, entry) => sum + entry.hours, 0) / 300) * 100}%`, height: "100%", background: "linear-gradient(90deg, #3b82f6, #6366f1)", borderRadius: 9999, transition: "width 0.5s ease" }} />
+                  <div style={{ width: `${Math.min(((hoursRendered ?? 0) / 300) * 100, 100)}%`, height: "100%", background: "linear-gradient(90deg, #3b82f6, #6366f1)", borderRadius: 9999, transition: "width 0.5s ease" }} />
                 </div>
-                <p style={{ fontSize: "0.85rem", color: "#64748b", margin: "1.25rem 0 0", textAlign: "center", fontWeight: 500 }}>Keep up the good work! {300 - dtrEntries.reduce((sum, entry) => sum + entry.hours, 0)} hours remaining.</p>
+                <p style={{ fontSize: "0.85rem", color: "#64748b", margin: "1.25rem 0 0", textAlign: "center", fontWeight: 500 }}>
+                  {hoursRendered !== null && hoursRendered >= 300
+                    ? "Requirement complete!"
+                    : `Keep up the good work! ${(300 - (hoursRendered ?? 0)).toFixed(2)} hours remaining.`}
+                </p>
+
+                <div style={{ borderTop: "1px solid #f1f5f9", marginTop: "1.5rem", paddingTop: "1.25rem" }}>
+                  <div style={{ fontSize: "0.8rem", fontWeight: 700, color: "#0f172a", marginBottom: "0.75rem" }}>Submit DTR</div>
+
+                  {dtrDoc && (
+                    <div style={{
+                      marginBottom: "1rem", padding: "0.75rem 1rem", borderRadius: "0.75rem",
+                      background: dtrDoc.status === "approved" ? "#dcfce7" : dtrDoc.status === "rejected" ? "#fee2e2" : "#fef9c3",
+                    }}>
+                      <div style={{
+                        fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em",
+                        color: dtrDoc.status === "approved" ? "#166534" : dtrDoc.status === "rejected" ? "#b91c1c" : "#a16207",
+                      }}>
+                        {dtrDoc.status === "approved" ? "Last Approved" : dtrDoc.status === "rejected" ? "Rejected" : "Pending Review"}
+                      </div>
+                      <div style={{ fontSize: "0.85rem", color: "#334155", marginTop: "0.25rem" }}>
+                        Claiming {toNum(dtrDoc.claimed_hours).toFixed(2)} hrs — submitted {new Date(dtrDoc.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </div>
+                      {dtrDoc.status === "rejected" && dtrDoc.rejection_reason && (
+                        <div style={{ fontSize: "0.8rem", color: "#b91c1c", marginTop: "0.35rem", fontStyle: "italic" }}>
+                          Reason: {dtrDoc.rejection_reason}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <div style={{ marginBottom: "0.75rem" }}>
+                    <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "0.4rem" }}>
+                      Total Hours Claimed
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.5"
+                      value={dtrClaimedHours}
+                      onChange={(e) => setDtrClaimedHours(e.target.value)}
+                      placeholder="e.g. 120"
+                      disabled={dtrUploading}
+                      style={{ width: "100%", padding: "0.6rem 0.75rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1", fontSize: "0.85rem", outline: "none", boxSizing: "border-box" }}
+                    />
+                  </div>
+
+                  {dtrUploading ? (
+                    <div style={{ textAlign: "center", padding: "0.75rem", color: "#3b82f6", fontSize: "0.8rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                      Uploading...
+                    </div>
+                  ) : (
+                    <div
+                      className="pdf-upload-box"
+                      onDragEnter={handleDtrDrag}
+                      onDragLeave={handleDtrDrag}
+                      onDragOver={handleDtrDrag}
+                      onDrop={handleDtrDrop}
+                      style={{
+                        position: "relative",
+                        background: dtrDragActive ? "#eff6ff" : "#f8fafc",
+                        border: `2px dashed ${dtrDragActive ? "#3b82f6" : "#cbd5e1"}`,
+                        borderRadius: "0.75rem", padding: "1rem",
+                        display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+                        cursor: "pointer", transition: "all 0.2s",
+                      }}
+                    >
+                      <input
+                        type="file"
+                        accept="application/pdf"
+                        onChange={handleDtrFileChange}
+                        style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer", width: "100%" }}
+                      />
+                      <IconUpload />
+                      <span style={{ fontSize: "0.75rem", fontWeight: 600, color: dtrDragActive ? "#3b82f6" : "#64748b", marginTop: "0.35rem" }}>
+                        {dtrDragActive ? "Drop PDF here" : (dtrDoc ? "Drag new DTR PDF or Click to replace" : "Drag DTR PDF or Click")}
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
             </RevealBox>
+
+            {/* ── Required Documents ── */}
+            <RevealBox delay={0.2}>
+              <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#0f172a", marginBottom: "1.25rem" }}>Required Documents</h2>
+              <div className="ui-card" style={{ padding: 0, overflow: "hidden" }}>
+                {documentsLoading ? (
+                  <div style={{ padding: "2.5rem", textAlign: "center", color: "#94a3b8", fontSize: "0.9rem" }}>
+                    Loading your documents...
+                  </div>
+                ) : (
+                  documents.map((doc) => (
+                    <DocumentRow
+                      key={doc.id}
+                      doc={doc}
+                      onUpload={handleUpload}
+                      onRemove={handleRemoveDocument}
+                      onView={(title, fileLink) => setSelectedDoc({ title, fileLink })}
+                    />
+                  ))
+                )}
+              </div>
+            </RevealBox>
+
           </div>
-
-          {/* ── Documents Section ── */}
-          <RevealBox delay={0.1}>
-            <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#0f172a", marginBottom: "1.25rem" }}>Required Documents</h2>
-            <div className="ui-card" style={{ padding: 0, overflow: "hidden" }}>
-              {documentsLoading ? (
-                <div style={{ padding: "2.5rem", textAlign: "center", color: "#94a3b8", fontSize: "0.9rem" }}>
-                  Loading your documents...
-                </div>
-              ) : (
-                documents.map((doc) => (
-                  <DocumentRow
-                    key={doc.id}
-                    doc={doc}
-                    onUpload={handleUpload}
-                    onRemove={handleRemoveDocument}
-                    onView={(title, fileLink) => setSelectedDoc({ title, fileLink })}
-                  />
-                ))
-              )}
-            </div>
-          </RevealBox>
-
-          {/* ── Weekly Journals Section ── */}
-          <RevealBox delay={0.2}>
-            <div className="journal-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem" }}>
-              <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#0f172a", margin: 0 }}>Weekly Journals</h2>
-              <button 
-                onClick={() => setShowJournalForm(!showJournalForm)}
-                style={{ background: "#3b82f6", color: "white", border: "none", borderRadius: "0.75rem", padding: "0.6rem 1.25rem", fontSize: "0.85rem", fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: "0.4rem", transition: "background 0.2s" }}
-                onMouseEnter={(e) => e.currentTarget.style.background = "#2563eb"}
-                onMouseLeave={(e) => e.currentTarget.style.background = "#3b82f6"}
-              >
-                <IconPlus /> Add Journal
-              </button>
-            </div>
-
-            <div className="ui-card" style={{ padding: "2rem" }}>
-              {showJournalForm && (
-                <form onSubmit={handleAddJournal} style={{ background: "#f8fafc", padding: "1.5rem", borderRadius: "1rem", marginBottom: "2rem", border: "1px dashed #cbd5e1" }}>
-                  <div className="journal-form-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1rem" }}>
-                    <div>
-                      <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 700, color: "#475569", marginBottom: "0.5rem", textTransform: "uppercase" }}>Start Date</label>
-                      <input type="date" value={journalStartDate} onChange={(e) => setJournalStartDate(e.target.value)} style={{ width: "100%", padding: "0.75rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1", fontSize: "0.9rem", outline: "none" }} required />
-                    </div>
-                    <div>
-                      <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 700, color: "#475569", marginBottom: "0.5rem", textTransform: "uppercase" }}>End Date</label>
-                      <input type="date" value={journalEndDate} onChange={(e) => setJournalEndDate(e.target.value)} style={{ width: "100%", padding: "0.75rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1", fontSize: "0.9rem", outline: "none" }} required />
-                    </div>
-                  </div>
-                  <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 700, color: "#475569", marginBottom: "0.5rem", textTransform: "uppercase" }}>Summary of the Week</label>
-                  <textarea 
-                    value={newJournalSummary} 
-                    onChange={(e) => setNewJournalSummary(e.target.value)} 
-                    placeholder="Write a brief summary of what you learned or accomplished this week..." 
-                    style={{ width: "100%", padding: "1rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1", fontSize: "0.9rem", outline: "none", minHeight: "100px", resize: "vertical", fontFamily: "inherit" }} 
-                    required 
-                  />
-                  <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.75rem", marginTop: "1rem" }}>
-                    <button type="button" onClick={() => setShowJournalForm(false)} style={{ background: "transparent", color: "#64748b", border: "none", padding: "0.5rem 1rem", fontSize: "0.85rem", fontWeight: 600, cursor: "pointer" }}>Cancel</button>
-                    <button type="submit" style={{ background: "#0f172a", color: "white", border: "none", borderRadius: "0.5rem", padding: "0.5rem 1.25rem", fontSize: "0.85rem", fontWeight: 600, cursor: "pointer" }}>Save Journal</button>
-                  </div>
-                </form>
-              )}
-
-              <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-                {journals.map((journal) => (
-                  <div key={journal.id} style={{ background: "white", padding: "1.5rem", borderRadius: "1rem", border: "1px solid #e2e8f0", boxShadow: "0 2px 4px rgba(0,0,0,0.02)" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
-                      <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "#0f172a", margin: 0 }}>{journal.week}</h3>
-                      <span style={{ fontSize: "0.8rem", color: "#64748b", fontWeight: 600 }}>{journal.dateRange}</span>
-                    </div>
-                    <p style={{ fontSize: "0.95rem", color: "#475569", lineHeight: 1.6, margin: 0 }}>
-                      {journal.summary}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </RevealBox>
-
-          {/* ── DTR Section ── */}
-          <RevealBox delay={0.3}>
-            <div className="dtr-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem", flexWrap: "wrap", gap: "0.75rem" }}>
-              <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#0f172a", margin: 0 }}>Daily Time Record</h2>
-              <div style={{ display: "flex", gap: "0.75rem", alignItems: "center", flexWrap: "wrap" }}>
-               <label className="proof-upload-btn">
-                  <IconUpload /> Upload Proof (PDF)
-                  <input type="file" accept="application/pdf" style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer" }} />
-                </label>
-                <button 
-                  onClick={() => setShowDtrForm(!showDtrForm)}
-                  style={{ background: "#3b82f6", color: "white", border: "none", borderRadius: "0.75rem", padding: "0.6rem 1.25rem", fontSize: "0.85rem", fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: "0.4rem", transition: "background 0.2s" }}
-                  onMouseEnter={(e) => e.currentTarget.style.background = "#2563eb"}
-                  onMouseLeave={(e) => e.currentTarget.style.background = "#3b82f6"}
-                >
-                  <IconPlus /> Add Log
-                </button>
-              </div>
-            </div>
-
-            <div className="ui-card" style={{ padding: "2rem" }}>
-              
-              {/* DTR Entry Form */}
-              {showDtrForm && (
-                <form onSubmit={handleAddDtr} style={{ background: "#f8fafc", padding: "1.5rem", borderRadius: "1rem", marginBottom: "2rem", border: "1px dashed #cbd5e1" }}>
-                  <div className="dtr-form-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1.5rem", marginBottom: "1.25rem" }}>
-                    <div>
-                      <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "0.4rem", textTransform: "uppercase" }}>Date</label>
-                      <input type="date" value={newDate} onChange={(e) => setNewDate(e.target.value)} style={{ width: "100%", padding: "0.6rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1", fontSize: "0.85rem", outline: "none" }} required />
-                    </div>
-                    <div>
-                      <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "0.4rem", textTransform: "uppercase" }}>Time In</label>
-                      <input type="time" value={newTimeIn} onChange={(e) => setNewTimeIn(e.target.value)} disabled={isAbsent} style={{ width: "100%", padding: "0.6rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1", fontSize: "0.85rem", outline: "none", background: isAbsent ? "#e2e8f0" : "white" }} required={!isAbsent} />
-                    </div>
-                    <div>
-                      <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "0.4rem", textTransform: "uppercase" }}>Time Out</label>
-                      <input type="time" value={newTimeOut} onChange={(e) => setNewTimeOut(e.target.value)} disabled={isAbsent} style={{ width: "100%", padding: "0.6rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1", fontSize: "0.85rem", outline: "none", background: isAbsent ? "#e2e8f0" : "white" }} required={!isAbsent} />
-                    </div>
-                  </div>
-                  
-                  <div className="dtr-task-row" style={{ display: "flex", gap: "1.5rem", alignItems: "flex-end", marginBottom: "1rem" }}>
-                    <div style={{ flex: 2 }}>
-                      <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "0.4rem", textTransform: "uppercase" }}>Task / Activity</label>
-                      <input type="text" value={newTask} onChange={(e) => setNewTask(e.target.value)} placeholder={isAbsent ? "Reason for absence..." : "What did you do today?"} style={{ width: "100%", padding: "0.6rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1", fontSize: "0.85rem", outline: "none" }} required />
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "0.4rem", textTransform: "uppercase" }}>Proof (PDF)</label>
-                      <input type="file" accept="application/pdf" onChange={(e) => setNewProofFile(e.target.files ? e.target.files[0] : null)} disabled={isAbsent} style={{ width: "100%", padding: "0.45rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1", fontSize: "0.75rem", outline: "none", background: isAbsent ? "#e2e8f0" : "white" }} required={!isAbsent} />
-                    </div>
-                    <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.85rem", fontWeight: 600, color: "#475569", paddingBottom: "0.6rem", cursor: "pointer" }}>
-                      <input type="checkbox" checked={isAbsent} onChange={(e) => setIsAbsent(e.target.checked)} style={{ transform: "scale(1.2)" }} />
-                      Mark as Absent
-                    </label>
-                  </div>
-
-                  <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.75rem", marginTop: "1.5rem" }}>
-                    <button type="button" onClick={() => setShowDtrForm(false)} style={{ background: "transparent", color: "#64748b", border: "none", padding: "0.5rem 1rem", fontSize: "0.85rem", fontWeight: 600, cursor: "pointer" }}>Cancel</button>
-                    <button type="submit" style={{ background: "#0f172a", color: "white", border: "none", borderRadius: "0.5rem", padding: "0.5rem 1.25rem", fontSize: "0.85rem", fontWeight: 600, cursor: "pointer" }}>Save Entry</button>
-                  </div>
-                </form>
-              )}
-
-              {/* DTR Excel-style Table */}
-              <div style={{ overflowX: "auto", border: "1px solid #e2e8f0", borderRadius: "0.75rem" }}>
-                <table className="dtr-table">
-                  <thead>
-                    <tr>
-                      <th>Date</th>
-                      <th>Time In</th>
-                      <th>Time Out</th>
-                      <th>Status</th>
-                      <th>Task / Activity</th>
-                      <th>Proof</th>
-                      <th style={{ textAlign: "right" }}>Hours</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {dtrEntries.map((entry) => (
-                      <tr key={entry.id}>
-                        <td style={{ fontWeight: 600, whiteSpace: "nowrap" }}>{entry.date}</td>
-                        <td style={{ whiteSpace: "nowrap" }}>{entry.timeIn}</td>
-                        <td style={{ whiteSpace: "nowrap" }}>{entry.timeOut}</td>
-                        <td>
-                          <span style={{ 
-                            fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", padding: "0.3rem 0.8rem", borderRadius: "9999px",
-                            color: entry.status === "present" ? "#166534" : "#b45309",
-                            background: entry.status === "present" ? "#dcfce7" : "#fef3c7" 
-                          }}>
-                            {entry.status}
-                          </span>
-                        </td>
-                        <td style={{ color: "#475569", maxWidth: "250px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                          {entry.task}
-                        </td>
-                        <td>
-                          {entry.proofFile ? (
-                            <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-                              <span style={{ fontSize: "0.75rem", color: "#16a34a", display: "flex", alignItems: "center", gap: "0.2rem", fontWeight: 600 }}>
-                                <IconCheck /> Attached
-                              </span>
-                              <button onClick={() => alert("Simulating PDF view for: " + entry.proofFile)} style={{ background: "#e0f2fe", color: "#0369a1", border: "none", padding: "0.25rem 0.6rem", borderRadius: "9999px", fontSize: "0.65rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", cursor: "pointer", transition: "opacity 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.opacity = "0.8"} onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}>View</button>
-                            </div>
-                          ) : <span style={{ fontSize: "0.75rem", color: "#94a3b8" }}>-</span>}
-                        </td>
-                        <td style={{ textAlign: "right", fontWeight: 700, color: "#0f172a", fontSize: "0.95rem" }}>{entry.hours}</td>
-                      </tr>
-                    ))}
-                    {dtrEntries.length === 0 && (
-                      <tr>
-                        <td colSpan={6} style={{ textAlign: "center", padding: "3rem", color: "#94a3b8", fontSize: "0.95rem" }}>No DTR records found.</td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-
-            </div>
-          </RevealBox>
-
         </div>
       </main>
 
-      {/* ══ EDIT PROFILE MODAL ══ */}
-      {showEditModal && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }}>
-          <div style={{ position: "absolute", inset: 0, background: "rgba(15,23,42,0.6)", backdropFilter: "blur(4px)" }} onClick={() => setShowEditModal(false)} />
-          <div style={{ background: "white", borderRadius: "1.5rem", width: "100%", maxWidth: "600px", position: "relative", zIndex: 101, boxShadow: "0 25px 50px -12px rgba(0,0,0,0.5)", animation: "modalEnter 0.3s ease", display: "flex", flexDirection: "column", maxHeight: "90vh" }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "1.5rem", borderBottom: "1px solid #e2e8f0" }}>
-              <h2 style={{ fontSize: "1.25rem", fontWeight: 800, color: "#0f172a", margin: 0 }}>Edit Profile Details</h2>
-              <button onClick={() => setShowEditModal(false)} style={{ background: "none", border: "none", color: "#64748b", cursor: "pointer", display: "flex" }}><IconX /></button>
-            </div>
-            <div style={{ padding: "1.5rem", overflowY: "auto", display: "flex", flexDirection: "column", gap: "1.25rem" }}>
-              <div className="edit-modal-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.25rem" }}>
-                <div>
-                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "0.4rem" }}>Full Name</label>
-                  <input type="text" value={editForm.name} onChange={(e) => setEditForm({...editForm, name: e.target.value})} style={{ width: "100%", padding: "0.75rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1", fontSize: "0.9rem", outline: "none" }} />
-                </div>
-                <div>
-                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "0.4rem" }}>Program & Year</label>
-                  <input type="text" value={editForm.program} onChange={(e) => setEditForm({...editForm, program: e.target.value})} style={{ width: "100%", padding: "0.75rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1", fontSize: "0.9rem", outline: "none" }} />
-                </div>
-                <div>
-                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "0.4rem" }}>Email Address</label>
-                  <input type="email" value={editForm.email} onChange={(e) => setEditForm({...editForm, email: e.target.value})} style={{ width: "100%", padding: "0.75rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1", fontSize: "0.9rem", outline: "none" }} />
-                </div>
-                <div>
-                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "0.4rem" }}>Phone Number</label>
-                  <input type="text" value={editForm.phone} onChange={(e) => setEditForm({...editForm, phone: e.target.value})} style={{ width: "100%", padding: "0.75rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1", fontSize: "0.9rem", outline: "none" }} />
-                </div>
-              </div>
-              <div style={{ borderTop: "1px solid #f1f5f9", margin: "0.5rem 0" }} />
-              <div className="edit-modal-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.25rem" }}>
-                <div>
-                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "0.4rem" }}>Company</label>
-                  <CompanySelect value={String(editForm.company_id)} onChange={(val) => setEditForm({...editForm, company_id: val})} />
-                </div>
-                <div>
-                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "0.4rem" }}>Location</label>
-                  <input type="text" value={editForm.location} onChange={(e) => setEditForm({...editForm, location: e.target.value})} style={{ width: "100%", padding: "0.75rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1", fontSize: "0.9rem", outline: "none" }} />
-                </div>
-                <div>
-                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "0.4rem" }}>OJT Role</label>
-                  <input type="text" value={editForm.role} onChange={(e) => setEditForm({...editForm, role: e.target.value})} style={{ width: "100%", padding: "0.75rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1", fontSize: "0.9rem", outline: "none" }} />
-                </div>
-                <div>
-                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "0.4rem" }}>OJT Supervisor</label>
-                  <input type="text" value={editForm.supervisor} onChange={(e) => setEditForm({...editForm, supervisor: e.target.value})} style={{ width: "100%", padding: "0.75rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1", fontSize: "0.9rem", outline: "none" }} />
-                </div>
-              </div>
-              <div style={{ borderTop: "1px solid #f1f5f9", margin: "0.5rem 0" }} />
-              <div className="edit-modal-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.25rem" }}>
-                <div>
-                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "0.4rem" }}>Guardian Name</label>
-                  <input type="text" value={editForm.guardian} onChange={(e) => setEditForm({...editForm, guardian: e.target.value})} style={{ width: "100%", padding: "0.75rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1", fontSize: "0.9rem", outline: "none" }} />
-                </div>
-                <div>
-                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "0.4rem" }}>Guardian Contact</label>
-                  <input type="text" value={editForm.guardianContact} onChange={(e) => setEditForm({...editForm, guardianContact: e.target.value})} style={{ width: "100%", padding: "0.75rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1", fontSize: "0.9rem", outline: "none" }} />
-                </div>
-              </div>
-            </div>
-            <div style={{ padding: "1.5rem", borderTop: "1px solid #e2e8f0", display: "flex", justifyContent: "flex-end", gap: "1rem", background: "#f8fafc", borderRadius: "0 0 1.5rem 1.5rem" }}>
-              <button onClick={() => setShowEditModal(false)} disabled={isSaving} style={{ background: "transparent", color: "#64748b", border: "1px solid #cbd5e1", borderRadius: "0.5rem", padding: "0.6rem 1.25rem", fontSize: "0.9rem", fontWeight: 600, cursor: isSaving ? "not-allowed" : "pointer" }}>Cancel</button>
-              <button onClick={handleSaveProfile} disabled={isSaving} style={{ background: isSaving ? "#94a3b8" : "#2563eb", color: "white", border: "none", borderRadius: "0.5rem", padding: "0.6rem 1.5rem", fontSize: "0.9rem", fontWeight: 600, cursor: isSaving ? "not-allowed" : "pointer", boxShadow: isSaving ? "none" : "0 4px 12px rgba(37,99,235,0.2)" }}>
-                {isSaving ? "Saving..." : "Save Changes"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ══ DOCUMENT VIEWER MODAL ══ */}
       {selectedDoc && (
         <DocumentViewerModal
           title={selectedDoc.title}
