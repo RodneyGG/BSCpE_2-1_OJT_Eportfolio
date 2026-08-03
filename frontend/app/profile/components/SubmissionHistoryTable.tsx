@@ -70,7 +70,7 @@ export default function SubmissionHistoryTable({ documents, onView }: Submission
                 <tr key={`${doc.id}-${idx}`} style={{ borderBottom: "1px solid #f1f5f9" }}>
                   <td style={{ padding: "1rem 0.5rem", fontWeight: 600, color: "#0f172a" }}>
                     {doc.name}
-                    {/* @ts-ignore */}
+                    {/* @ts-expect-error doc.week is not in the typed Document interface yet */}
                     {doc.week && <span style={{ marginLeft: "0.5rem", color: "#64748b", fontWeight: 500 }}>(Week {doc.week})</span>}
                   </td>
                   <td style={{ padding: "1rem 0.5rem", textTransform: "capitalize", color: "#475569" }}>
