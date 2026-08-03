@@ -561,7 +561,6 @@ export default function ProfilePage() {
                         <td style={{ padding: "1.25rem 1rem", color: "#475569", textTransform: "capitalize" }}>{doc.phase === "other" ? "Other" : `${doc.phase} OJT`}</td>
                         <td style={{ padding: "1.25rem 1rem", color: "#475569", fontWeight: 600 }}>{doc.week || "—"}</td>
                         <td style={{ padding: "1.25rem 1rem" }}>
-                          {/* @ts-expect-error status prop type mismatch with StatusBadge */}
                           <StatusBadge status={doc.reviewStatus || "pending"} />
                         </td>
                         <td style={{ padding: "1.25rem 1rem", color: doc.reviewStatus === "rejected" ? "#b91c1c" : "#475569", fontStyle: doc.reviewStatus === "rejected" ? "normal" : "italic", fontWeight: doc.reviewStatus === "rejected" ? 600 : 400 }}>
