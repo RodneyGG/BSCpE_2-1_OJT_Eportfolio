@@ -5,11 +5,14 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\BlockController;
 use App\Http\Controllers\Api\AccountSetupController;
+use App\Http\Controllers\Api\PasswordResetController;
 // Public routes
 Route::post('/login', [AuthController::class, 'login']);
 Route::get('/companies', [CompanyController::class, 'index']);
 Route::get('/block', [BlockController::class, 'show']);
 Route::post('/setup-account', [AccountSetupController::class, 'complete']);
+Route::post('/forgot-password', [PasswordResetController::class, 'request']);
+Route::post('/reset-password', [PasswordResetController::class, 'complete']);
 // Google OAuth
 Route::get('/google/callback', [\App\Http\Controllers\Api\GoogleOAuthController::class, 'callback']);
 use App\Http\Controllers\Api\DocumentController;
