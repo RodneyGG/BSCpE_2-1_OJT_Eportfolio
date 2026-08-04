@@ -13,6 +13,9 @@ export interface ManagedUser {
   can_review: boolean;
   is_active: boolean;
   created_at: string;
+  approved_documents_count?: number;
+  pending_documents_count?: number;
+  rejected_documents_count?: number;
 }
 function IconPlus() {
   return (
@@ -27,7 +30,10 @@ interface ManageUsersSectionProps {
 }
 interface DialogState {
   variant: "confirm" | "alert";
+  title?: string;
   message: string;
+  highlight?: string;
+  icon?: "warning" | "success";
   danger?: boolean;
   resolve: (value: boolean) => void;
 }
@@ -41,18 +47,19 @@ export default function ManageUsersSection({ onViewStudent, onCountChange }: Man
   const [showCreate, setShowCreate] = useState(false);
   const [createName, setCreateName] = useState("");
   const [createEmail, setCreateEmail] = useState("");
-  const [createRole, setCreateRole] = useState<"normal" | "admin">("normal");
+  const [createRole, setCreateRole] = useState<"normal" | "admin" | "prof">("normal");
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
   const [revealPassword, setRevealPassword] = useState<{ email: string; password: string } | null>(null);
-  const showConfirm = (message: string, danger = false): Promise<boolean> => {
+  const profExists = users.some((u) => u.role === "prof");
+  const showConfirm = (message: string, danger = false, highlight?: string, title?: string): Promise<boolean> => {
     return new Promise((resolve) => {
-      setDialog({ variant: "confirm", message, danger, resolve });
+      setDialog({ variant: "confirm", message, danger, highlight, title, resolve });
     });
   };
-  const showAlert = (message: string): Promise<void> => {
+  const showAlert = (message: string, icon?: "warning" | "success", title?: string, highlight?: string): Promise<void> => {
     return new Promise((resolve) => {
-      setDialog({ variant: "alert", message, resolve: () => resolve() });
+      setDialog({ variant: "alert", message, icon, title, highlight, resolve: () => resolve() });
     });
   };
   const handleDialogConfirm = () => {
@@ -101,8 +108,17 @@ export default function ManageUsersSection({ onViewStudent, onCountChange }: Man
         }),
       });
       setShowCreate(false);
-      setRevealPassword({ email: data.user.email, password: data.temp_password });
-      loadUsers();
+      if (createRole === "normal") {
+        await showAlert(
+          `${createName.trim()} has been created and a setup link has been emailed to them.`,
+          "success",
+          "Account Created"
+        );
+        loadUsers();
+      } else {
+        setRevealPassword({ email: data.user.email, password: data.temp_password });
+        loadUsers();
+      }
     } catch (err) {
       const e = err as { message?: string };
       setCreateError(e.message || "Failed to create account.");
@@ -161,6 +177,27 @@ export default function ManageUsersSection({ onViewStudent, onCountChange }: Man
     } catch (err) {
       const e = err as { message?: string };
       await showAlert(e.message || "Failed to resend setup email.");
+    } finally {
+      setBusyId(null);
+    }
+  };
+  const handleDelete = async (user: ManagedUser) => {
+    const docTotal =
+      (user.approved_documents_count ?? 0) + (user.pending_documents_count ?? 0) + (user.rejected_documents_count ?? 0);
+    const message = `${user.name}'s account (${user.email}) will be permanently deleted. This action cannot be undone.`;
+    const highlight =
+      docTotal > 0
+        ? `${docTotal} document${docTotal === 1 ? "" : "s"} on file will also be permanently deleted. Consider Deactivate instead if you want to preserve their record.`
+        : undefined;
+    const ok = await showConfirm(message, true, highlight, "Delete Account");
+    if (!ok) return;
+    setBusyId(user.id);
+    try {
+      await fetchApi(`/admin/users/${user.id}`, { method: "DELETE" });
+      loadUsers();
+    } catch (err) {
+      const e = err as { message?: string };
+      await showAlert(e.message || "Failed to delete account.");
     } finally {
       setBusyId(null);
     }
@@ -246,6 +283,14 @@ export default function ManageUsersSection({ onViewStudent, onCountChange }: Man
                       {user.is_active ? "Deactivate" : "Reactivate"}
                     </button>
                   )}
+                  <button
+                    className="btn-action"
+                    disabled={busyId === user.id}
+                    onClick={() => handleDelete(user)}
+                    style={{ background: "#7f1d1d", borderColor: "#7f1d1d", color: "#fff" }}
+                  >
+                    Delete
+                  </button>
                 </div>
               </div>
             </div>
@@ -273,11 +318,14 @@ export default function ManageUsersSection({ onViewStudent, onCountChange }: Man
               />
               <select
                 value={createRole}
-                onChange={(e) => setCreateRole(e.target.value as "normal" | "admin")}
+                onChange={(e) => setCreateRole(e.target.value as "normal" | "admin" | "prof")}
                 style={{ padding: "0.6rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1", fontSize: "0.85rem" }}
               >
                 <option value="normal">Student</option>
                 <option value="admin">Admin</option>
+                <option value="prof" disabled={profExists}>
+                  {profExists ? "Professor (already exists)" : "Professor"}
+                </option>
               </select>
               {createError && <div style={{ color: "#ef4444", fontSize: "0.8rem" }}>{createError}</div>}
               <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end", marginTop: "0.5rem" }}>
@@ -313,7 +361,10 @@ export default function ManageUsersSection({ onViewStudent, onCountChange }: Man
       <ConfirmDialog
         open={dialog !== null}
         variant={dialog?.variant ?? "confirm"}
+        title={dialog?.title}
         message={dialog?.message ?? ""}
+        highlight={dialog?.highlight}
+        icon={dialog?.icon}
         danger={dialog?.danger}
         onConfirm={handleDialogConfirm}
         onCancel={handleDialogCancel}

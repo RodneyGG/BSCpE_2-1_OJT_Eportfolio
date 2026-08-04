@@ -96,8 +96,14 @@ class UserController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
-            'role' => ['required', Rule::in(['normal', 'admin'])],
+            'role' => ['required', Rule::in(['normal', 'admin', 'prof'])],
         ]);
+
+        if ($validated['role'] === 'prof' && User::where('role', 'prof')->exists()) {
+            return response()->json([
+                'message' => 'A professor account already exists. Only one active professor account is allowed at a time.',
+            ], 422);
+        }
 
         if ($validated['role'] === 'normal') {
             $user = User::create([
@@ -252,6 +258,36 @@ class UserController extends Controller
         return response()->json([
             'message' => 'Account reactivated.',
             'is_active' => $user->is_active,
+        ]);
+    }
+
+/**
+     * Permanently delete a user account. No longer blocks on existing
+     * documents — the frontend warns with a document count and requires
+     * explicit confirmation before calling this. Cascades documents/DTRs
+     * and setup tokens at the DB level (see migrations).
+     */
+    public function destroy(Request $request, User $user)
+    {
+        $documentCount = $user->documents()->count();
+
+        ActivityLog::create([
+            'actor_id' => $request->user()->id,
+            'action' => 'account_deleted',
+            'target_id' => $user->id,
+            'metadata' => [
+                'deleted_name' => $user->name,
+                'deleted_email' => $user->email,
+                'deleted_role' => $user->role,
+                'documents_deleted' => $documentCount,
+            ],
+        ]);
+
+        $user->delete();
+
+        return response()->json([
+            'message' => 'Account permanently deleted.',
+            'documents_deleted' => $documentCount,
         ]);
     }
 }
