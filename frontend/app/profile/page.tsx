@@ -125,7 +125,7 @@ function DocumentCardItem({ doc, onUpload, onRemove, onView }: { doc: { id: stri
       {/* Header Area */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.25rem", gap: "1rem" }}>
         <h3 style={{ fontSize: "1.15rem", fontWeight: 700, color: "#0f172a", margin: 0, lineHeight: 1.3 }}>{doc.name}</h3>
-        {/* @ts-ignore */}
+        {/* @ts-expect-error status prop type mismatch with StatusBadge */}
         <StatusBadge status={badgeStatus} />
       </div>
 
@@ -561,7 +561,6 @@ export default function ProfilePage() {
                         <td style={{ padding: "1.25rem 1rem", color: "#475569", textTransform: "capitalize" }}>{doc.phase === "other" ? "Other" : `${doc.phase} OJT`}</td>
                         <td style={{ padding: "1.25rem 1rem", color: "#475569", fontWeight: 600 }}>{doc.week || "—"}</td>
                         <td style={{ padding: "1.25rem 1rem" }}>
-                          {/* @ts-ignore */}
                           <StatusBadge status={doc.reviewStatus || "pending"} />
                         </td>
                         <td style={{ padding: "1.25rem 1rem", color: doc.reviewStatus === "rejected" ? "#b91c1c" : "#475569", fontStyle: doc.reviewStatus === "rejected" ? "normal" : "italic", fontWeight: doc.reviewStatus === "rejected" ? 600 : 400 }}>

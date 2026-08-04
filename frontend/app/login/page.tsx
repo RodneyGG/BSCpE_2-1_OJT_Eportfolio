@@ -176,7 +176,7 @@ export default function LoginPage() {
                 <input type="checkbox" style={{ transform: "scale(1.1)", cursor: "pointer" }} />
                 Remember me
               </label>
-              <Link href="#" style={{ fontSize: "0.85rem", fontWeight: 600, color: "#3b82f6", textDecoration: "none" }}>Forgot password?</Link>
+              <Link href="/forgot-password" style={{ fontSize: "0.85rem", fontWeight: 600, color: "#3b82f6", textDecoration: "none" }}>Forgot password?</Link>
             </div>
 
           </div>

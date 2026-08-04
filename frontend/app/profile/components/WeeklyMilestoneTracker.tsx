@@ -17,7 +17,7 @@ export default function WeeklyMilestoneTracker({ documents, requiredTypes, onUpl
   const existingWeeks = useMemo(() => {
     const weeks = new Set<number>([1]); // Always show at least Week 1
     documents.forEach(d => {
-      // @ts-ignore
+      // @ts-expect-error week field not in typed Document interface
       if (d.week) weeks.add(d.week);
     });
     return Array.from(weeks).sort((a, b) => a - b);
@@ -34,7 +34,7 @@ export default function WeeklyMilestoneTracker({ documents, requiredTypes, onUpl
 
   // Helper to get status of a specific week
   const getWeekStatus = (weekNum: number) => {
-    // @ts-ignore
+    // @ts-expect-error week field not in typed Document interface
     const weekDocs = documents.filter(d => d.week === weekNum);
     
     if (weekDocs.some(d => d.reviewStatus === "rejected")) return "rejected";
@@ -108,7 +108,7 @@ export default function WeeklyMilestoneTracker({ documents, requiredTypes, onUpl
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "1.5rem" }}>
           {requiredTypes.map(req => {
-            // @ts-ignore
+            // @ts-expect-error week field not in typed Document interface
             let existingDoc = documents.find(d => d.week === activeWeek && d.name === req.title);
             
             if (!existingDoc) {
@@ -118,7 +118,7 @@ export default function WeeklyMilestoneTracker({ documents, requiredTypes, onUpl
                 phase: "during",
                 status: "pending",
                 date: "",
-                // @ts-ignore
+                // @ts-expect-error week field not in typed Document interface
                 week: activeWeek
               };
             }
