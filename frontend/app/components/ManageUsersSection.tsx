@@ -283,15 +283,16 @@ export default function ManageUsersSection({ onViewStudent, onCountChange }: Man
                       {user.is_active ? "Deactivate" : "Reactivate"}
                     </button>
                   )}
+                {user.id !== currentUser?.id && (
                   <button
                     className="btn-action"
-                    disabled={busyId === user.id || user.id === currentUser?.id}
+                    disabled={busyId === user.id}
                     onClick={() => handleDelete(user)}
-                    title={user.id === currentUser?.id ? "You cannot delete your own account" : undefined}
                     style={{ background: "#7f1d1d", borderColor: "#7f1d1d", color: "#fff" }}
                   >
                     Delete
                   </button>
+                )}
                 </div>
               </div>
             </div>
