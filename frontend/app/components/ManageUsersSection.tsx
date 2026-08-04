@@ -1,10 +1,8 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import { fetchApi } from "../../lib/api";
 import { useRole } from "../context/RoleContext";
 import ConfirmDialog from "./ConfirmDialog";
-
 export interface ManagedUser {
   id: number;
   name: string;
@@ -16,7 +14,6 @@ export interface ManagedUser {
   is_active: boolean;
   created_at: string;
 }
-
 function IconPlus() {
   return (
     <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round">
@@ -24,19 +21,16 @@ function IconPlus() {
     </svg>
   );
 }
-
 interface ManageUsersSectionProps {
   onViewStudent?: (user: ManagedUser) => void;
   onCountChange?: (count: number) => void;
 }
-
 interface DialogState {
   variant: "confirm" | "alert";
   message: string;
   danger?: boolean;
   resolve: (value: boolean) => void;
 }
-
 export default function ManageUsersSection({ onViewStudent, onCountChange }: ManageUsersSectionProps) {
   const { role } = useRole();
   const [users, setUsers] = useState<ManagedUser[]>([]);
@@ -44,38 +38,31 @@ export default function ManageUsersSection({ onViewStudent, onCountChange }: Man
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<number | null>(null);
   const [dialog, setDialog] = useState<DialogState | null>(null);
-
   const [showCreate, setShowCreate] = useState(false);
   const [createName, setCreateName] = useState("");
   const [createEmail, setCreateEmail] = useState("");
   const [createRole, setCreateRole] = useState<"normal" | "admin">("normal");
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
-
   const [revealPassword, setRevealPassword] = useState<{ email: string; password: string } | null>(null);
-
   const showConfirm = (message: string, danger = false): Promise<boolean> => {
     return new Promise((resolve) => {
       setDialog({ variant: "confirm", message, danger, resolve });
     });
   };
-
   const showAlert = (message: string): Promise<void> => {
     return new Promise((resolve) => {
       setDialog({ variant: "alert", message, resolve: () => resolve() });
     });
   };
-
   const handleDialogConfirm = () => {
     dialog?.resolve(true);
     setDialog(null);
   };
-
   const handleDialogCancel = () => {
     dialog?.resolve(false);
     setDialog(null);
   };
-
   const loadUsers = () => {
     setLoading(true);
     setError(null);
@@ -84,15 +71,12 @@ export default function ManageUsersSection({ onViewStudent, onCountChange }: Man
       .catch(() => setError("Failed to load users."))
       .finally(() => setLoading(false));
   };
-
   useEffect(() => {
     loadUsers();
   }, []);
-
   useEffect(() => {
     onCountChange?.(users.filter((u) => u.role === "normal").length);
   }, [users, onCountChange]);
-
   const openCreate = () => {
     setCreateName("");
     setCreateEmail("");
@@ -100,7 +84,6 @@ export default function ManageUsersSection({ onViewStudent, onCountChange }: Man
     setCreateError(null);
     setShowCreate(true);
   };
-
   const submitCreate = async () => {
     if (!createName.trim() || !createEmail.trim()) {
       setCreateError("Name and email are required.");
@@ -127,7 +110,6 @@ export default function ManageUsersSection({ onViewStudent, onCountChange }: Man
       setCreating(false);
     }
   };
-
   const handleResetPassword = async (user: ManagedUser) => {
     const ok = await showConfirm(`Reset password for ${user.name}? This will invalidate their current password.`);
     if (!ok) return;
@@ -141,7 +123,6 @@ export default function ManageUsersSection({ onViewStudent, onCountChange }: Man
       setBusyId(null);
     }
   };
-
   const handleToggleActive = async (user: ManagedUser) => {
     const ok = await showConfirm(
       `${user.is_active ? "Deactivate" : "Reactivate"} ${user.name}?`,
@@ -159,7 +140,6 @@ export default function ManageUsersSection({ onViewStudent, onCountChange }: Man
       setBusyId(null);
     }
   };
-
   const handleToggleReview = async (user: ManagedUser) => {
     setBusyId(user.id);
     try {
@@ -171,7 +151,20 @@ export default function ManageUsersSection({ onViewStudent, onCountChange }: Man
       setBusyId(null);
     }
   };
-
+  const handleResendSetup = async (user: ManagedUser) => {
+    const ok = await showConfirm(`Resend the account setup email to ${user.name} (${user.email})?`);
+    if (!ok) return;
+    setBusyId(user.id);
+    try {
+      await fetchApi(`/admin/users/${user.id}/resend-setup`, { method: "POST" });
+      await showAlert(`Setup email resent to ${user.email}.`);
+    } catch (err) {
+      const e = err as { message?: string };
+      await showAlert(e.message || "Failed to resend setup email.");
+    } finally {
+      setBusyId(null);
+    }
+  };
   return (
     <div className="admin-card">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
@@ -180,7 +173,6 @@ export default function ManageUsersSection({ onViewStudent, onCountChange }: Man
           <IconPlus /> Create Account
         </button>
       </div>
-
       {loading ? (
         <div style={{ textAlign: "center", padding: "2rem", color: "#94a3b8" }}>Loading...</div>
       ) : error ? (
@@ -231,25 +223,35 @@ export default function ManageUsersSection({ onViewStudent, onCountChange }: Man
                       {user.can_review ? "Revoke Review" : "Grant Review"}
                     </button>
                   )}
-                  <button
-                    className="btn-action"
-                    disabled={busyId === user.id}
-                    onClick={() => handleToggleActive(user)}
-                    style={
-                      user.is_active
-                        ? { background: "#fee2e2", borderColor: "#fecaca", color: "#991b1b" }
-                        : { background: "#d1fae5", borderColor: "#a7f3d0", color: "#065f46" }
-                    }
-                  >
-                    {user.is_active ? "Deactivate" : "Reactivate"}
-                  </button>
+                  {!user.is_active && user.role === "normal" ? (
+                    <button
+                      className="btn-action"
+                      disabled={busyId === user.id}
+                      onClick={() => handleResendSetup(user)}
+                      style={{ background: "#dbeafe", borderColor: "#bfdbfe", color: "#1e40af" }}
+                    >
+                      Resend Setup Email
+                    </button>
+                  ) : (
+                    <button
+                      className="btn-action"
+                      disabled={busyId === user.id}
+                      onClick={() => handleToggleActive(user)}
+                      style={
+                        user.is_active
+                          ? { background: "#fee2e2", borderColor: "#fecaca", color: "#991b1b" }
+                          : { background: "#d1fae5", borderColor: "#a7f3d0", color: "#065f46" }
+                      }
+                    >
+                      {user.is_active ? "Deactivate" : "Reactivate"}
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
           ))}
         </div>
       )}
-
       {showCreate && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50 }}>
           <div style={{ background: "#fff", borderRadius: "1rem", padding: "1.5rem", width: "100%", maxWidth: "26rem" }}>
@@ -290,7 +292,6 @@ export default function ManageUsersSection({ onViewStudent, onCountChange }: Man
           </div>
         </div>
       )}
-
       {revealPassword && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50 }}>
           <div style={{ background: "#fff", borderRadius: "1rem", padding: "1.5rem", width: "100%", maxWidth: "26rem" }}>
@@ -309,7 +310,6 @@ export default function ManageUsersSection({ onViewStudent, onCountChange }: Man
           </div>
         </div>
       )}
-
       <ConfirmDialog
         open={dialog !== null}
         variant={dialog?.variant ?? "confirm"}

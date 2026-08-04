@@ -1,11 +1,14 @@
 <?php
 namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
+use App\Mail\AccountSetupMail;
 use App\Models\User;
 use App\Models\ActivityLog;
+use App\Services\AccountSetupService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rule;
 class UserController extends Controller
 {
@@ -83,6 +86,10 @@ class UserController extends Controller
 
     /**
      * Create a new account (student or admin). Prof and admin can both call this.
+     *
+     * Students: created inactive with an unusable random password; a setup-link
+     * email is sent immediately so the student sets their own password.
+     * Admins: unchanged — created active with a temp password shown to the creator.
      */
     public function store(Request $request)
     {
@@ -91,6 +98,33 @@ class UserController extends Controller
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'role' => ['required', Rule::in(['normal', 'admin'])],
         ]);
+
+        if ($validated['role'] === 'normal') {
+            $user = User::create([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'role' => $validated['role'],
+                'password' => Hash::make(Str::random(32)),
+                'must_change_password' => false,
+                'is_active' => false,
+            ]);
+
+            $plainToken = (new AccountSetupService())->generate($user);
+            Mail::to($user->email)->send(new AccountSetupMail($user, $plainToken));
+
+            ActivityLog::create([
+                'actor_id' => $request->user()->id,
+                'action' => 'account_created',
+                'target_id' => $user->id,
+                'metadata' => ['created_role' => $user->role, 'setup_method' => 'email_link'],
+            ]);
+
+            return response()->json([
+                'user' => $user,
+                'message' => 'Account created. A setup email has been sent to the student.',
+            ], 201);
+        }
+
         $tempPassword = Str::random(10);
         $user = User::create([
             'name' => $validated['name'],
@@ -99,17 +133,52 @@ class UserController extends Controller
             'password' => Hash::make($tempPassword),
             'must_change_password' => true,
         ]);
+
         ActivityLog::create([
             'actor_id' => $request->user()->id,
             'action' => 'account_created',
             'target_id' => $user->id,
-            'metadata' => ['created_role' => $user->role],
+            'metadata' => ['created_role' => $user->role, 'setup_method' => 'temp_password'],
         ]);
+
         return response()->json([
             'user' => $user,
             'temp_password' => $tempPassword,
         ], 201);
     }
+
+    /**
+     * Resend the account-setup email to a student who hasn't activated yet.
+     * Enforces the 1/minute cooldown via AccountSetupService (throws ValidationException).
+     */
+    public function resendSetup(Request $request, User $user)
+    {
+        if ($user->role !== 'normal') {
+            return response()->json([
+                'message' => 'Setup emails only apply to student accounts.',
+            ], 422);
+        }
+
+        if ($user->is_active) {
+            return response()->json([
+                'message' => 'This account is already active.',
+            ], 422);
+        }
+
+        $plainToken = (new AccountSetupService())->resend($user);
+        Mail::to($user->email)->send(new AccountSetupMail($user, $plainToken));
+
+        ActivityLog::create([
+            'actor_id' => $request->user()->id,
+            'action' => 'account_setup_resent',
+            'target_id' => $user->id,
+        ]);
+
+        return response()->json([
+            'message' => 'Setup email resent.',
+        ]);
+    }
+
     /**
      * Reset a user's password to a new random temp password.
      */
