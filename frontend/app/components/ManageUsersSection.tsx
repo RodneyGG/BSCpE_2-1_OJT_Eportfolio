@@ -38,7 +38,7 @@ interface DialogState {
   resolve: (value: boolean) => void;
 }
 export default function ManageUsersSection({ onViewStudent, onCountChange }: ManageUsersSectionProps) {
-  const { role } = useRole();
+  const { role, user: currentUser } = useRole();
   const [users, setUsers] = useState<ManagedUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -197,7 +197,7 @@ export default function ManageUsersSection({ onViewStudent, onCountChange }: Man
       loadUsers();
     } catch (err) {
       const e = err as { message?: string };
-      await showAlert(e.message || "Failed to delete account.");
+      await showAlert(e.message || "Failed to delete account.", "warning", "Delete Failed");
     } finally {
       setBusyId(null);
     }
@@ -285,8 +285,9 @@ export default function ManageUsersSection({ onViewStudent, onCountChange }: Man
                   )}
                   <button
                     className="btn-action"
-                    disabled={busyId === user.id}
+                    disabled={busyId === user.id || user.id === currentUser?.id}
                     onClick={() => handleDelete(user)}
+                    title={user.id === currentUser?.id ? "You cannot delete your own account" : undefined}
                     style={{ background: "#7f1d1d", borderColor: "#7f1d1d", color: "#fff" }}
                   >
                     Delete

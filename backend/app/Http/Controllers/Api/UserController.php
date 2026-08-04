@@ -269,6 +269,12 @@ class UserController extends Controller
      */
     public function destroy(Request $request, User $user)
     {
+        if ($user->id === $request->user()->id) {
+            return response()->json([
+                'message' => 'You cannot delete your own account.',
+            ], 422);
+        }
+
         $documentCount = $user->documents()->count();
 
         ActivityLog::create([
