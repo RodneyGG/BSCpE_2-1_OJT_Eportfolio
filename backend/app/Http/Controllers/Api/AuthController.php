@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ChangePasswordRequest;
 use App\Http\Requests\LoginRequest;
-use App\Http\Requests\SelectCompanyRequest;
 use App\Services\AuthService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -131,19 +130,4 @@ class AuthController extends Controller
         return response()->json(['message' => 'Password changed successfully']);
     }
 
-    /**
-     * Select/change the user's company assignment.
-     */
-    public function selectCompany(SelectCompanyRequest $request): JsonResponse
-    {
-        $company = $this->authService->selectCompany(
-            $request->user(),
-            $request->input('company_id')
-        );
-
-        return response()->json([
-            'message' => 'Company selected successfully',
-            'company' => $company,
-        ]);
-    }
 }

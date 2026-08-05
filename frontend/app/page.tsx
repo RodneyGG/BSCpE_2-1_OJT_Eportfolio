@@ -6,7 +6,7 @@ import AppNavbar from "./components/AppNavbar";
 import { fetchApi } from "../lib/api";
 import { useRouter } from "next/navigation";
 import HeroCompanyRow from "./components/HeroCompanyRow";
-
+import ToastStack, { useToasts } from "./components/Toast";
 /* ═══════════════════════════ Data ═══════════════════════════ */
 interface Student { id: string; name: string; role: string; }
 interface Company { id: number; name: string; location: string; studentCount: number; students: Student[]; }
@@ -14,12 +14,32 @@ interface Company { id: number; name: string; location: string; studentCount: nu
 /* ═══════════════════════════ Page ════════════════════════════ */
 export default function Home() {
   const router = useRouter();
+  const { role } = useRole();
+  const { toasts, pushToast } = useToasts();
   const [openId, setOpenId] = useState<number | null>(0);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loadingCompanies, setLoadingCompanies] = useState(true);
+  const [syncing, setSyncing] = useState(false);
 
   const toggle = (id: number) => setOpenId(prev => prev === id ? null : id);
   const totalStudents = companies.reduce((s, c) => s + c.studentCount, 0);
+
+const handleSyncCompanies = async () => {
+    setSyncing(true);
+    try {
+      const result = await fetchApi('/admin/companies/sync', { method: 'POST' });
+      pushToast(
+        `Sync complete — ${result.matched} matched, ${result.needs_review} needs review, ${result.unmatched} unmatched`,
+        'success'
+      );
+      const fresh = await fetchApi('/companies');
+      setCompanies(fresh);
+    } catch (err: any) {
+      pushToast(err.message || 'Sync failed', 'error');
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   const handleDeleteCompany = async (id: number) => {
     try {
@@ -211,9 +231,32 @@ export default function Home() {
                 Partner Companies
               </span>
             </div>
-            <span style={{ fontSize: "0.7rem", color: "#94a3b8", fontWeight: 500 }}>
-              {loadingCompanies ? 'Loading...' : `${companies.length} companies · ${totalStudents} students`}
-            </span>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+              <span style={{ fontSize: "0.7rem", color: "#94a3b8", fontWeight: 500 }}>
+                {loadingCompanies ? 'Loading...' : `${companies.length} companies · ${totalStudents} students`}
+              </span>
+              {role === 'admin' && (
+                <button
+                  onClick={handleSyncCompanies}
+                  disabled={syncing}
+                  style={{
+                    display: "flex", alignItems: "center", gap: "0.4rem",
+                    background: syncing ? "#e2e8f0" : "#eff6ff",
+                    color: syncing ? "#94a3b8" : "#1d4ed8",
+                    border: "1px solid",
+                    borderColor: syncing ? "#e2e8f0" : "#bfdbfe",
+                    borderRadius: "9999px",
+                    padding: "0.3rem 0.85rem",
+                    fontSize: "0.7rem", fontWeight: 700,
+                    letterSpacing: "0.04em", textTransform: "uppercase",
+                    cursor: syncing ? "not-allowed" : "pointer",
+                    transition: "background 0.2s",
+                  }}
+                >
+                  {syncing ? "Syncing..." : "Sync Companies"}
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Accordion list */}
@@ -317,6 +360,7 @@ export default function Home() {
           </div>
         </footer>
       </div>
+      <ToastStack toasts={toasts} />
     </>
   );
 }

@@ -27,6 +27,13 @@ function IconBook() {
     </svg>
   );
 }
+function IconActivity() {
+  return (
+    <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+    </svg>
+  );
+}
 function IconBug() {
   return (
     <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
@@ -52,6 +59,13 @@ function IconLogin() {
   return (
     <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
       <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3" />
+    </svg>
+  );
+}
+function IconLock() {
+  return (
+    <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
     </svg>
   );
 }
@@ -282,8 +296,10 @@ export default function AppNavbar() {
               }}>
                 {[
                   { href: "/profile", label: "My Profile", icon: <IconUser />, external: false },
+                  { href: "/change-password", label: "Change Password", icon: <IconLock />, external: false },
                   { href: "/help", label: "Help / Docs", icon: <IconHelp />, external: false },
                   { href: "/user-manual", label: "User Manual", icon: <IconBook />, external: false },
+                  ...(role === "admin" ? [{ href: "/admin/activity-log", label: "Activity Log", icon: <IconActivity />, external: false }] : []),
                   { href: `mailto:${BUG_REPORT_EMAIL}?subject=OJT%20E-Portfolio%20Bug%20Report`, label: "Report a Bug", icon: <IconBug />, external: true },
                   { href: GITHUB_REPO_URL, label: "Visit GitHub", icon: <IconGithub />, external: true },
                 ].map((item) => (

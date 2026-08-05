@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\BlockController;
 use App\Http\Controllers\Api\AccountSetupController;
 use App\Http\Controllers\Api\PasswordResetController;
+use App\Http\Controllers\Api\ActivityLogController;
 // Public routes
 Route::post('/login', [AuthController::class, 'login']);
 Route::get('/companies', [CompanyController::class, 'index']);
@@ -24,7 +25,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
     Route::patch('/profile', [AuthController::class, 'updateProfile']);
     Route::post('/change-password', [AuthController::class, 'changePassword']);
-    Route::post('/select-company', [AuthController::class, 'selectCompany']);
     Route::patch('/admin/block', [BlockController::class, 'update'])->middleware('role:admin');
     Route::get('/students', [UserController::class, 'index']);
     // Google Auth
@@ -33,6 +33,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/companies/{company}', [CompanyController::class, 'show']);
     Route::patch('/companies/{company}/address', [CompanyController::class, 'updateAddress']);
     Route::delete('/admin/companies/{company}', [CompanyController::class, 'destroy'])->middleware('role:admin');
+    Route::post('/admin/companies/sync', [CompanyController::class, 'sync'])->middleware('role:admin');
     Route::get('/notifications', [NotificationController::class, 'index']);
     
     // Documents
@@ -52,4 +53,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/admin/users/{user}', [UserController::class, 'show'])->middleware('role:admin,prof');
     Route::post('/admin/users/{user}/resend-setup', [UserController::class, 'resendSetup'])->middleware('role:admin');
     Route::delete('/admin/users/{user}', [UserController::class, 'destroy'])->middleware('role:admin');
+    Route::get('/admin/activity-logs', [ActivityLogController::class, 'index'])->middleware('role:admin');
 });

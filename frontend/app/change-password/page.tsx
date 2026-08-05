@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { fetchApi } from "../../lib/api";
 import { useRole } from "../context/RoleContext";
+import ProtectedRoute from "../components/ProtectedRoute";
 
 function IconKey() {
   return (
@@ -79,6 +80,7 @@ export default function ChangePasswordPage() {
   };
 
   return (
+    <ProtectedRoute>
     <div style={{
       minHeight: "100vh",
       background: "linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%)",
@@ -112,7 +114,11 @@ export default function ChangePasswordPage() {
             <IconKey />
           </div>
           <h1 style={{ fontSize: "1.5rem", fontWeight: 800, color: "#0f172a", margin: "0 0 0.5rem 0", letterSpacing: "-0.02em" }}>Change Password</h1>
-          <p style={{ fontSize: "0.9rem", color: "#64748b", margin: 0 }}>Please update your default password.</p>
+          <p style={{ fontSize: "0.9rem", color: "#64748b", margin: 0 }}>
+            {user?.must_change_password
+              ? "Please update your default password."
+              : "Update your account password."}
+          </p>
         </div>
 
         {errorMsg && (
@@ -183,8 +189,8 @@ export default function ChangePasswordPage() {
 
           </div>
 
-          <button 
-            type="submit" 
+<button
+            type="submit"
             disabled={isLoading}
             style={{ 
               width: "100%", background: isLoading ? "#94a3b8" : "#2563eb", color: "white", border: "none", 
@@ -198,5 +204,6 @@ export default function ChangePasswordPage() {
         </form>
       </div>
     </div>
+    </ProtectedRoute>
   );
 }
