@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\BlockController;
 use App\Http\Controllers\Api\AccountSetupController;
 use App\Http\Controllers\Api\PasswordResetController;
+use App\Http\Controllers\Api\ActivityLogController;
 // Public routes
 Route::post('/login', [AuthController::class, 'login']);
 Route::get('/companies', [CompanyController::class, 'index']);
@@ -52,4 +53,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/admin/users/{user}', [UserController::class, 'show'])->middleware('role:admin,prof');
     Route::post('/admin/users/{user}/resend-setup', [UserController::class, 'resendSetup'])->middleware('role:admin');
     Route::delete('/admin/users/{user}', [UserController::class, 'destroy'])->middleware('role:admin');
+    Route::get('/admin/activity-logs', [ActivityLogController::class, 'index'])->middleware('role:admin');
 });

@@ -27,6 +27,13 @@ function IconBook() {
     </svg>
   );
 }
+function IconActivity() {
+  return (
+    <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+    </svg>
+  );
+}
 function IconBug() {
   return (
     <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
@@ -284,6 +291,7 @@ export default function AppNavbar() {
                   { href: "/profile", label: "My Profile", icon: <IconUser />, external: false },
                   { href: "/help", label: "Help / Docs", icon: <IconHelp />, external: false },
                   { href: "/user-manual", label: "User Manual", icon: <IconBook />, external: false },
+                  ...(role === "admin" ? [{ href: "/admin/activity-log", label: "Activity Log", icon: <IconActivity />, external: false }] : []),
                   { href: `mailto:${BUG_REPORT_EMAIL}?subject=OJT%20E-Portfolio%20Bug%20Report`, label: "Report a Bug", icon: <IconBug />, external: true },
                   { href: GITHUB_REPO_URL, label: "Visit GitHub", icon: <IconGithub />, external: true },
                 ].map((item) => (
