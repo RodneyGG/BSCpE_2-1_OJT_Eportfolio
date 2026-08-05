@@ -8,8 +8,9 @@ export default function CompanySelect({ value, onChange }: { value: string, onCh
 
   useEffect(() => {
     fetchApi('/companies')
-      .then(data => {
-        setCompanies(data);
+      .then((data: any) => {
+        // Handle both wrapped { companies, ... } and legacy bare-array response
+        setCompanies(Array.isArray(data) ? data : data.companies ?? []);
         setLoading(false);
       })
       .catch(err => {
