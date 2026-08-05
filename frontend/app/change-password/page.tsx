@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { fetchApi } from "../../lib/api";
 import { useRole } from "../context/RoleContext";
+import ProtectedRoute from "../components/ProtectedRoute";
 
 function IconKey() {
   return (
@@ -79,6 +80,7 @@ export default function ChangePasswordPage() {
   };
 
   return (
+    <ProtectedRoute>
     <div style={{
       minHeight: "100vh",
       background: "linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%)",
@@ -183,8 +185,8 @@ export default function ChangePasswordPage() {
 
           </div>
 
-          <button 
-            type="submit" 
+<button
+            type="submit"
             disabled={isLoading}
             style={{ 
               width: "100%", background: isLoading ? "#94a3b8" : "#2563eb", color: "white", border: "none", 
@@ -198,5 +200,6 @@ export default function ChangePasswordPage() {
         </form>
       </div>
     </div>
+    </ProtectedRoute>
   );
 }
