@@ -30,11 +30,9 @@ class CompanyController extends Controller
                   ->select('id', 'name', 'role', 'email', 'company_id');
             }])
             ->orderBy('name')
-            ->get()
-            // Drop companies that have zero active students after filtering
-            ->filter(fn ($company) => $company->users->isNotEmpty());
+            ->get();
 
-        $formatted = $companies->values()->map(function ($company) {
+        $formatted = $companies->map(function ($company) {
             return [
                 'id' => $company->id,
                 'name' => $company->name,
