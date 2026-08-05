@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Company;
+use App\Services\RosterSyncService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -82,14 +83,30 @@ class CompanyController extends Controller
         ]);
     }
 
+/**
+     * Trigger a roster sync from the Google Sheet (Admin only).
+     */
+    public function sync(RosterSyncService $rosterSync): JsonResponse
+    {
+        $summary = $rosterSync->sync(false);
+
+        return response()->json([
+            'matched' => $summary['matched'],
+            'needs_review' => $summary['needs_review'],
+            'unmatched' => $summary['unmatched'],
+            'malformed' => $summary['malformed'],
+        ]);
+    }
+
     /**
      * Delete a company (Admin only).
      */
     public function destroy(Company $company): JsonResponse
     {
         $company->delete();
+
         return response()->json([
-            'message' => 'Company deleted successfully'
+            'message' => 'Company deleted successfully',
         ]);
     }
 }

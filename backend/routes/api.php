@@ -33,6 +33,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/companies/{company}', [CompanyController::class, 'show']);
     Route::patch('/companies/{company}/address', [CompanyController::class, 'updateAddress']);
     Route::delete('/admin/companies/{company}', [CompanyController::class, 'destroy'])->middleware('role:admin');
+    Route::post('/admin/companies/sync', [CompanyController::class, 'sync'])->middleware('role:admin');
     Route::get('/notifications', [NotificationController::class, 'index']);
     
     // Documents
