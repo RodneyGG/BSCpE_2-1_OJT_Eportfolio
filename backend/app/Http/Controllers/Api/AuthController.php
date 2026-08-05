@@ -83,10 +83,10 @@ class AuthController extends Controller
      * Update the authenticated user's own profile fields.
      *
      * Allows name/email (with uniqueness check against other users),
-     * phone/program, OJT deployment details, and emergency contact info.
+     * phone/program, OJT deployment details (company, role, supervisor,
+     * start/end dates), and emergency contact info.
      * Still does NOT allow touching role, password, hours_rendered,
-     * company_id (company selection goes through selectCompany), or any
-     * admin-only fields here.
+     * or any admin-only fields here.
      */
     public function updateProfile(Request $request): JsonResponse
     {
@@ -102,8 +102,11 @@ class AuthController extends Controller
             ],
             'phone' => ['nullable', 'string', 'max:30'],
             'program' => ['nullable', 'string', 'max:255'],
+            'company_id' => ['nullable', 'integer', 'exists:companies,id'],
             'ojt_role' => ['nullable', 'string', 'max:255'],
             'ojt_supervisor' => ['nullable', 'string', 'max:255'],
+            'ojt_start_date' => ['nullable', 'date'],
+            'ojt_end_date' => ['nullable', 'date'],
             'emergency_contact_name' => ['nullable', 'string', 'max:255'],
             'emergency_contact_number' => ['nullable', 'string', 'max:30'],
         ]);
@@ -112,7 +115,7 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Profile updated successfully',
-            'user' => $user->fresh(),
+            'user' => $user->fresh()->load('company'),
         ]);
     }
 
