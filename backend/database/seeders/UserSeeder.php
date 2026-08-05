@@ -33,7 +33,7 @@ class UserSeeder extends Seeder
             'name' => 'Test Student',
             'email' => 'student@ojt.dev',
             'password' => Hash::make('Student@2026'),
-            'role' => 'student',
+            'role' => 'normal',
             'must_change_password' => false,
             'company_id' => $testCompany ? $testCompany->id : null,
         ]);

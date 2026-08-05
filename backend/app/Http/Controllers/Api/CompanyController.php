@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Company;
+use App\Models\User;
 use App\Services\RosterSyncService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -12,10 +13,24 @@ class CompanyController extends Controller
 {
     /**
      * List all companies.
+     *
+     * Only active students (role=normal, is_active=true) are included in
+     * per-company counts and student lists.  A top-level `totalStudents`
+     * field gives the global count of ALL active students (including those
+     * not yet assigned to any company) so the dashboard stat tile matches
+     * the checklist page exactly.
      */
     public function index(): JsonResponse
     {
-        $companies = Company::has('users')->with('users:id,name,role,email,company_id')->orderBy('name')->get();
+        // Scope the eager-load to active students only so counts are consistent
+        // with the checklist endpoint (UserController@checklist).
+        $companies = Company::with(['users' => function ($q) {
+                $q->where('role', 'normal')
+                  ->where('is_active', true)
+                  ->select('id', 'name', 'role', 'email', 'company_id');
+            }])
+            ->orderBy('name')
+            ->get();
 
         $formatted = $companies->map(function ($company) {
             return [
@@ -39,7 +54,16 @@ class CompanyController extends Controller
             ];
         });
 
-        return response()->json($formatted);
+        // Global count of ALL active students — single source of truth shared
+        // with the checklist endpoint so the dashboard tile is always accurate.
+        $totalStudents = User::where('role', 'normal')
+            ->where('is_active', true)
+            ->count();
+
+        return response()->json([
+            'companies' => $formatted,
+            'totalStudents' => $totalStudents,
+        ]);
     }
 
     /**

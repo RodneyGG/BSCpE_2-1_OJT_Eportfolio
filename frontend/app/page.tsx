@@ -18,11 +18,11 @@ export default function Home() {
   const { toasts, pushToast } = useToasts();
   const [openId, setOpenId] = useState<number | null>(0);
   const [companies, setCompanies] = useState<Company[]>([]);
+  const [totalStudents, setTotalStudents] = useState(0);
   const [loadingCompanies, setLoadingCompanies] = useState(true);
   const [syncing, setSyncing] = useState(false);
 
   const toggle = (id: number) => setOpenId(prev => prev === id ? null : id);
-  const totalStudents = companies.reduce((s, c) => s + c.studentCount, 0);
 
 const handleSyncCompanies = async () => {
     setSyncing(true);
@@ -33,7 +33,8 @@ const handleSyncCompanies = async () => {
         'success'
       );
       const fresh = await fetchApi('/companies');
-      setCompanies(fresh);
+      setCompanies(fresh.companies ?? fresh);
+      if (fresh.totalStudents !== undefined) setTotalStudents(fresh.totalStudents);
     } catch (err: any) {
       pushToast(err.message || 'Sync failed', 'error');
     } finally {
@@ -53,8 +54,16 @@ const handleSyncCompanies = async () => {
 
   useEffect(() => {
     fetchApi('/companies')
-      .then(data => {
-        setCompanies(data);
+      .then((data: { companies: Company[]; totalStudents: number } | Company[]) => {
+        // Handle both the new { companies, totalStudents } format and
+        // a bare array for backward-compat during rolling deploys.
+        if (Array.isArray(data)) {
+          setCompanies(data);
+          setTotalStudents(data.reduce((s, c) => s + c.studentCount, 0));
+        } else {
+          setCompanies(data.companies);
+          setTotalStudents(data.totalStudents);
+        }
         setLoadingCompanies(false);
       })
       .catch(err => {
