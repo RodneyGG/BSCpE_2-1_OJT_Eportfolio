@@ -62,6 +62,13 @@ function IconLogin() {
     </svg>
   );
 }
+function IconLock() {
+  return (
+    <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
+    </svg>
+  );
+}
 function IconUser() {
   return (
     <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
@@ -289,6 +296,7 @@ export default function AppNavbar() {
               }}>
                 {[
                   { href: "/profile", label: "My Profile", icon: <IconUser />, external: false },
+                  { href: "/change-password", label: "Change Password", icon: <IconLock />, external: false },
                   { href: "/help", label: "Help / Docs", icon: <IconHelp />, external: false },
                   { href: "/user-manual", label: "User Manual", icon: <IconBook />, external: false },
                   ...(role === "admin" ? [{ href: "/admin/activity-log", label: "Activity Log", icon: <IconActivity />, external: false }] : []),

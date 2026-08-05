@@ -114,7 +114,11 @@ export default function ChangePasswordPage() {
             <IconKey />
           </div>
           <h1 style={{ fontSize: "1.5rem", fontWeight: 800, color: "#0f172a", margin: "0 0 0.5rem 0", letterSpacing: "-0.02em" }}>Change Password</h1>
-          <p style={{ fontSize: "0.9rem", color: "#64748b", margin: 0 }}>Please update your default password.</p>
+          <p style={{ fontSize: "0.9rem", color: "#64748b", margin: 0 }}>
+            {user?.must_change_password
+              ? "Please update your default password."
+              : "Update your account password."}
+          </p>
         </div>
 
         {errorMsg && (
