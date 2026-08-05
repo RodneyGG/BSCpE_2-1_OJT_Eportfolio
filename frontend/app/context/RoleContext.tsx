@@ -69,6 +69,7 @@ export function RoleProvider({ children }: { children: ReactNode }) {
     setRole("normal");
     try {
       localStorage.removeItem("ojt_user");
+      localStorage.removeItem("auth_token");
     } catch (e) {
       console.error("Failed to remove session from localStorage", e);
     }

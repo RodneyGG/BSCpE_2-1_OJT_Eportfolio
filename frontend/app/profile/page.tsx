@@ -5,6 +5,7 @@ import { useRole, Role } from "../context/RoleContext";
 import { fetchApi } from "../../lib/api";
 import CompanySelect from "./CompanySelect";
 import AppNavbar from "../components/AppNavbar";
+import ProtectedRoute from "../components/ProtectedRoute";
 import { REQUIRED_DOCUMENTS } from "../data/documentTypes";
 import DocumentViewerModal from "../components/DocumentViewerModal";
 
@@ -329,8 +330,8 @@ export default function ProfilePage() {
   const displayProgram = profileData?.program || "BSCpE 2-1";
 
   return (
-    <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)", fontFamily: "var(--font-geist-sans, system-ui, sans-serif)", display: "flex", flexDirection: "column" }}>
-      <style>{`
+    <ProtectedRoute>
+    <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)", fontFamily: "var(--font-geist-sans, system-ui, sans-serif)", display: "flex", flexDirection: "column" }}>      <style>{`
         .ui-card { background: white; border-radius: 1.25rem; padding: 2rem; box-shadow: 0 10px 30px rgba(0,0,0,0.04); border: 1px solid rgba(255,255,255,0.8); display: flex; flex-direction: column; height: 100%; }
         .card-edit-btn { background: none; border: 1px solid #cbd5e1; color: #475569; border-radius: 0.5rem; padding: 0.6rem 1.2rem; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: all 0.15s; }
         .card-edit-btn:hover { background: #f1f5f9; color: #0f172a; }
@@ -585,5 +586,6 @@ export default function ProfilePage() {
         />
       )}
     </div>
+    </ProtectedRoute>
   );
 }
