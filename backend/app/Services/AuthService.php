@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\User;
-use App\Models\Company;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
@@ -62,13 +61,4 @@ class AuthService
         ]);
     }
 
-    /**
-     * Select a company for the user.
-     */
-    public function selectCompany(User $user, int $companyId): Company
-    {
-        $company = Company::findOrFail($companyId);
-        $user->update(['company_id' => $company->id]);
-        return $company;
-    }
 }

@@ -14,7 +14,7 @@ class CompanyController extends Controller
      */
     public function index(): JsonResponse
     {
-        $companies = Company::with('users:id,name,role,email,company_id')->orderBy('name')->get();
+        $companies = Company::has('users')->with('users:id,name,role,email,company_id')->orderBy('name')->get();
 
         $formatted = $companies->map(function ($company) {
             return [

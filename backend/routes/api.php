@@ -25,7 +25,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
     Route::patch('/profile', [AuthController::class, 'updateProfile']);
     Route::post('/change-password', [AuthController::class, 'changePassword']);
-    Route::post('/select-company', [AuthController::class, 'selectCompany']);
     Route::patch('/admin/block', [BlockController::class, 'update'])->middleware('role:admin');
     Route::get('/students', [UserController::class, 'index']);
     // Google Auth
