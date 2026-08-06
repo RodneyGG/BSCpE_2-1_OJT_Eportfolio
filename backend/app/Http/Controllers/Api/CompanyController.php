@@ -125,15 +125,17 @@ class CompanyController extends Controller
 /**
      * Trigger a roster sync from the Google Sheet (Admin only).
      */
-    public function sync(RosterSyncService $rosterSync): JsonResponse
+    public function sync(Request $request, RosterSyncService $rosterSync): JsonResponse
     {
-        $summary = $rosterSync->sync(false);
-
+        $summary = $rosterSync->sync(false, $request->user()->id);
         return response()->json([
             'matched' => $summary['matched'],
             'needs_review' => $summary['needs_review'],
             'unmatched' => $summary['unmatched'],
             'malformed' => $summary['malformed'],
+            'deployments_proposed' => $summary['deployments_proposed'],
+            'deployments_updated' => $summary['deployments_updated'],
+            'deployments_mismatched' => $summary['deployments_mismatched'],
         ]);
     }
 

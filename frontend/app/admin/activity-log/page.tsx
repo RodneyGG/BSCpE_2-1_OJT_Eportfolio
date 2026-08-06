@@ -30,6 +30,7 @@ const ACTION_COLORS: Record<string, string> = {
   password_reset: "#60a5fa",
   review_permission_toggled: "#c084fc",
   account_setup_resent: "#94a3b8",
+  deployment_sheet_mismatch: "#fb923c",
 };
 
 function formatTime(value: string): string {
@@ -94,6 +95,11 @@ function describeAction(entry: ActivityLogEntry): string {
       return `reactivated ${targetName}'s account`;
     case "account_setup_resent":
       return `resent setup email to ${targetName}`;
+    case "deployment_sheet_mismatch": {
+      const fields = (meta.fields as Record<string, { old: unknown; new: unknown }>) ?? {};
+      const fieldNames = Object.keys(fields).join(", ") || "some fields";
+      return `roster sheet disagrees with ${targetName}'s confirmed deployment (${fieldNames})`;
+    }
     default:
       return `performed "${entry.action}" on ${targetName}`;
   }
@@ -181,7 +187,7 @@ export default function ActivityLogPage() {
                       <div key={entry.id} style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
                         <span style={{ color: "#64748b" }}>[{formatTime(entry.created_at)}]</span>{" "}
                         <span style={{ color: "#38bdf8", fontWeight: 600 }}>
-                          {entry.actor?.name ?? "unknown"}
+                          {entry.actor?.name ?? "System"}
                         </span>{" "}
                         <span style={{ color: "#475569" }}>→</span>{" "}
                         <span style={{ color }}>{describeAction(entry)}</span>
