@@ -243,7 +243,37 @@ class UserController extends Controller
             'is_active' => $user->is_active,
         ]);
     }
+    public function updateCompany(Request $request, User $user)
+    {
+        if ($user->role !== 'normal') {
+            return response()->json([
+                'message' => 'Only student accounts can be assigned a company.',
+            ], 422);
+        }
 
+        $request->validate([
+            'company_id' => ['nullable', 'integer', 'exists:companies,id'],
+        ]);
+
+        $previousCompanyId = $user->company_id;
+        $user->update(['company_id' => $request->company_id]);
+        $user->load('company:id,name');
+
+        ActivityLog::create([
+            'actor_id' => $request->user()->id,
+            'action' => 'company_reassigned',
+            'target_id' => $user->id,
+            'metadata' => [
+                'previous_company_id' => $previousCompanyId,
+                'new_company_id' => $user->company_id,
+            ],
+        ]);
+
+        return response()->json([
+            'message' => 'Company assignment updated.',
+            'company' => $user->company,
+        ]);
+    }
     /**
      * Reactivate a previously deactivated user account.
      */

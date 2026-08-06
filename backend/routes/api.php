@@ -54,4 +54,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/admin/users/{user}/resend-setup', [UserController::class, 'resendSetup'])->middleware('role:admin');
     Route::delete('/admin/users/{user}', [UserController::class, 'destroy'])->middleware('role:admin');
     Route::get('/admin/activity-logs', [ActivityLogController::class, 'index'])->middleware('role:admin');
+    Route::patch('/admin/users/{user}/company', [UserController::class, 'updateCompany'])->middleware('role:admin');
 });
