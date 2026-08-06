@@ -11,21 +11,22 @@ interface ConfirmDialogProps {
   confirmLabel?: string;
   cancelLabel?: string;
   danger?: boolean;
+  isProcessing?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
 }
-function IconWarning() {
+function IconWarningLarge() {
   return (
-    <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <svg width={48} height={48} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
       <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
       <line x1="12" y1="9" x2="12" y2="13" />
       <line x1="12" y1="17" x2="12.01" y2="17" />
     </svg>
   );
 }
-function IconSuccess() {
+function IconSuccessLarge() {
   return (
-    <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+    <svg width={48} height={48} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
       <circle cx="12" cy="12" r="10" />
       <path d="M8 12.5l2.5 2.5L16 9.5" />
     </svg>
@@ -45,6 +46,7 @@ export default function ConfirmDialog({
   confirmLabel,
   cancelLabel = "Cancel",
   danger = false,
+  isProcessing = false,
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
@@ -53,67 +55,119 @@ export default function ConfirmDialog({
   if (!open || !mounted) return null;
   const resolvedIcon = icon ?? (danger ? "warning" : undefined);
   const tone = resolvedIcon ? TONE_STYLES[resolvedIcon] : null;
+  
   return createPortal(
     <div
       style={{
-        position: "fixed", inset: 0, background: "rgba(15,23,42,0.5)",
-        display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200,
+        position: "fixed", inset: 0, background: "rgba(15,23,42,0.6)", backdropFilter: "blur(4px)",
+        display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999,
       }}
-      onClick={onCancel}
+      onClick={!isProcessing ? onCancel : undefined}
     >
       <div
-        style={{ background: "#fff", borderRadius: "1rem", padding: "1.5rem", width: "100%", maxWidth: "24rem", boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)" }}
+        style={{ 
+          background: "#fff", 
+          borderRadius: "1.25rem", 
+          padding: "2.5rem 2rem", 
+          width: "100%", 
+          maxWidth: "32rem", 
+          boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          textAlign: "center"
+        }}
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 style={{ fontSize: "1rem", fontWeight: 700, margin: "0 0 0.6rem", color: "#0f172a", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-          {tone && (
-            <span style={{ color: tone.iconColor }}>
-              {resolvedIcon === "warning" ? <IconWarning /> : <IconSuccess />}
-            </span>
-          )}
+        {tone && (
+          <div style={{ 
+            color: tone.iconColor, 
+            background: tone.bg, 
+            padding: "1.25rem", 
+            borderRadius: "9999px",
+            marginBottom: "1.5rem",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center"
+          }}>
+            {resolvedIcon === "warning" ? <IconWarningLarge /> : <IconSuccessLarge />}
+          </div>
+        )}
+        
+        <h3 style={{ fontSize: "1.5rem", fontWeight: 800, margin: "0 0 1rem", color: "#0f172a" }}>
           {title || (variant === "alert" ? "Notice" : "Please Confirm")}
         </h3>
-        <p style={{ fontSize: "0.85rem", color: "#475569", margin: highlight ? "0 0 0.9rem" : "0 0 1.25rem", lineHeight: 1.5 }}>
+        
+        <p style={{ fontSize: "1.05rem", color: "#475569", margin: highlight ? "0 0 1rem" : "0 0 2rem", lineHeight: 1.6 }}>
           {message}
         </p>
+        
         {highlight && tone && (
           <div
             style={{
-              display: "flex",
-              alignItems: "flex-start",
-              gap: "0.6rem",
+              width: "100%",
               background: tone.bg,
               border: `1px solid ${tone.border}`,
-              borderLeft: `4px solid ${tone.borderLeft}`,
-              borderRadius: "0.5rem",
-              padding: "0.7rem 0.85rem",
-              marginBottom: "1.25rem",
+              borderRadius: "0.75rem",
+              padding: "1rem",
+              marginBottom: "2rem",
+              textAlign: "left"
             }}
           >
-            <span style={{ color: tone.borderLeft, marginTop: "0.1rem" }}>
-              {resolvedIcon === "warning" ? <IconWarning /> : <IconSuccess />}
-            </span>
-            <span style={{ fontSize: "0.8rem", fontWeight: 600, color: tone.text, lineHeight: 1.4 }}>
+            <span style={{ fontSize: "0.95rem", fontWeight: 600, color: tone.text, lineHeight: 1.5 }}>
               {highlight}
             </span>
           </div>
         )}
-        <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>
+        
+        <div style={{ display: "flex", gap: "1rem", width: "100%", justifyContent: "center" }}>
           {variant === "confirm" && (
-            <button className="btn-action" onClick={onCancel}>
+            <button 
+              onClick={onCancel}
+              disabled={isProcessing}
+              style={{
+                flex: 1,
+                padding: "0.875rem 1.5rem",
+                borderRadius: "0.75rem",
+                background: "#f1f5f9",
+                color: "#475569",
+                fontWeight: 700,
+                fontSize: "1rem",
+                border: "none",
+                cursor: isProcessing ? "not-allowed" : "pointer",
+                opacity: isProcessing ? 0.6 : 1,
+                transition: "all 0.2s"
+              }}
+              onMouseEnter={(e) => { if (!isProcessing) { e.currentTarget.style.background = "#e2e8f0"; e.currentTarget.style.color = "#0f172a"; } }}
+              onMouseLeave={(e) => { if (!isProcessing) { e.currentTarget.style.background = "#f1f5f9"; e.currentTarget.style.color = "#475569"; } }}
+            >
               {cancelLabel}
             </button>
           )}
           <button
-            className="btn-action"
             onClick={onConfirm}
-            style={
-              danger
-                ? { background: "#fee2e2", borderColor: "#fecaca", color: "#991b1b" }
-                : { background: "#dcfce7", borderColor: "#bbf7d0", color: "#166534" }
-            }
+            disabled={isProcessing}
+            style={{
+              flex: 1,
+              padding: "0.875rem 1.5rem",
+              borderRadius: "0.75rem",
+              background: danger ? "#ef4444" : "#3b82f6",
+              color: "white",
+              fontWeight: 700,
+              fontSize: "1rem",
+              border: "none",
+              cursor: isProcessing ? "not-allowed" : "pointer",
+              opacity: isProcessing ? 0.6 : 1,
+              transition: "all 0.2s",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "0.5rem"
+            }}
+            onMouseEnter={(e) => { if (!isProcessing) e.currentTarget.style.background = danger ? "#dc2626" : "#2563eb"; }}
+            onMouseLeave={(e) => { if (!isProcessing) e.currentTarget.style.background = danger ? "#ef4444" : "#3b82f6"; }}
           >
-            {confirmLabel || (variant === "alert" ? "OK" : "Confirm")}
+            {isProcessing ? "Processing..." : (confirmLabel || (variant === "alert" ? "OK" : "Confirm"))}
           </button>
         </div>
       </div>
