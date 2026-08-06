@@ -274,38 +274,62 @@ export default function AppNavbar() {
 
         {/* Middle links */}
         <div style={{ display: "flex", alignItems: "center", gap: "1.5rem", flex: 1, justifyContent: "flex-end" }}>
-          <Link
-            href="/#companies"
-            onClick={handleCompaniesClick}
-            style={{
-              fontSize: "0.75rem", fontWeight: 600, color: "#93c5fd", textDecoration: "none",
-              letterSpacing: "0.06em", textTransform: "uppercase", transition: "color 0.2s",
-            }}
-          >
-            Companies
-          </Link>
-          {isLoggedIn && (
-            <Link
-              href={dashboardHref(role)}
-              style={{
-                fontSize: "0.75rem", fontWeight: 600, color: "white", textDecoration: "none",
-                letterSpacing: "0.06em", textTransform: "uppercase", transition: "color 0.2s",
-              }}
-            >
-              {dashboardLabel(role)}
-            </Link>
-          )}
-          {isLoggedIn && (role === "prof" || role === "admin") && (
-            <Link
-              href="/admin/checklist"
-              style={{
-                fontSize: "0.75rem", fontWeight: 600, color: "#93c5fd", textDecoration: "none",
-                letterSpacing: "0.06em", textTransform: "uppercase", transition: "color 0.2s",
-              }}
-            >
-              Checklist
-            </Link>
-          )}
+          {(() => {
+            const isCompaniesActive = pathname === "/";
+            return (
+              <Link
+                href="/#companies"
+                onClick={handleCompaniesClick}
+                style={{
+                  fontSize: "0.75rem", fontWeight: 600,
+                  color: isCompaniesActive ? "white" : "#93c5fd",
+                  textDecoration: "none",
+                  letterSpacing: "0.06em", textTransform: "uppercase", transition: "color 0.2s",
+                  borderBottom: isCompaniesActive ? "2px solid #3b82f6" : "2px solid transparent",
+                  paddingBottom: "0.2rem",
+                }}
+              >
+                Companies
+              </Link>
+            );
+          })()}
+          {isLoggedIn && (() => {
+            const href = dashboardHref(role);
+            const isDashboardActive = pathname === href;
+            return (
+              <Link
+                href={href}
+                style={{
+                  fontSize: "0.75rem", fontWeight: 600,
+                  color: isDashboardActive ? "white" : "#93c5fd",
+                  textDecoration: "none",
+                  letterSpacing: "0.06em", textTransform: "uppercase", transition: "color 0.2s",
+                  borderBottom: isDashboardActive ? "2px solid #3b82f6" : "2px solid transparent",
+                  paddingBottom: "0.2rem",
+                }}
+              >
+                {dashboardLabel(role)}
+              </Link>
+            );
+          })()}
+          {isLoggedIn && (role === "prof" || role === "admin") && (() => {
+            const isChecklistActive = pathname === "/admin/checklist";
+            return (
+              <Link
+                href="/admin/checklist"
+                style={{
+                  fontSize: "0.75rem", fontWeight: 600,
+                  color: isChecklistActive ? "white" : "#93c5fd",
+                  textDecoration: "none",
+                  letterSpacing: "0.06em", textTransform: "uppercase", transition: "color 0.2s",
+                  borderBottom: isChecklistActive ? "2px solid #3b82f6" : "2px solid transparent",
+                  paddingBottom: "0.2rem",
+                }}
+              >
+                Checklist
+              </Link>
+            );
+          })()}
         </div>
 
         {/* Auth-aware right side */}

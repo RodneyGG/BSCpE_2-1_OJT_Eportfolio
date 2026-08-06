@@ -29,6 +29,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/students', [UserController::class, 'index']);
     // Google Auth
     Route::get('/google/auth', [\App\Http\Controllers\Api\GoogleOAuthController::class, 'redirect']);
+    Route::get('/google/status', [\App\Http\Controllers\Api\GoogleOAuthController::class, 'status']);
     // Companies
     Route::get('/companies/{company}', [CompanyController::class, 'show']);
     Route::patch('/companies/{company}/address', [CompanyController::class, 'updateAddress']);
