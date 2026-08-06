@@ -372,4 +372,4 @@ const handleSyncCompanies = async () => {
       <ToastStack toasts={toasts} />
     </>
   );
-}
+} 

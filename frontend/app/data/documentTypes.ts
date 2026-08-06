@@ -33,7 +33,7 @@ export const REQUIRED_DOCUMENTS: RequiredDocument[] = [
   },
   {
     id: "internship-agreement",
-    title: "Internship Agreement 2024",
+    title: "Internship Agreement",
     shortTitle: "Intern Agree.",
     phase: "before",
   },
@@ -52,10 +52,10 @@ export const REQUIRED_DOCUMENTS: RequiredDocument[] = [
   },
   {
     id: "moa",
-    title: "Memorandum of Agreement (MOA) ver. OCT 2024",
+    title: "Memorandum of Agreement (MOA)",
     shortTitle: "MOA",
     phase: "before",
-    aliases: ["Memorandum of Agreement", "MOA ver OCT 2024"],
+    aliases: ["Memorandum of Agreement", "MOA ver OCT 2024", "Memorandum of Agreement (MOA) ver. OCT 2024"],
   },
   {
     id: "overtime-agreement",
