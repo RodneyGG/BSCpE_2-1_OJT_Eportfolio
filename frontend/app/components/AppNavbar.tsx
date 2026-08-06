@@ -84,6 +84,25 @@ function IconLogoMark() {
   );
 }
 
+function IconMenu() {
+  return (
+    <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <line x1="3" y1="12" x2="21" y2="12" />
+      <line x1="3" y1="6" x2="21" y2="6" />
+      <line x1="3" y1="18" x2="21" y2="18" />
+    </svg>
+  );
+}
+
+function IconX() {
+  return (
+    <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
+  );
+}
+
 function roleBadge(role: string) {
   if (role === "admin") {
     return { label: "ADMIN", bg: "#fef3c7", color: "#92400e", border: "#fde68a" };
@@ -111,6 +130,7 @@ export default function AppNavbar() {
   const pathname = usePathname();
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [navScrolled, setNavScrolled] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -150,49 +170,66 @@ export default function AppNavbar() {
       e.preventDefault();
       document.getElementById("companies")?.scrollIntoView({ behavior: "smooth" });
     }
+    setMobileMenuOpen(false);
     // Otherwise let the Link navigate to "/#companies" normally
   };
 
   const initials = isLoggedIn && user ? user.name.split(" ").map((w) => w[0]).slice(0, 2).join("") : "";
 
   return (
-    <nav style={{
-      background: navScrolled
-        ? "rgba(15,23,42,0.97)"
-        : "linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%)",
-      backdropFilter: navScrolled ? "blur(12px)" : "none",
-      boxShadow: navScrolled ? "0 4px 24px rgba(0,0,0,0.4)" : "0 2px 12px rgba(15,23,42,0.4)",
-      position: "sticky", top: 0, zIndex: 50,
-      transition: "all 0.3s ease",
-    }}>
-      <div style={{
-        maxWidth: 1400, margin: "0 auto", padding: "0 2rem", height: 64,
-        display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1.5rem",
+    <>
+      <style>{`
+        .nav-container { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 2rem; min-height: 64px; gap: 1rem; }
+        .nav-center-links { display: flex; align-items: center; gap: 2.5rem; justify-content: flex-end; flex: 1; }
+        .mobile-menu-btn { display: none; background: transparent; border: none; color: white; cursor: pointer; padding: 0.5rem; margin-left: 0.5rem; }
+        
+        @media (max-width: 1024px) {
+          .nav-center-links { gap: 1.5rem; }
+        }
+        
+        @media (max-width: 768px) {
+          .nav-container { padding: 0.75rem 1rem; }
+          .mobile-menu-btn { display: flex; align-items: center; justify-content: center; }
+          .nav-user { margin-left: auto; }
+          .nav-center-links {
+            display: none; 
+            flex-direction: column;
+            position: absolute; top: 100%; left: 0; right: 0;
+            background: #0f172a; border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding: 1.5rem; gap: 1.5rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            align-items: flex-start;
+          }
+          .nav-center-links.open { display: flex; }
+        }
+      `}</style>
+      <nav style={{
+        backgroundColor: navScrolled ? "rgba(15,23,42,0.97)" : "transparent",
+        backgroundImage: navScrolled ? "none" : "linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%)",
+        backdropFilter: navScrolled ? "blur(12px)" : "none",
+        boxShadow: navScrolled ? "0 4px 24px rgba(0,0,0,0.4)" : "0 2px 12px rgba(15,23,42,0.4)",
+        position: "sticky", top: 0, zIndex: 50,
+        transition: "all 0.3s ease",
+        minHeight: 64,
       }}>
-        {/* Brand — always the same, always goes home */}
-        <Link href="/" style={{ display: "flex", alignItems: "center", gap: "0.65rem", textDecoration: "none", flexShrink: 0 }}>
+      <div className="nav-container">
+        {/* Brand */}
+        <Link href="/" className="nav-brand" style={{ display: "flex", alignItems: "center", gap: "0.75rem", textDecoration: "none", flexShrink: 0 }}>
           <div style={{
-            width: 32, height: 32, borderRadius: "0.5rem",
             background: "linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)",
+            width: 36, height: 36, borderRadius: "0.75rem",
             display: "flex", alignItems: "center", justifyContent: "center",
-            boxShadow: "0 0 0 2px rgba(99,102,241,0.35)",
-            flexShrink: 0,
+            boxShadow: "0 4px 10px rgba(59, 130, 246, 0.3)",
           }}>
             <IconLogoMark />
           </div>
-          <div>
-            <div style={{ fontSize: "0.8rem", fontWeight: 800, color: "white", letterSpacing: "0.05em", lineHeight: 1 }}>
-              BSCPE 2-1
-            </div>
-            <div style={{ fontSize: "0.55rem", color: "#93c5fd", letterSpacing: "0.14em",
-              textTransform: "uppercase", lineHeight: 1, marginTop: 2 }}>
-              OJT Tracker
-            </div>
-          </div>
+          <span style={{ fontSize: "1.1rem", fontWeight: 800, color: "white", letterSpacing: "0.02em" }}>
+            OJT E-Portfolio
+          </span>
         </Link>
 
         {/* Middle links */}
-        <div style={{ display: "flex", alignItems: "center", gap: "1.5rem", flex: 1, justifyContent: "flex-end" }}>
+        <div className={`nav-center-links ${mobileMenuOpen ? "open" : ""}`}>
           {(() => {
             const isCompaniesActive = pathname === "/";
             return (
@@ -218,6 +255,7 @@ export default function AppNavbar() {
             return (
               <Link
                 href={href}
+                onClick={() => setMobileMenuOpen(false)}
                 style={{
                   fontSize: "0.75rem", fontWeight: 600,
                   color: isDashboardActive ? "white" : "#93c5fd",
@@ -236,6 +274,7 @@ export default function AppNavbar() {
             return (
               <Link
                 href="/admin/checklist"
+                onClick={() => setMobileMenuOpen(false)}
                 style={{
                   fontSize: "0.75rem", fontWeight: 600,
                   color: isChecklistActive ? "white" : "#93c5fd",
@@ -253,7 +292,7 @@ export default function AppNavbar() {
 
         {/* Auth-aware right side */}
         {!isLoggedIn ? (
-          <Link href="/login" style={{
+          <Link href="/login" className="nav-user" style={{
             display: "flex", alignItems: "center", gap: "0.5rem",
             background: "rgba(255,255,255,0.1)",
             border: "1px solid rgba(255,255,255,0.15)",
@@ -277,7 +316,7 @@ export default function AppNavbar() {
             Log In
           </Link>
         ) : (
-          <div ref={menuRef} style={{ position: "relative", flexShrink: 0 }}>
+          <div ref={menuRef} className="nav-user" style={{ position: "relative", flexShrink: 0 }}>
             <button
               onClick={() => setMenuOpen((v) => !v)}
               style={{
@@ -364,7 +403,17 @@ export default function AppNavbar() {
             )}
           </div>
         )}
+        
+        {/* Hamburger Menu Toggle (Mobile Only) */}
+        <button 
+          className="mobile-menu-btn" 
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          aria-label="Toggle navigation"
+        >
+          {mobileMenuOpen ? <IconX /> : <IconMenu />}
+        </button>
       </div>
     </nav>
+    </>
   );
 }
