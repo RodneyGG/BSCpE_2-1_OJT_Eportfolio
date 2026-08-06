@@ -35,6 +35,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/admin/companies/{company}', [CompanyController::class, 'destroy'])->middleware('role:admin');
     Route::post('/admin/companies/sync', [CompanyController::class, 'sync'])->middleware('role:admin');
     Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::patch('/notifications/read-all', [NotificationController::class, 'markAllAsRead']);
+    Route::patch('/notifications/{notification}/read', [NotificationController::class, 'markAsRead']);
     
     // Documents
     Route::post('/documents/upload', [DocumentController::class, 'upload']);
