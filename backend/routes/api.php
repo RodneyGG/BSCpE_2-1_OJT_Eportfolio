@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\BlockController;
 use App\Http\Controllers\Api\AccountSetupController;
 use App\Http\Controllers\Api\PasswordResetController;
 use App\Http\Controllers\Api\ActivityLogController;
+use App\Http\Controllers\Api\DeploymentController;
 // Public routes
 Route::post('/login', [AuthController::class, 'login']);
 Route::get('/companies', [CompanyController::class, 'index']);
@@ -41,6 +42,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/documents/mine', [DocumentController::class, 'mine']);
     Route::get('/documents/pending', [DocumentController::class, 'pending'])->middleware('role:admin,prof');
     Route::patch('/documents/{document}/review', [DocumentController::class, 'review'])->middleware('role:admin,prof');
+    // Deployments
+    Route::get('/deployments/mine', [DeploymentController::class, 'mine']);
+    Route::patch('/deployments/{deployment}/confirm', [DeploymentController::class, 'confirm']);
     // OJT Submission Checklist (admin + prof)
     Route::get('/admin/checklist', [UserController::class, 'checklist'])->middleware('role:admin,prof');
     // User management (admin only)
