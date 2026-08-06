@@ -20,16 +20,30 @@ class CompanyController extends Controller
      * not yet assigned to any company) so the dashboard stat tile matches
      * the checklist page exactly.
      */
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        // Scope the eager-load to active students only so counts are consistent
-        // with the checklist endpoint (UserController@checklist).
-        $companies = Company::has('users')
+        // By default, return ALL companies (used by self-service and admin
+        // company pickers, which must be able to target an empty company).
+        // Pass ?withStudents=1 to restrict to companies that have at least
+        // one active, normal-role student — used by the dashboard view.
+        // The existence filter and the eager-loaded student list use the
+        // SAME criteria so a company's presence and its studentCount never
+        // disagree with each other.
+        $query = Company::query();
+
+        if ($request->boolean('withStudents')) {
+            $query->whereHas('users', function ($q) {
+                $q->where('role', 'normal')
+                  ->where('is_active', true);
+            });
+        }
+
+        $companies = $query
             ->with(['users' => function ($q) {
                 $q->where('role', 'normal')
                   ->where('is_active', true)
                   ->select('id', 'name', 'role', 'email', 'company_id');
-            }])
+                }])
             ->orderBy('name')
             ->get();
 

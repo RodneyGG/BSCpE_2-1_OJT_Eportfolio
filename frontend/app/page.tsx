@@ -32,7 +32,7 @@ const handleSyncCompanies = async () => {
         `Sync complete — ${result.matched} matched, ${result.needs_review} needs review, ${result.unmatched} unmatched`,
         'success'
       );
-      const fresh = await fetchApi('/companies');
+      const fresh = await fetchApi('/companies?withStudents=1');
       setCompanies(fresh.companies ?? fresh);
       if (fresh.totalStudents !== undefined) setTotalStudents(fresh.totalStudents);
     } catch (err: any) {
@@ -53,7 +53,7 @@ const handleSyncCompanies = async () => {
   };
 
   useEffect(() => {
-    fetchApi('/companies')
+    fetchApi('/companies?withStudents=1')
       .then((data: { companies: Company[]; totalStudents: number } | Company[]) => {
         // Handle both the new { companies, totalStudents } format and
         // a bare array for backward-compat during rolling deploys.
