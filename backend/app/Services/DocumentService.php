@@ -138,4 +138,21 @@ class DocumentService
 
         return $document->fresh(['user', 'reviewer']);
     }
+
+    /**
+     * Delete a document from Google Drive and the database.
+     */
+    public function deleteDocument(Document $document): void
+    {
+        if ($document->file_id) {
+            try {
+                $this->driveService->delete($document->file_id);
+            } catch (\Exception $e) {
+                // If the file is already deleted on Drive or there's an API error, log it but proceed to delete the record
+                \Illuminate\Support\Facades\Log::warning('Failed to delete file from Google Drive: ' . $e->getMessage());
+            }
+        }
+
+        $document->delete();
+    }
 }

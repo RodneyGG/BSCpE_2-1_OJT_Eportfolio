@@ -8,6 +8,7 @@ import AppNavbar from "../components/AppNavbar";
 import ProtectedRoute from "../components/ProtectedRoute";
 import { REQUIRED_DOCUMENTS } from "../data/documentTypes";
 import DocumentViewerModal from "../components/DocumentViewerModal";
+import ConfirmDialog from "../components/ConfirmDialog";
 
 /* ═══════════════════════════ Scroll reveal hook ════════════════════ */
 function useReveal() {
@@ -149,7 +150,7 @@ function DocumentCardItem({ doc, onUpload, onRemove, onView }: { doc: { id: stri
                 <button onClick={() => onView(doc.name, doc.fileLink!)} style={{ flex: 1, background: "#e0f2fe", color: "#0369a1", border: "none", padding: "0.75rem", borderRadius: "0.5rem", fontSize: "0.9rem", fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}>Preview File</button>
               )}
               <button onClick={() => onRemove(doc.id)} style={{ flex: 1, background: doc.reviewStatus === "rejected" ? "#ef4444" : "#fee2e2", color: doc.reviewStatus === "rejected" ? "white" : "#b91c1c", border: "none", padding: "0.75rem", borderRadius: "0.5rem", fontSize: "0.9rem", fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}>
-                {doc.reviewStatus === "rejected" ? "Re-upload Document" : "Replace File"}
+                {doc.reviewStatus === "rejected" ? "Delete & Re-upload" : "Delete File"}
               </button>
             </div>
           </div>
@@ -189,6 +190,7 @@ export default function ProfilePage() {
   const [activeWeek, setActiveWeek] = useState<number>(1);
   const [weeksArray, setWeeksArray] = useState<number[]>([1]);
   const [viewingDoc, setViewingDoc] = useState<{title: string, link: string} | null>(null);
+  const [deletingDoc, setDeletingDoc] = useState<string | null>(null);
 
   useEffect(() => {
     fetchApi('/me')
@@ -289,7 +291,46 @@ export default function ProfilePage() {
   };
 
   const handleRemoveDocument = (id: string) => {
-    setDocuments(docs => docs.map(d => d.id === id ? { ...d, status: "not_submitted", date: "", fileLink: undefined, reviewStatus: undefined, rejectionReason: undefined } : d));
+    setDeletingDoc(id);
+  };
+
+  const confirmDeleteDocument = async () => {
+    if (!deletingDoc) return;
+    
+    // Check if it is just a local state replace (if not a DB ID)
+    const docToDelete = documents.find(d => d.id === deletingDoc);
+    if (!docToDelete) {
+      setDeletingDoc(null);
+      return;
+    }
+    
+    try {
+      if (!isNaN(Number(docToDelete.id))) {
+        await fetchApi(`/documents/${docToDelete.id}`, { method: 'DELETE' });
+      }
+      
+      setDocuments(docs => docs.map(d => {
+        if (d.id === deletingDoc) {
+          const reqDef = REQUIRED_DOCUMENTS.find(r => r.title === d.name);
+          return {
+            id: reqDef ? reqDef.id : d.name,
+            name: d.name,
+            phase: d.phase,
+            status: "not_submitted",
+            date: "",
+            fileLink: undefined,
+            reviewStatus: undefined,
+            rejectionReason: undefined,
+            week: d.week
+          };
+        }
+        return d;
+      }));
+    } catch (err: any) {
+      alert(err.message || 'Failed to delete document.');
+    } finally {
+      setDeletingDoc(null);
+    }
   };
 
   const handleViewPdf = async (title: string, link: string) => {
@@ -585,6 +626,17 @@ export default function ProfilePage() {
           onClose={() => setViewingDoc(null)}
         />
       )}
+
+      <ConfirmDialog
+        open={!!deletingDoc}
+        variant="confirm"
+        title="Delete Uploaded File"
+        message="Are you sure you want to delete this uploaded file? This action cannot be undone."
+        confirmLabel="Delete"
+        danger={true}
+        onConfirm={confirmDeleteDocument}
+        onCancel={() => setDeletingDoc(null)}
+      />
     </div>
     </ProtectedRoute>
   );

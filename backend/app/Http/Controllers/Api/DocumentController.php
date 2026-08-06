@@ -76,4 +76,28 @@ class DocumentController extends Controller
             'document' => $updated,
         ]);
     }
+
+    /**
+     * Delete an uploaded document.
+     */
+    public function destroy(Document $document): JsonResponse
+    {
+        $user = auth()->user();
+
+        // Check permission: only the owner or admin can delete
+        if ($document->user_id !== $user->id && $user->role !== 'admin') {
+            return response()->json(['message' => 'Unauthorized to delete this document'], 403);
+        }
+
+        try {
+            $this->documentService->deleteDocument($document);
+            return response()->json(['message' => 'Document deleted successfully']);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Document Deletion Failed: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Failed to delete document',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 }
