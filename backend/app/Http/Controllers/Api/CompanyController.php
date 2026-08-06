@@ -24,7 +24,8 @@ class CompanyController extends Controller
     {
         // Scope the eager-load to active students only so counts are consistent
         // with the checklist endpoint (UserController@checklist).
-        $companies = Company::with(['users' => function ($q) {
+        $companies = Company::has('users')
+            ->with(['users' => function ($q) {
                 $q->where('role', 'normal')
                   ->where('is_active', true)
                   ->select('id', 'name', 'role', 'email', 'company_id');
