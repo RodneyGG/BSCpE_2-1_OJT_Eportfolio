@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useRole } from "../context/RoleContext";
 import { BUG_REPORT_EMAIL, GITHUB_REPO_URL } from "../lib/config";
+import { fetchApi } from "../../lib/api";
 
 function IconChevronDown() {
   return (
@@ -83,6 +84,26 @@ function IconLogoMark() {
     </svg>
   );
 }
+function IconBell() {
+  return (
+    <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+    </svg>
+  );
+}
+
+function timeAgo(dateString: string) {
+  const date = new Date(dateString);
+  const now = new Date();
+  const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+  if (seconds < 60) return "Just now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
 
 function IconMenu() {
   return (
@@ -130,18 +151,78 @@ export default function AppNavbar() {
   const pathname = usePathname();
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [navScrolled, setNavScrolled] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const notifRef = useRef<HTMLDivElement>(null);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const toggleMenu = () => {
+    setMenuOpen((v) => !v);
+    if (!menuOpen) setNotifOpen(false);
+  };
+  const toggleNotif = () => {
+    setNotifOpen((v) => !v);
+    if (!notifOpen) setMenuOpen(false);
+  };
+
+  const loadNotifications = async () => {
+    if (!isLoggedIn) return;
+    try {
+      const res = await fetchApi("/notifications");
+      if (res) {
+        setNotifications(res.notifications || []);
+        setUnreadCount(res.unread_count || 0);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      loadNotifications();
+      const interval = setInterval(loadNotifications, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [isLoggedIn]);
+
+  const markAllRead = async () => {
+    try {
+      await fetchApi("/notifications/read-all", { method: "PATCH" });
+      setNotifications(notifications.map(n => ({ ...n, is_read: true })));
+      setUnreadCount(0);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const markRead = async (id: number) => {
+    try {
+      await fetchApi(`/notifications/${id}/read`, { method: "PATCH" });
+      setNotifications(notifications.map(n => n.id === id ? { ...n, is_read: true } : n));
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setMenuOpen(false);
       }
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setNotifOpen(false);
+      }
     }
     function handleEscape(e: KeyboardEvent) {
-      if (e.key === "Escape") setMenuOpen(false);
+      if (e.key === "Escape") {
+        setMenuOpen(false);
+        setNotifOpen(false);
+      }
     }
     document.addEventListener("mousedown", handleClickOutside);
     document.addEventListener("keydown", handleEscape);
@@ -316,9 +397,108 @@ export default function AppNavbar() {
             Log In
           </Link>
         ) : (
-          <div ref={menuRef} className="nav-user" style={{ position: "relative", flexShrink: 0 }}>
-            <button
-              onClick={() => setMenuOpen((v) => !v)}
+          <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+            {/* Notification Bell */}
+            <div ref={notifRef} style={{ position: "relative", flexShrink: 0 }}>
+              <button
+                onClick={toggleNotif}
+                style={{
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  width: 36, height: 36, borderRadius: "50%",
+                  background: notifOpen ? "rgba(255,255,255,0.15)" : "transparent",
+                  border: "none", cursor: "pointer", transition: "background 0.2s ease",
+                  color: "white"
+                }}
+                onMouseEnter={(e) => {
+                  if (!notifOpen) e.currentTarget.style.background = "rgba(255,255,255,0.1)";
+                }}
+                onMouseLeave={(e) => {
+                  if (!notifOpen) e.currentTarget.style.background = "transparent";
+                }}
+              >
+                <IconBell />
+                {unreadCount > 0 && (
+                  <span style={{
+                    position: "absolute", top: 2, right: 2,
+                    background: "#ef4444", color: "white",
+                    fontSize: "0.6rem", fontWeight: 800,
+                    width: 16, height: 16, borderRadius: "50%",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    border: "2px solid #0f172a"
+                  }}>
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
+              </button>
+              
+              {notifOpen && (
+                <div style={{
+                  position: "absolute", top: "calc(100% + 0.5rem)", right: 0,
+                  width: 320, background: "white", borderRadius: "0.75rem",
+                  boxShadow: "0 10px 30px rgba(0,0,0,0.15)", border: "1px solid #e2e8f0",
+                  overflow: "hidden", zIndex: 60, display: "flex", flexDirection: "column"
+                }}>
+                  <div style={{
+                    padding: "0.75rem 1rem", borderBottom: "1px solid #e2e8f0",
+                    display: "flex", alignItems: "center", justifyContent: "space-between"
+                  }}>
+                    <span style={{ fontSize: "0.85rem", fontWeight: 700, color: "#334155" }}>Notifications</span>
+                    {unreadCount > 0 && (
+                      <button
+                        onClick={markAllRead}
+                        style={{
+                          fontSize: "0.7rem", color: "#3b82f6", background: "none", border: "none",
+                          cursor: "pointer", fontWeight: 600
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.textDecoration = "underline"}
+                        onMouseLeave={(e) => e.currentTarget.style.textDecoration = "none"}
+                      >
+                        Mark all read
+                      </button>
+                    )}
+                  </div>
+                  <div style={{ maxHeight: 400, overflowY: "auto" }}>
+                    {notifications.length === 0 ? (
+                      <div style={{ padding: "2rem 1rem", textAlign: "center", fontSize: "0.8rem", color: "#64748b" }}>
+                        No notifications yet
+                      </div>
+                    ) : (
+                      notifications.map(notif => (
+                        <div
+                          key={notif.id}
+                          onClick={() => { if (!notif.is_read) markRead(notif.id); }}
+                          style={{
+                            padding: "0.75rem 1rem", borderBottom: "1px solid #e2e8f0",
+                            borderLeft: `3px solid ${notif.is_read ? "transparent" : "#3b82f6"}`,
+                            background: notif.is_read ? "transparent" : "#f8fafc",
+                            cursor: notif.is_read ? "default" : "pointer",
+                            transition: "background 0.2s"
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!notif.is_read) e.currentTarget.style.background = "#eff6ff";
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!notif.is_read) e.currentTarget.style.background = "#f8fafc";
+                          }}
+                        >
+                          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.25rem" }}>
+                            <span style={{ fontSize: "0.8rem", fontWeight: 600, color: "#334155" }}>{notif.title}</span>
+                            <span style={{ fontSize: "0.7rem", color: "#94a3b8" }}>{timeAgo(notif.created_at)}</span>
+                          </div>
+                          <div style={{ fontSize: "0.75rem", color: "#64748b", lineHeight: 1.4 }}>
+                            {notif.message}
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div ref={menuRef} className="nav-user" style={{ position: "relative", flexShrink: 0 }}>
+              <button
+                onClick={toggleMenu}
               style={{
                 display: "flex", alignItems: "center", gap: "0.6rem",
                 background: menuOpen ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.1)",
@@ -402,6 +582,7 @@ export default function AppNavbar() {
               </div>
             )}
           </div>
+        </div>
         )}
         
         {/* Hamburger Menu Toggle (Mobile Only) */}
