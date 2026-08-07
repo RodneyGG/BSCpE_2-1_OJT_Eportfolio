@@ -155,14 +155,14 @@ function DocumentCardItem({ doc, onUpload, onRemove, onView }: { doc: { id: stri
             </div>
           </div>
         ) : doc.status === "uploading" ? (
-          <div style={{ background: "#eff6ff", borderRadius: "0.75rem", padding: "20px 0", display: "flex", justifyContent: "center", alignItems: "center" }}>
+          <div style={{ background: "#eff6ff", borderRadius: "0.75rem", padding: "16px 0", display: "flex", justifyContent: "center", alignItems: "center" }}>
             <span style={{ color: "#3b82f6", fontSize: "1rem", fontWeight: 700 }}>Uploading...</span>
           </div>
         ) : (
-          <div className="pdf-upload-box" onDragEnter={handleDrag} onDragLeave={handleDrag} onDragOver={handleDrag} onDrop={handleDrop} style={{ position: "relative", background: dragActive ? "#eff6ff" : "#f8fafc", border: `2px dashed ${dragActive ? "#3b82f6" : "#cbd5e1"}`, borderRadius: "0.75rem", padding: "20px 0", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "all 0.2s" }}>
+          <div className="pdf-upload-box" onDragEnter={handleDrag} onDragLeave={handleDrag} onDragOver={handleDrag} onDrop={handleDrop} style={{ position: "relative", background: dragActive ? "#eff6ff" : "#f8fafc", border: `2px dashed ${dragActive ? "#3b82f6" : "#cbd5e1"}`, borderRadius: "0.75rem", padding: "16px 0", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "all 0.2s" }}>
             <input type="file" accept="application/pdf" onChange={handleChange} style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer", width: "100%" }} />
             <IconUpload />
-            <span style={{ fontSize: "0.95rem", fontWeight: 600, color: dragActive ? "#3b82f6" : "#64748b", marginTop: "0.75rem" }}>{dragActive ? "Drop PDF here" : "Drag PDF or Click to browse"}</span>
+            <span style={{ fontSize: "0.95rem", fontWeight: 600, color: dragActive ? "#3b82f6" : "#64748b", marginTop: "0.5rem" }}>{dragActive ? "Drop PDF here" : "Drag PDF or Click to browse"}</span>
           </div>
         )}
       </div>
