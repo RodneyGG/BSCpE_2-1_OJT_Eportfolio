@@ -20,15 +20,30 @@ class CompanyController extends Controller
      * not yet assigned to any company) so the dashboard stat tile matches
      * the checklist page exactly.
      */
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        // Scope the eager-load to active students only so counts are consistent
-        // with the checklist endpoint (UserController@checklist).
-        $companies = Company::with(['users' => function ($q) {
+        // By default, return ALL companies (used by self-service and admin
+        // company pickers, which must be able to target an empty company).
+        // Pass ?withStudents=1 to restrict to companies that have at least
+        // one active, normal-role student — used by the dashboard view.
+        // The existence filter and the eager-loaded student list use the
+        // SAME criteria so a company's presence and its studentCount never
+        // disagree with each other.
+        $query = Company::query();
+
+        if ($request->boolean('withStudents')) {
+            $query->whereHas('users', function ($q) {
+                $q->where('role', 'normal')
+                  ->where('is_active', true);
+            });
+        }
+
+        $companies = $query
+            ->with(['users' => function ($q) {
                 $q->where('role', 'normal')
                   ->where('is_active', true)
                   ->select('id', 'name', 'role', 'email', 'company_id');
-            }])
+                }])
             ->orderBy('name')
             ->get();
 
@@ -110,15 +125,17 @@ class CompanyController extends Controller
 /**
      * Trigger a roster sync from the Google Sheet (Admin only).
      */
-    public function sync(RosterSyncService $rosterSync): JsonResponse
+    public function sync(Request $request, RosterSyncService $rosterSync): JsonResponse
     {
-        $summary = $rosterSync->sync(false);
-
+        $summary = $rosterSync->sync(false, $request->user()->id);
         return response()->json([
             'matched' => $summary['matched'],
             'needs_review' => $summary['needs_review'],
             'unmatched' => $summary['unmatched'],
             'malformed' => $summary['malformed'],
+            'deployments_proposed' => $summary['deployments_proposed'],
+            'deployments_updated' => $summary['deployments_updated'],
+            'deployments_mismatched' => $summary['deployments_mismatched'],
         ]);
     }
 

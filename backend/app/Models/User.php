@@ -69,4 +69,8 @@ class User extends Authenticatable
     {
         return $this->hasOne(AccountSetupToken::class);
     }
+    public function deployments(): HasMany
+    {
+    return $this->hasMany(Deployment::class);
+    }
 }

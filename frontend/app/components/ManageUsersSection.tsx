@@ -9,6 +9,7 @@ export interface ManagedUser {
   email: string;
   role: "normal" | "prof" | "admin";
   company_id: number | null;
+  company?: { id: number; name: string } | null;
   must_change_password: boolean;
   can_review: boolean;
   is_active: boolean;
@@ -16,6 +17,8 @@ export interface ManagedUser {
   approved_documents_count?: number;
   pending_documents_count?: number;
   rejected_documents_count?: number;
+  hours_rendered?: string | null;
+  required_hours?: number | null;
 }
 function IconPlus() {
   return (
@@ -51,6 +54,10 @@ export default function ManageUsersSection({ onViewStudent, onCountChange }: Man
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
   const [revealPassword, setRevealPassword] = useState<{ email: string; password: string } | null>(null);
+  const [companies, setCompanies] = useState<{ id: number; name: string }[]>([]);
+  const [companyModalUser, setCompanyModalUser] = useState<ManagedUser | null>(null);
+  const [selectedCompanyId, setSelectedCompanyId] = useState<string>("");
+  const [savingCompany, setSavingCompany] = useState(false);
   const profExists = users.some((u) => u.role === "prof");
   const showConfirm = (message: string, danger = false, highlight?: string, title?: string): Promise<boolean> => {
     return new Promise((resolve) => {
@@ -80,6 +87,14 @@ export default function ManageUsersSection({ onViewStudent, onCountChange }: Man
   };
   useEffect(() => {
     loadUsers();
+  }, []);
+  useEffect(() => {
+    fetchApi("/companies")
+      .then((data: any) => {
+        const list = Array.isArray(data) ? data : data.companies ?? [];
+        setCompanies(list.map((c: any) => ({ id: c.id, name: c.name })));
+      })
+      .catch(() => {});
   }, []);
   useEffect(() => {
     onCountChange?.(users.filter((u) => u.role === "normal").length);
@@ -156,6 +171,27 @@ export default function ManageUsersSection({ onViewStudent, onCountChange }: Man
       setBusyId(null);
     }
   };
+  const openCompanyModal = (user: ManagedUser) => {
+    setCompanyModalUser(user);
+    setSelectedCompanyId(user.company?.id ? String(user.company.id) : "");
+  };
+  const handleChangeCompany = async () => {
+    if (!companyModalUser) return;
+    setSavingCompany(true);
+    try {
+      await fetchApi(`/admin/users/${companyModalUser.id}/company`, {
+        method: "PATCH",
+        body: JSON.stringify({ company_id: selectedCompanyId ? Number(selectedCompanyId) : null }),
+      });
+      setCompanyModalUser(null);
+      loadUsers();
+    } catch (err) {
+      const e = err as { message?: string };
+      await showAlert(e.message || "Failed to update company.");
+    } finally {
+      setSavingCompany(false);
+    }
+  };
   const handleToggleReview = async (user: ManagedUser) => {
     setBusyId(user.id);
     try {
@@ -202,13 +238,53 @@ export default function ManageUsersSection({ onViewStudent, onCountChange }: Man
       setBusyId(null);
     }
   };
+  const handleExportCsv = async () => {
+    try {
+      const token = localStorage.getItem("auth_token");
+
+      if (!token) {
+        console.error("No auth token found in localStorage.");
+        return;
+      }
+
+      const response = await fetch("/api/admin/deployments/export", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "text/csv",
+        },
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Export endpoint returned error:", response.status, errorText);
+        throw new Error(`Export failed (${response.status}): ${errorText}`);
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `confirmed_deployments_${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Failed to download CSV export:", err);
+    }
+  };
   return (
     <div className="admin-card">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
         <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#0f172a", margin: 0 }}>Manage Users</h2>
-        <button className="btn-action btn-approve" onClick={openCreate} style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem" }}>
-          <IconPlus /> Create Account
-        </button>
+        <div style={{ display: "flex", gap: "0.5rem" }}>
+          <button className="btn-action" onClick={handleExportCsv} style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem" }}>
+            Export Deployments CSV
+          </button>
+          <button className="btn-action btn-approve" onClick={openCreate} style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem" }}>
+            <IconPlus /> Create Account
+          </button>
+        </div>
       </div>
       {loading ? (
         <div style={{ textAlign: "center", padding: "2rem", color: "#94a3b8" }}>Loading...</div>
@@ -244,12 +320,19 @@ export default function ManageUsersSection({ onViewStudent, onCountChange }: Man
                       </span>
                     )}
                   </div>
-                  <div style={{ fontSize: "0.75rem", color: "#64748b", marginTop: "0.2rem" }}>{user.email}</div>
+                  <div style={{ fontSize: "0.75rem", color: "#64748b", marginTop: "0.2rem" }}>
+                    {user.email} {user.role === "normal" && `· ${user.company?.name ?? "Unassigned"}`}
+                  </div>
                 </div>
                 <div style={{ display: "flex", gap: "0.5rem", flexShrink: 0, flexWrap: "wrap" }}>
                   {user.role === "normal" && onViewStudent && (
                     <button className="btn-action" disabled={busyId === user.id} onClick={() => onViewStudent(user)}>
                       View Details
+                    </button>
+                  )}
+                  {user.role === "normal" && (
+                    <button className="btn-action" disabled={busyId === user.id} onClick={() => openCompanyModal(user)}>
+                      Change Company
                     </button>
                   )}
                   <button className="btn-action" disabled={busyId === user.id} onClick={() => handleResetPassword(user)}>
@@ -355,6 +438,30 @@ export default function ManageUsersSection({ onViewStudent, onCountChange }: Man
             <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "1rem" }}>
               <button className="btn-action btn-approve" onClick={() => setRevealPassword(null)}>
                 Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {companyModalUser && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50 }}>
+          <div style={{ background: "#fff", borderRadius: "1rem", padding: "1.5rem", width: "100%", maxWidth: "26rem" }}>
+            <h3 style={{ fontSize: "1rem", fontWeight: 700, margin: "0 0 1rem" }}>Change Company</h3>
+            <p style={{ fontSize: "0.8rem", color: "#64748b", margin: "0 0 1rem" }}>
+              Assign a company for <strong>{companyModalUser.name}</strong>.
+            </p>
+            <select value={selectedCompanyId} onChange={(e) => setSelectedCompanyId(e.target.value)} style={{ width: "100%", padding: "0.6rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1", fontSize: "0.85rem" }}>
+              <option value="">Unassigned</option>
+              {companies.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+            <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end", marginTop: "1rem" }}>
+              <button className="btn-action" onClick={() => setCompanyModalUser(null)}>
+                Cancel
+              </button>
+              <button className="btn-action btn-approve" disabled={savingCompany} onClick={handleChangeCompany}>
+                {savingCompany ? "Saving..." : "Save"}
               </button>
             </div>
           </div>

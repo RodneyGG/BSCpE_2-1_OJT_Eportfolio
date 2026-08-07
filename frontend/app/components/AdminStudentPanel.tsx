@@ -13,9 +13,9 @@ interface AdminStudentListItem {
   id: number;
   name: string;
   email?: string;
-  company: StudentCompany | null;
-  hours_rendered: string | null;
-  required_hours: number | null;
+  company?: StudentCompany | null;
+  hours_rendered?: string | null;
+  required_hours?: number | null;
   is_active?: boolean;
   approved_documents_count?: number;
   pending_documents_count?: number;
@@ -33,11 +33,20 @@ interface DetailDocument {
 }
 
 // Confirmed via curl against GET /admin/users/{id} — bare object, no wrapper.
+interface DeploymentDetail {
+  id: number;
+  role: string | null;
+  supervisor_name: string | null;
+  supervisor_contact: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  status: string;
+}
+
 interface AdminStudentFullDetail {
   phone: string | null;
   program: string | null;
-  ojt_role: string | null;
-  ojt_supervisor: string | null;
+  deployment: DeploymentDetail | null;
   documents: DetailDocument[];
 }
 
@@ -75,10 +84,24 @@ export default function AdminStudentPanel({
   // (see its confirm-approve preview: current -> claimed_hours), so we
   // reuse that same assumption here rather than re-deriving it.
   const [renderedHoursOverride, setRenderedHoursOverride] = useState<string | null>(null);
+  const [editingDeployment, setEditingDeployment] = useState(false);
+  const [deploymentForm, setDeploymentForm] = useState({ role: "", supervisor_name: "", supervisor_contact: "", start_date: "", end_date: "" });
+  const [savingDeployment, setSavingDeployment] = useState(false);
 
   useEffect(() => {
     fetchApi(`/admin/users/${student.id}`)
-      .then((data: AdminStudentFullDetail) => setDetail(data))
+      .then((data: AdminStudentFullDetail) => {
+        setDetail(data);
+        if (data.deployment) {
+          setDeploymentForm({
+            role: data.deployment.role || "",
+            supervisor_name: data.deployment.supervisor_name || "",
+            supervisor_contact: data.deployment.supervisor_contact || "",
+            start_date: data.deployment.start_date ? data.deployment.start_date.slice(0, 10) : "",
+            end_date: data.deployment.end_date ? data.deployment.end_date.slice(0, 10) : "",
+          });
+        }
+      })
       .catch(() => setDetailError(true));
   }, [student.id]);
 
@@ -102,6 +125,29 @@ export default function AdminStudentPanel({
       );
       return { ...prev, documents: nextDocuments };
     });
+  };
+
+  const handleSaveDeployment = async () => {
+    if (!detail?.deployment) return;
+    setSavingDeployment(true);
+    try {
+      const res = await fetchApi(`/admin/deployments/${detail.deployment.id}/override`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          role: deploymentForm.role || null,
+          supervisor_name: deploymentForm.supervisor_name || null,
+          supervisor_contact: deploymentForm.supervisor_contact || null,
+          start_date: deploymentForm.start_date || null,
+          end_date: deploymentForm.end_date || null,
+        }),
+      });
+      setDetail((prev) => prev ? { ...prev, deployment: res.deployment } : prev);
+      setEditingDeployment(false);
+    } catch (err: any) {
+      alert(err.message || "Failed to update deployment.");
+    } finally {
+      setSavingDeployment(false);
+    }
   };
 
   const handleAfterAction = (doc: ReviewableDocument, action: "approved" | "rejected") => {
@@ -179,23 +225,88 @@ export default function AdminStudentPanel({
             </div>
           </div>
 
-          <h3 style={{ fontSize: "0.75rem", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "0.75rem" }}>
-            Deployment Details
-          </h3>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem", marginBottom: "1.75rem", fontSize: "0.85rem" }}>
-            <div>
-              <span style={{ color: "#94a3b8" }}>Company</span>
-              <div style={{ color: "#0f172a", fontWeight: 600 }}>{student.company?.name || "—"}</div>
-            </div>
-            <div>
-              <span style={{ color: "#94a3b8" }}>Role</span>
-              <div style={{ color: "#0f172a", fontWeight: 600 }}>{detail?.ojt_role || (detailError ? "—" : "…")}</div>
-            </div>
-            <div style={{ gridColumn: "1 / -1" }}>
-              <span style={{ color: "#94a3b8" }}>Supervisor</span>
-              <div style={{ color: "#0f172a", fontWeight: 600 }}>{detail?.ojt_supervisor || (detailError ? "—" : "…")}</div>
-            </div>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
+            <h3 style={{ fontSize: "0.75rem", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", margin: 0 }}>
+              Deployment Details
+            </h3>
+            {detail?.deployment && !editingDeployment && (
+              <button
+                onClick={() => setEditingDeployment(true)}
+                style={{ background: "none", border: "1px solid #cbd5e1", color: "#475569", borderRadius: "0.4rem", padding: "0.3rem 0.75rem", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer" }}
+              >
+                Edit
+              </button>
+            )}
           </div>
+
+          {!detail?.deployment ? (
+            <div style={{ border: "1px dashed #cbd5e1", borderRadius: "1rem", padding: "1.25rem", textAlign: "center", color: "#94a3b8", fontSize: "0.85rem", marginBottom: "1.75rem" }}>
+              {detailError ? "Couldn't load deployment." : !detail ? "Loading..." : "No deployment on record."}
+            </div>
+          ) : editingDeployment ? (
+            <div style={{ marginBottom: "1.75rem" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem", marginBottom: "1rem" }}>
+                <div>
+                  <label style={{ display: "block", fontSize: "0.75rem", color: "#94a3b8", marginBottom: "0.25rem" }}>Role</label>
+                  <input value={deploymentForm.role} onChange={(e) => setDeploymentForm({ ...deploymentForm, role: e.target.value })}
+                    style={{ width: "100%", padding: "0.5rem 0.65rem", borderRadius: "0.4rem", border: "1px solid #cbd5e1", fontSize: "0.85rem", boxSizing: "border-box" }} />
+                </div>
+                <div>
+                  <label style={{ display: "block", fontSize: "0.75rem", color: "#94a3b8", marginBottom: "0.25rem" }}>Supervisor Contact</label>
+                  <input value={deploymentForm.supervisor_contact} onChange={(e) => setDeploymentForm({ ...deploymentForm, supervisor_contact: e.target.value })}
+                    style={{ width: "100%", padding: "0.5rem 0.65rem", borderRadius: "0.4rem", border: "1px solid #cbd5e1", fontSize: "0.85rem", boxSizing: "border-box" }} />
+                </div>
+                <div style={{ gridColumn: "1 / -1" }}>
+                  <label style={{ display: "block", fontSize: "0.75rem", color: "#94a3b8", marginBottom: "0.25rem" }}>Supervisor</label>
+                  <input value={deploymentForm.supervisor_name} onChange={(e) => setDeploymentForm({ ...deploymentForm, supervisor_name: e.target.value })}
+                    style={{ width: "100%", padding: "0.5rem 0.65rem", borderRadius: "0.4rem", border: "1px solid #cbd5e1", fontSize: "0.85rem", boxSizing: "border-box" }} />
+                </div>
+                <div>
+                  <label style={{ display: "block", fontSize: "0.75rem", color: "#94a3b8", marginBottom: "0.25rem" }}>Start Date</label>
+                  <input type="date" value={deploymentForm.start_date} onChange={(e) => setDeploymentForm({ ...deploymentForm, start_date: e.target.value })}
+                    style={{ width: "100%", padding: "0.5rem 0.65rem", borderRadius: "0.4rem", border: "1px solid #cbd5e1", fontSize: "0.85rem", boxSizing: "border-box" }} />
+                </div>
+                <div>
+                  <label style={{ display: "block", fontSize: "0.75rem", color: "#94a3b8", marginBottom: "0.25rem" }}>End Date</label>
+                  <input type="date" value={deploymentForm.end_date} onChange={(e) => setDeploymentForm({ ...deploymentForm, end_date: e.target.value })}
+                    style={{ width: "100%", padding: "0.5rem 0.65rem", borderRadius: "0.4rem", border: "1px solid #cbd5e1", fontSize: "0.85rem", boxSizing: "border-box" }} />
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>
+                <button onClick={() => setEditingDeployment(false)} disabled={savingDeployment}
+                  style={{ background: "transparent", border: "1px solid #cbd5e1", color: "#64748b", borderRadius: "0.4rem", padding: "0.4rem 1rem", fontSize: "0.8rem", fontWeight: 700, cursor: "pointer" }}>
+                  Cancel
+                </button>
+                <button onClick={handleSaveDeployment} disabled={savingDeployment}
+                  style={{ background: "#2563eb", border: "none", color: "white", borderRadius: "0.4rem", padding: "0.4rem 1rem", fontSize: "0.8rem", fontWeight: 700, cursor: "pointer" }}>
+                  {savingDeployment ? "Saving..." : "Save Override"}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem", marginBottom: "1.75rem", fontSize: "0.85rem" }}>
+              <div>
+                <span style={{ color: "#94a3b8" }}>Company</span>
+                <div style={{ color: "#0f172a", fontWeight: 600 }}>{student.company?.name || "—"}</div>
+              </div>
+              <div>
+                <span style={{ color: "#94a3b8" }}>Role</span>
+                <div style={{ color: "#0f172a", fontWeight: 600 }}>{detail.deployment.role || "—"}</div>
+              </div>
+              <div style={{ gridColumn: "1 / -1" }}>
+                <span style={{ color: "#94a3b8" }}>Supervisor</span>
+                <div style={{ color: "#0f172a", fontWeight: 600 }}>{detail.deployment.supervisor_name || "—"}</div>
+              </div>
+              <div>
+                <span style={{ color: "#94a3b8" }}>Start Date</span>
+                <div style={{ color: "#0f172a", fontWeight: 600 }}>{detail.deployment.start_date ? detail.deployment.start_date.slice(0, 10) : "—"}</div>
+              </div>
+              <div>
+                <span style={{ color: "#94a3b8" }}>End Date</span>
+                <div style={{ color: "#0f172a", fontWeight: 600 }}>{detail.deployment.end_date ? detail.deployment.end_date.slice(0, 10) : "—"}</div>
+              </div>
+            </div>
+          )}
 
           <h3 style={{ fontSize: "0.75rem", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "0.75rem" }}>
             Hours Rendered
@@ -231,7 +342,7 @@ export default function AdminStudentPanel({
               documents={pendingDocs as unknown as ReviewableDocument[]}
               onDocumentsChange={handleDocumentsChange}
               onAfterAction={handleAfterAction}
-              fallbackUser={{ name: student.name, hours_rendered: renderedHoursOverride ?? student.hours_rendered }}
+              fallbackUser={{ name: student.name, hours_rendered: renderedHoursOverride ?? student.hours_rendered ?? null }}
               showUserName={false}
               emptyMessage="Nothing pending for this student right now."
             />

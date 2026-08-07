@@ -5,6 +5,7 @@ use App\Mail\AccountSetupMail;
 use App\Models\User;
 use App\Models\ActivityLog;
 use App\Services\AccountSetupService;
+use App\Services\DeploymentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
@@ -76,11 +77,11 @@ class UserController extends Controller
      * Full detail for a single student, including their documents —
      * powers the admin/prof review side panel. Admin/prof only (route middleware).
      */
-    public function show(Request $request, User $user)
+    public function show(Request $request, User $user, DeploymentService $deploymentService)
     {
         $user->load('company');
         $user->load(['documents' => fn ($q) => $q->orderBy('created_at', 'desc')]);
-
+        $user->setAttribute('deployment', $deploymentService->getForUser($user));
         return response()->json($user);
     }
 
@@ -243,7 +244,59 @@ class UserController extends Controller
             'is_active' => $user->is_active,
         ]);
     }
+    public function updateCompany(Request $request, User $user)
+    {
+        if ($user->role !== 'normal') {
+            return response()->json([
+                'message' => 'Only student accounts can be assigned a company.',
+            ], 422);
+        }
 
+        $request->validate([
+            'company_id' => ['nullable', 'integer', 'exists:companies,id'],
+        ]);
+
+        $previousCompanyId = $user->company_id;
+        $newCompanyId = $request->company_id;
+
+        // 1. Update legacy user table column
+        $user->update(['company_id' => $newCompanyId]);
+        $user->load('company:id,name');
+
+        // 2. Sync/upsert active deployment record
+        if ($newCompanyId) {
+            $deployment = \App\Models\Deployment::where('user_id', $user->id)
+                ->orderByRaw("status = 'confirmed' desc")
+                ->latest('id')
+                ->first();
+
+            if ($deployment) {
+                $deployment->update(['company_id' => $newCompanyId]);
+            } else {
+                \App\Models\Deployment::create([
+                    'user_id' => $user->id,
+                    'company_id' => $newCompanyId,
+                    'status' => 'pending_confirmation',
+                ]);
+            }
+        }
+
+        // 3. Log activity
+        ActivityLog::create([
+            'actor_id' => $request->user()->id,
+            'action' => 'company_reassigned',
+            'target_id' => $user->id,
+            'metadata' => [
+                'previous_company_id' => $previousCompanyId,
+                'new_company_id' => $user->company_id,
+            ],
+        ]);
+
+        return response()->json([
+            'message' => 'Company assignment updated.',
+            'company' => $user->company,
+        ]);
+    }
     /**
      * Reactivate a previously deactivated user account.
      */
