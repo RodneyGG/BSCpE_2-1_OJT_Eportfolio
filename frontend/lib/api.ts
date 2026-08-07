@@ -3,6 +3,26 @@ export const API_BASE_URL = isServer
   ? (process.env.INTERNAL_API_URL || 'http://backend:8000/api') 
   : (process.env.NEXT_PUBLIC_API_URL || '/api');
 
+// Fetch Google Sheet preview with custom sheet URL
+export async function previewBulkImport(sheetUrl: string) {
+  return fetchApi(
+    `/admin/students/bulk-import/preview?url=${encodeURIComponent(sheetUrl.trim())}`
+  );
+}
+
+// Commit the validated rows to create users
+export async function commitBulkImport(sheetUrl: string, students: Array<any>) {
+  return fetchApi("/admin/students/bulk-import/commit", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      url: sheetUrl.trim(),
+      students,
+    }),
+  });
+}
 export async function fetchApi(endpoint: string, options: RequestInit = {}) {
   // Get token from localStorage if in browser
   const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
@@ -35,4 +55,6 @@ export async function fetchApi(endpoint: string, options: RequestInit = {}) {
   }
 
   return data;
+
+  
 }

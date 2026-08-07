@@ -1,8 +1,10 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
+import BulkImportModal from "./BulkImportModal";
 import { fetchApi } from "../../lib/api";
 import { useRole } from "../context/RoleContext";
 import ConfirmDialog from "./ConfirmDialog";
+
 export interface ManagedUser {
   id: number;
   name: string;
@@ -20,6 +22,7 @@ export interface ManagedUser {
   hours_rendered?: string | null;
   required_hours?: number | null;
 }
+
 function IconPlus() {
   return (
     <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round">
@@ -27,10 +30,12 @@ function IconPlus() {
     </svg>
   );
 }
+
 interface ManageUsersSectionProps {
   onViewStudent?: (user: ManagedUser) => void;
   onCountChange?: (count: number) => void;
 }
+
 interface DialogState {
   variant: "confirm" | "alert";
   title?: string;
@@ -40,6 +45,7 @@ interface DialogState {
   danger?: boolean;
   resolve: (value: boolean) => void;
 }
+
 export default function ManageUsersSection({ onViewStudent, onCountChange }: ManageUsersSectionProps) {
   const { role, user: currentUser } = useRole();
   const [users, setUsers] = useState<ManagedUser[]>([]);
@@ -58,25 +64,32 @@ export default function ManageUsersSection({ onViewStudent, onCountChange }: Man
   const [companyModalUser, setCompanyModalUser] = useState<ManagedUser | null>(null);
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>("");
   const [savingCompany, setSavingCompany] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+
   const profExists = users.some((u) => u.role === "prof");
+
   const showConfirm = (message: string, danger = false, highlight?: string, title?: string): Promise<boolean> => {
     return new Promise((resolve) => {
       setDialog({ variant: "confirm", message, danger, highlight, title, resolve });
     });
   };
+
   const showAlert = (message: string, icon?: "warning" | "success", title?: string, highlight?: string): Promise<void> => {
     return new Promise((resolve) => {
       setDialog({ variant: "alert", message, icon, title, highlight, resolve: () => resolve() });
     });
   };
+
   const handleDialogConfirm = () => {
     dialog?.resolve(true);
     setDialog(null);
   };
+
   const handleDialogCancel = () => {
     dialog?.resolve(false);
     setDialog(null);
   };
+
   const loadUsers = () => {
     setLoading(true);
     setError(null);
@@ -85,9 +98,11 @@ export default function ManageUsersSection({ onViewStudent, onCountChange }: Man
       .catch(() => setError("Failed to load users."))
       .finally(() => setLoading(false));
   };
+
   useEffect(() => {
     loadUsers();
   }, []);
+
   useEffect(() => {
     fetchApi("/companies")
       .then((data: any) => {
@@ -96,9 +111,11 @@ export default function ManageUsersSection({ onViewStudent, onCountChange }: Man
       })
       .catch(() => {});
   }, []);
+
   useEffect(() => {
     onCountChange?.(users.filter((u) => u.role === "normal").length);
   }, [users, onCountChange]);
+
   const openCreate = () => {
     setCreateName("");
     setCreateEmail("");
@@ -106,6 +123,7 @@ export default function ManageUsersSection({ onViewStudent, onCountChange }: Man
     setCreateError(null);
     setShowCreate(true);
   };
+
   const submitCreate = async () => {
     if (!createName.trim() || !createEmail.trim()) {
       setCreateError("Name and email are required.");
@@ -141,6 +159,7 @@ export default function ManageUsersSection({ onViewStudent, onCountChange }: Man
       setCreating(false);
     }
   };
+
   const handleResetPassword = async (user: ManagedUser) => {
     const ok = await showConfirm(`Reset password for ${user.name}? This will invalidate their current password.`);
     if (!ok) return;
@@ -154,6 +173,7 @@ export default function ManageUsersSection({ onViewStudent, onCountChange }: Man
       setBusyId(null);
     }
   };
+
   const handleToggleActive = async (user: ManagedUser) => {
     const ok = await showConfirm(
       `${user.is_active ? "Deactivate" : "Reactivate"} ${user.name}?`,
@@ -171,10 +191,12 @@ export default function ManageUsersSection({ onViewStudent, onCountChange }: Man
       setBusyId(null);
     }
   };
+
   const openCompanyModal = (user: ManagedUser) => {
     setCompanyModalUser(user);
     setSelectedCompanyId(user.company?.id ? String(user.company.id) : "");
   };
+
   const handleChangeCompany = async () => {
     if (!companyModalUser) return;
     setSavingCompany(true);
@@ -192,6 +214,7 @@ export default function ManageUsersSection({ onViewStudent, onCountChange }: Man
       setSavingCompany(false);
     }
   };
+
   const handleToggleReview = async (user: ManagedUser) => {
     setBusyId(user.id);
     try {
@@ -203,6 +226,7 @@ export default function ManageUsersSection({ onViewStudent, onCountChange }: Man
       setBusyId(null);
     }
   };
+
   const handleResendSetup = async (user: ManagedUser) => {
     const ok = await showConfirm(`Resend the account setup email to ${user.name} (${user.email})?`);
     if (!ok) return;
@@ -217,6 +241,7 @@ export default function ManageUsersSection({ onViewStudent, onCountChange }: Man
       setBusyId(null);
     }
   };
+
   const handleDelete = async (user: ManagedUser) => {
     const docTotal =
       (user.approved_documents_count ?? 0) + (user.pending_documents_count ?? 0) + (user.rejected_documents_count ?? 0);
@@ -238,6 +263,7 @@ export default function ManageUsersSection({ onViewStudent, onCountChange }: Man
       setBusyId(null);
     }
   };
+
   const handleExportCsv = async () => {
     try {
       const token = localStorage.getItem("auth_token");
@@ -273,11 +299,15 @@ export default function ManageUsersSection({ onViewStudent, onCountChange }: Man
       console.error("Failed to download CSV export:", err);
     }
   };
+
   return (
     <div className="admin-card">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
         <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#0f172a", margin: 0 }}>Manage Users</h2>
         <div style={{ display: "flex", gap: "0.5rem" }}>
+          <button className="btn-action" onClick={() => setIsImportModalOpen(true)} style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem" }}>
+            Bulk Import
+          </button>
           <button className="btn-action" onClick={handleExportCsv} style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem" }}>
             Export Deployments CSV
           </button>
@@ -366,16 +396,16 @@ export default function ManageUsersSection({ onViewStudent, onCountChange }: Man
                       {user.is_active ? "Deactivate" : "Reactivate"}
                     </button>
                   )}
-                {user.id !== currentUser?.id && (
-                  <button
-                    className="btn-action"
-                    disabled={busyId === user.id}
-                    onClick={() => handleDelete(user)}
-                    style={{ background: "#7f1d1d", borderColor: "#7f1d1d", color: "#fff" }}
-                  >
-                    Delete
-                  </button>
-                )}
+                  {user.id !== currentUser?.id && (
+                    <button
+                      className="btn-action"
+                      disabled={busyId === user.id}
+                      onClick={() => handleDelete(user)}
+                      style={{ background: "#7f1d1d", borderColor: "#7f1d1d", color: "#fff" }}
+                    >
+                      Delete
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -467,6 +497,13 @@ export default function ManageUsersSection({ onViewStudent, onCountChange }: Man
           </div>
         </div>
       )}
+      <BulkImportModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onSuccess={() => {
+          loadUsers();
+        }}
+      />
       <ConfirmDialog
         open={dialog !== null}
         variant={dialog?.variant ?? "confirm"}
