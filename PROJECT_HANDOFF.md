@@ -10,11 +10,18 @@ A Next.js frontend application for a BSCpE OJT e-portfolio. The application feat
 - An exact hardcoded UI scale-down was executed to strictly enforce smaller constraints and remove clamps: section headers are fixed at `16px`, main metrics (0.00) at `28px`, the student name at `20px`, and global card paddings are explicitly `16px` (except OJT Deployment, which remains completely untouched).
 - The Profile Bar was rebalanced to a 65/35 ratio, giving the student information area more visual dominance over the hours metric. The "Edit Profile" button was logically relocated to the top-right of this student info block, separating it from the hours-submission status badge.
 - Submission History retains its original flat-table layout, making all historical data visible at a glance. (An accordion design was temporarily tested but reverted).
-- Fixed a bug where a native browser scrollbar appeared inside the Rejected box because fixed heights (`110px`) caused content overflow. Height restrictions were swapped for padding bounds to allow the content to breathe.
+- Fixed a bug where a native browser scrollbar appeared inside the Rejected box because fixed heights (`110px`) caused content overflow. Height restrictions were swapped for padding bounds to allow the content to breathe. The empty "Drag PDF" upload box was also tightened vertically.
 - Crucially, the internal layout, data bindings, and specific styling of the OJT Deployment card were rigorously preserved through all layout changes to fulfill the scope-lock requirements.
 - All modifications are currently on the `feature/profile-accordion-and-merge` branch. No changes to the actual shared components' core structure (e.g. `RevealBox`, `StatusBadge`) were performed, preserving the design system.
 
 ## 3. Session Logs
+### 2026-08-07 - Tighten Upload Box Padding
+- **Agent:** Antigravity
+- **Summary of Changes:** 
+  - Reduced vertical padding on the empty `.pdf-upload-box` state to `16px 0`.
+  - Tightened the top margin on the "Drag PDF" text to `0.5rem`.
+- **Branch:** `feature/profile-accordion-and-merge`
+
 ### 2026-08-07 - Revert Submission History Accordion
 - **Agent:** Antigravity
 - **Summary of Changes:** 
