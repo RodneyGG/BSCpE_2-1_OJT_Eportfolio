@@ -26,6 +26,7 @@ This file acts as the AI's "memory map." Before starting a new task, the AI shou
   - Configured `husky` to run `npm run lint` and `npm run build` as a `pre-push` hook.
   - Fixed GitHub Pages deployment by adding `actions/configure-pages@v5` to `.github/workflows/deploy-pages.yml`.
 - **Documentation**:
+  - Created [PROJECT_MAP.md](file:///home/lloyd/project-bscpe2-1/BSCpE_2-1_OJT_Eportfolio/docs/PROJECT_MAP.md) as the centralized project directory and architecture layout map.
   - Created `project-scaffolding.md` for architectural planning.
   - Created `dev-logs.md` to track compilation errors and fixes.
 
