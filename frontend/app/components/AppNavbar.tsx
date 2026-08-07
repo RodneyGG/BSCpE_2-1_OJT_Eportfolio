@@ -282,6 +282,8 @@ export default function AppNavbar() {
             align-items: flex-start;
           }
           .nav-center-links.open { display: flex; }
+          .user-name-text, .user-role-badge, .nav-user-dropdown-icon, .brand-text { display: none !important; }
+          .nav-user-btn { padding: 0.3rem !important; gap: 0 !important; }
         }
       `}</style>
       <nav style={{
@@ -304,7 +306,7 @@ export default function AppNavbar() {
           }}>
             <IconLogoMark />
           </div>
-          <span style={{ fontSize: "1.1rem", fontWeight: 800, color: "white", letterSpacing: "0.02em" }}>
+          <span className="brand-text" style={{ fontSize: "1.1rem", fontWeight: 800, color: "white", letterSpacing: "0.02em" }}>
             OJT E-Portfolio
           </span>
         </Link>
@@ -498,6 +500,7 @@ export default function AppNavbar() {
 
             <div ref={menuRef} className="nav-user" style={{ position: "relative", flexShrink: 0 }}>
               <button
+                className="nav-user-btn"
                 onClick={toggleMenu}
               style={{
                 display: "flex", alignItems: "center", gap: "0.6rem",
@@ -512,12 +515,12 @@ export default function AppNavbar() {
                 display: "flex", alignItems: "center", justifyContent: "center",
                 fontSize: "0.6rem", fontWeight: 800, color: "white", flexShrink: 0,
               }}>{initials}</div>
-              <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "white",
+              <span className="user-name-text" style={{ fontSize: "0.75rem", fontWeight: 700, color: "white",
                 letterSpacing: "0.05em", textTransform: "uppercase", whiteSpace: "nowrap" }}>
                 {user?.name}
               </span>
               {badge && (
-                <span style={{
+                <span className="user-role-badge" style={{
                   fontSize: "0.6rem", fontWeight: 800, letterSpacing: "0.05em",
                   padding: "0.15rem 0.45rem", borderRadius: "9999px",
                   background: badge.bg, color: badge.color, border: `1px solid ${badge.border}`,
@@ -525,7 +528,7 @@ export default function AppNavbar() {
                   {badge.label}
                 </span>
               )}
-              <span style={{ color: "#93c5fd", display: "flex", transform: menuOpen ? "rotate(180deg)" : "none", transition: "transform 0.2s ease" }}>
+              <span className="nav-user-dropdown-icon" style={{ color: "#93c5fd", display: "flex", transform: menuOpen ? "rotate(180deg)" : "none", transition: "transform 0.2s ease" }}>
                 <IconChevronDown />
               </span>
             </button>
