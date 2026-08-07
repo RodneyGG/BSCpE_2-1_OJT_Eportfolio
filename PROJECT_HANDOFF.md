@@ -11,10 +11,19 @@ A Next.js frontend application for a BSCpE OJT e-portfolio. The application feat
 - The Profile Bar was rebalanced to a 65/35 ratio, giving the student information area more visual dominance over the hours metric. The "Edit Profile" button was logically relocated to the top-right of this student info block, separating it from the hours-submission status badge.
 - Submission History retains its original flat-table layout, making all historical data visible at a glance. (An accordion design was temporarily tested but reverted).
 - Fixed a bug where a native browser scrollbar appeared inside the Rejected box because fixed heights (`110px`) caused content overflow. Height restrictions were swapped for padding bounds to allow the content to breathe. The empty "Drag PDF" upload box was also tightened vertically.
+- Executed a global mobile responsiveness audit: The global `AppNavbar` collapses text elements at `< 768px` to prevent horizontal overflow, the upload card grid properly drops to 1 column using `min(100%, 350px)`, and the profile/hours bar properly stacks vertically.
 - Crucially, the internal layout, data bindings, and specific styling of the OJT Deployment card were rigorously preserved through all layout changes to fulfill the scope-lock requirements.
 - All modifications are currently on the `feature/profile-accordion-and-merge` branch. No changes to the actual shared components' core structure (e.g. `RevealBox`, `StatusBadge`) were performed, preserving the design system.
 
 ## 3. Session Logs
+### 2026-08-07 - Mobile Responsiveness Audit
+- **Agent:** Antigravity
+- **Summary of Changes:** 
+  - Hid the `OJT E-Portfolio` text and student name/role labels in `AppNavbar` below 768px to resolve horizontal overflow on narrow screens (e.g. iPhone).
+  - Updated the upload grid in `page.tsx` from a hard `380px` minimum to `min(100%, 350px)` to allow graceful 1-column wrapping on mobile.
+  - Verified that the Profile Bar vertically stacks and Submission History scrolls horizontally as intended.
+- **Branch:** `feature/profile-accordion-and-merge`
+
 ### 2026-08-07 - Tighten Upload Box Padding
 - **Agent:** Antigravity
 - **Summary of Changes:** 
