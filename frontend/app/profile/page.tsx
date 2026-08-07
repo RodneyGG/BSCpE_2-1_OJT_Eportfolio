@@ -186,7 +186,7 @@ export default function ProfilePage() {
   const [ojtForm, setOjtForm] = useState({ company_id: "", ojt_role: "", ojt_supervisor: "", ojt_start_date: "", ojt_end_date: "" });
   const [savingOjt, setSavingOjt] = useState(false);
 
-  const [activeTab, setActiveTab] = useState("before");
+  const [openSection, setOpenSection] = useState<string | null>("before");
   const [activeWeek, setActiveWeek] = useState<number>(1);
   const [weeksArray, setWeeksArray] = useState<number[]>([1]);
   const [viewingDoc, setViewingDoc] = useState<{title: string, link: string} | null>(null);
@@ -384,9 +384,10 @@ export default function ProfilePage() {
         .card-save-btn:hover { background: #1d4ed8; }
         .card-cancel-btn { background: transparent; color: #64748b; border: 1px solid #cbd5e1; border-radius: 0.5rem; padding: 0.6rem 1.25rem; font-size: 0.9rem; font-weight: 700; cursor: pointer; width: auto; }
         .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
-        .tab-btn { flex: 1; min-width: 120px; padding: 1.25rem; border: none; background: transparent; border-bottom: 3px solid transparent; font-size: clamp(0.9rem, 2.5vw, 1.1rem); font-weight: 800; color: #64748b; cursor: pointer; transition: all 0.2s; text-transform: capitalize; }
-        .tab-btn.active { color: #0f172a; border-bottom-color: #3b82f6; }
-        .tab-btn:hover:not(.active) { color: #334155; }
+        .accordion-header { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 1.1rem clamp(1rem, 3vw, 2rem); background: white; border: none; border-bottom: 1px solid #e2e8f0; cursor: pointer; transition: background 0.2s; font-family: inherit; font-size: inherit; }
+        .accordion-header:hover { background: #f0f9ff; }
+        .accordion-chevron { width: 16px; height: 16px; color: #64748b; transition: transform 0.3s ease; flex-shrink: 0; }
+        .accordion-chevron.open { transform: rotate(90deg); color: #3b82f6; }
         .pdf-upload-box:hover { background: #e2e8f0 !important; border-color: #94a3b8 !important; }
         
         @media (max-width: 1024px) {
@@ -533,65 +534,74 @@ export default function ProfilePage() {
               <h2 style={{ fontSize: "clamp(1.3rem, 3vw, 1.6rem)", fontWeight: 800, color: "#0f172a", margin: 0 }}>Required Documents</h2>
             </div>
             
-            <div style={{ display: "flex", borderBottom: "1px solid #e2e8f0", background: "white", flexWrap: "wrap" }}>
-              {["before", "during", "after", "other"].map(tab => (
-                <button key={tab} className={`tab-btn ${activeTab === tab ? "active" : ""}`} onClick={() => setActiveTab(tab)}>
-                  {tab === "other" ? "Other Documents" : `${tab} OJT`}
-                </button>
-              ))}
-            </div>
+            {documentsLoading ? (
+              <div style={{ textAlign: "center", color: "#94a3b8", padding: "4rem", fontSize: "1.25rem", fontWeight: 600 }}>Loading documents...</div>
+            ) : (
+              ["before", "during", "after", "other"].map(phase => (
+                <div key={phase}>
+                  <button className="accordion-header" onClick={() => setOpenSection(prev => prev === phase ? null : phase)}>
+                    <span style={{ fontWeight: 800, fontSize: "clamp(0.9rem, 2.5vw, 1.1rem)", color: "#0f172a", textTransform: "capitalize" }}>
+                      {phase === "other" ? "Other Documents" : `${phase} OJT`}
+                    </span>
+                    <svg className={`accordion-chevron${openSection === phase ? " open" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M9 18l6-6-6-6" />
+                    </svg>
+                  </button>
 
-            <div style={{ padding: "clamp(1.5rem, 4vw, 2.5rem) clamp(1rem, 3vw, 2rem)", background: "#f8fafc" }}>
-              {documentsLoading ? (
-                <div style={{ textAlign: "center", color: "#94a3b8", padding: "4rem", fontSize: "1.25rem", fontWeight: 600 }}>Loading documents...</div>
-              ) : activeTab === "during" ? (
-                <div>
-                  {/* Week Navigation */}
-                  <div style={{ display: "flex", gap: "0.75rem", overflowX: "auto", paddingBottom: "1.5rem", borderBottom: "2px solid #e2e8f0", marginBottom: "2rem" }}>
-                    {weeksArray.map(w => (
-                      <button key={w} onClick={() => setActiveWeek(w)} style={{ padding: "0.75rem 1.75rem", borderRadius: "9999px", border: "none", background: activeWeek === w ? "#0f172a" : "white", color: activeWeek === w ? "white" : "#475569", borderStyle: "solid", borderWidth: 1, borderColor: activeWeek === w ? "#0f172a" : "#cbd5e1", fontSize: "1rem", fontWeight: 800, cursor: "pointer", transition: "all 0.2s", whiteSpace: "nowrap", boxShadow: activeWeek === w ? "0 4px 10px rgba(15,23,42,0.2)" : "none" }}>
-                        Week {w}
-                      </button>
-                    ))}
-                    <button onClick={() => setWeeksArray([...weeksArray, Math.max(...weeksArray) + 1])} style={{ padding: "0.75rem 1.75rem", borderRadius: "9999px", border: "2px dashed #cbd5e1", background: "transparent", color: "#64748b", fontSize: "1rem", fontWeight: 800, cursor: "pointer", transition: "all 0.2s", whiteSpace: "nowrap" }} onMouseEnter={(e) => {e.currentTarget.style.borderColor = "#94a3b8"; e.currentTarget.style.color = "#334155"}} onMouseLeave={(e) => {e.currentTarget.style.borderColor = "#cbd5e1"; e.currentTarget.style.color = "#64748b"}}>
-                      + Add Week
-                    </button>
-                  </div>
+                  {openSection === phase && (
+                    <div style={{ padding: "clamp(1.5rem, 4vw, 2.5rem) clamp(1rem, 3vw, 2rem)", background: "#f8fafc", borderBottom: "1px solid #e2e8f0" }}>
+                      {phase === "during" ? (
+                        <div>
+                          {/* Week Navigation */}
+                          <div style={{ display: "flex", gap: "0.75rem", overflowX: "auto", paddingBottom: "1.5rem", borderBottom: "2px solid #e2e8f0", marginBottom: "2rem" }}>
+                            {weeksArray.map(w => (
+                              <button key={w} onClick={() => setActiveWeek(w)} style={{ padding: "0.75rem 1.75rem", borderRadius: "9999px", border: "none", background: activeWeek === w ? "#0f172a" : "white", color: activeWeek === w ? "white" : "#475569", borderStyle: "solid", borderWidth: 1, borderColor: activeWeek === w ? "#0f172a" : "#cbd5e1", fontSize: "1rem", fontWeight: 800, cursor: "pointer", transition: "all 0.2s", whiteSpace: "nowrap", boxShadow: activeWeek === w ? "0 4px 10px rgba(15,23,42,0.2)" : "none" }}>
+                                Week {w}
+                              </button>
+                            ))}
+                            <button onClick={() => setWeeksArray([...weeksArray, Math.max(...weeksArray) + 1])} style={{ padding: "0.75rem 1.75rem", borderRadius: "9999px", border: "2px dashed #cbd5e1", background: "transparent", color: "#64748b", fontSize: "1rem", fontWeight: 800, cursor: "pointer", transition: "all 0.2s", whiteSpace: "nowrap" }} onMouseEnter={(e) => {e.currentTarget.style.borderColor = "#94a3b8"; e.currentTarget.style.color = "#334155"}} onMouseLeave={(e) => {e.currentTarget.style.borderColor = "#cbd5e1"; e.currentTarget.style.color = "#64748b"}}>
+                              + Add Week
+                            </button>
+                          </div>
 
-                  {/* Week Info Card */}
-                  <div style={{ background: "white", border: "1px solid #e2e8f0", borderRadius: "1rem", padding: "2rem", marginBottom: "2.5rem", display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: "0 4px 15px rgba(0,0,0,0.03)" }}>
-                    <div>
-                      <h3 style={{ margin: "0 0 0.35rem 0", fontSize: "1.4rem", fontWeight: 800, color: "#0f172a" }}>Week Schedule</h3>
-                      <div style={{ fontSize: "1rem", color: "#64748b" }}>Edit dates for this specific week</div>
+                          {/* Week Info Card */}
+                          <div style={{ background: "white", border: "1px solid #e2e8f0", borderRadius: "1rem", padding: "2rem", marginBottom: "2.5rem", display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: "0 4px 15px rgba(0,0,0,0.03)" }}>
+                            <div>
+                              <h3 style={{ margin: "0 0 0.35rem 0", fontSize: "1.4rem", fontWeight: 800, color: "#0f172a" }}>Week Schedule</h3>
+                              <div style={{ fontSize: "1rem", color: "#64748b" }}>Edit dates for this specific week</div>
+                            </div>
+                            <div style={{ display: "flex", gap: "1.25rem", alignItems: "center" }}>
+                              <input type="date" style={{ padding: "0.75rem 1rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1", fontSize: "1rem", outline: "none", color: "#475569", fontWeight: 600 }} />
+                              <span style={{ color: "#94a3b8", fontWeight: 800, fontSize: "1.1rem" }}>—</span>
+                              <input type="date" style={{ padding: "0.75rem 1rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1", fontSize: "1rem", outline: "none", color: "#475569", fontWeight: 600 }} />
+                            </div>
+                          </div>
+
+                          {/* Week Uploads Grid */}
+                          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(380px, 1fr))", gap: "24px" }}>
+                            {REQUIRED_DOCUMENTS.filter(r => r.phase === "during").map(req => {
+                              let existingDoc = documents.find(d => d.week === activeWeek && d.name === req.title);
+                              if (!existingDoc) {
+                                existingDoc = { id: `${req.id}-week-${activeWeek}`, name: req.title, phase: "during", status: "not_submitted", date: "", week: activeWeek };
+                              }
+                              return (
+                                <DocumentCardItem key={`${req.id}-w${activeWeek}`} doc={existingDoc} onUpload={handleUpload} onRemove={handleRemoveDocument} onView={handleViewPdf} />
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ) : (
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(380px, 1fr))", gap: "24px" }}>
+                          {documents.filter(d => d.phase === phase).map(doc => (
+                            <DocumentCardItem key={doc.id} doc={doc} onUpload={handleUpload} onRemove={handleRemoveDocument} onView={handleViewPdf} />
+                          ))}
+                        </div>
+                      )}
                     </div>
-                    <div style={{ display: "flex", gap: "1.25rem", alignItems: "center" }}>
-                      <input type="date" style={{ padding: "0.75rem 1rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1", fontSize: "1rem", outline: "none", color: "#475569", fontWeight: 600 }} />
-                      <span style={{ color: "#94a3b8", fontWeight: 800, fontSize: "1.1rem" }}>—</span>
-                      <input type="date" style={{ padding: "0.75rem 1rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1", fontSize: "1rem", outline: "none", color: "#475569", fontWeight: 600 }} />
-                    </div>
-                  </div>
-
-                  {/* Week Uploads Grid */}
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(380px, 1fr))", gap: "24px" }}>
-                    {REQUIRED_DOCUMENTS.filter(r => r.phase === "during").map(req => {
-                      let existingDoc = documents.find(d => d.week === activeWeek && d.name === req.title);
-                      if (!existingDoc) {
-                        existingDoc = { id: `${req.id}-week-${activeWeek}`, name: req.title, phase: "during", status: "not_submitted", date: "", week: activeWeek };
-                      }
-                      return (
-                        <DocumentCardItem key={`${req.id}-w${activeWeek}`} doc={existingDoc} onUpload={handleUpload} onRemove={handleRemoveDocument} onView={handleViewPdf} />
-                      );
-                    })}
-                  </div>
+                  )}
                 </div>
-              ) : (
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(380px, 1fr))", gap: "24px" }}>
-                  {documents.filter(d => d.phase === activeTab).map(doc => (
-                    <DocumentCardItem key={doc.id} doc={doc} onUpload={handleUpload} onRemove={handleRemoveDocument} onView={handleViewPdf} />
-                  ))}
-                </div>
-              )}
-            </div>
+              ))
+            )}
           </div>
         </RevealBox>
 
