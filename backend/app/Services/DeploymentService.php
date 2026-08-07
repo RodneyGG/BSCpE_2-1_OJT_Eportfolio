@@ -144,7 +144,7 @@ class DeploymentService
         ], ',', '"', '\\');
 
         foreach ($deployments as $d) {
-            $companyName = $d->company?->name ?? $d->company_name ?? 'N/A';
+            $companyName = $d->company?->name ?? 'N/A';
 
             fputcsv($output, [
                 $d->user_id,
