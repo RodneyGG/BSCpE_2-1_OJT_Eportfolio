@@ -473,6 +473,14 @@ export default function ProfilePage() {
                 </div>
               ) : (
                 <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
+                  {deployment.source === "roster_sync_detected" && deployment.status === "pending_confirmation" && (
+                    <div style={{ display: "flex", gap: "0.75rem", alignItems: "flex-start", background: "#fefce8", border: "1px solid #fde68a", borderRadius: "0.75rem", padding: "1rem 1.25rem", marginBottom: "1.5rem" }}>
+                      <span style={{ fontSize: "1.1rem", lineHeight: 1 }}>⚠️</span>
+                      <div style={{ fontSize: "0.9rem", color: "#854d0e", fontWeight: 600, lineHeight: 1.5 }}>
+                        This information was auto-detected from our records — please review it for accuracy.
+                      </div>
+                    </div>
+                  )}
                   <div style={{ fontSize: "1.3rem", fontWeight: 800, color: "#0f172a", marginBottom: "0.35rem" }}>
                     {profileData?.company?.name || "No Company Assigned"}
                   </div>
