@@ -8,13 +8,20 @@ A Next.js frontend application for a BSCpE OJT e-portfolio. The application feat
 - The Required Documents section was successfully converted from a horizontal tab bar into a single-open accordion. The During OJT accordion body retains the complex week navigation, schedule card, and uploads grid functionality perfectly.
 - The top layout of the profile page was redesigned. The Student Information card and Hours Rendered card were merged into a single horizontal bar for a cleaner layout. OJT Deployment is now a standalone full-width card underneath the merged profile bar.
 - An exact hardcoded UI scale-down was executed to strictly enforce smaller constraints and remove clamps: section headers are fixed at `16px`, main metrics (0.00) at `28px`, the student name at `20px`, and global card paddings are explicitly `16px` (except OJT Deployment, which remains completely untouched).
-- The Profile Bar was rebalanced to a 65/35 ratio, giving the student information area more visual dominance over the hours metric.
+- The Profile Bar was rebalanced to a 65/35 ratio, giving the student information area more visual dominance over the hours metric. The "Edit Profile" button was logically relocated to the top-right of this student info block, separating it from the hours-submission status badge.
 - Submission History was redesigned into a categorized accordion UI (matching Required Documents) to group historical uploads cleanly without cluttering the page.
 - Fixed a bug where a native browser scrollbar appeared inside the Rejected box because fixed heights (`110px`) caused content overflow. Height restrictions were swapped for padding bounds to allow the content to breathe.
 - Crucially, the internal layout, data bindings, and specific styling of the OJT Deployment card were rigorously preserved through all layout changes to fulfill the scope-lock requirements.
 - All modifications are currently on the `feature/profile-accordion-and-merge` branch. No changes to the actual shared components' core structure (e.g. `RevealBox`, `StatusBadge`) were performed, preserving the design system.
 
 ## 3. Session Logs
+### 2026-08-07 - Relocate Edit Profile Button
+- **Agent:** Antigravity
+- **Summary of Changes:** 
+  - Moved the "Edit Profile" button out of the hours-rendered block and anchored it to the top-right of the student information block.
+  - Kept the 65/35 flex layout and the "NOT SUBMITTED" badge completely intact on the hours side.
+- **Branch:** `feature/profile-accordion-and-merge`
+
 ### 2026-08-07 - Profile Rebalance & History Accordion
 - **Agent:** Antigravity
 - **Summary of Changes:** 
