@@ -384,6 +384,10 @@ export default function ProfilePage() {
         .card-save-btn:hover { background: #1d4ed8; }
         .card-cancel-btn { background: transparent; color: #64748b; border: 1px solid #cbd5e1; border-radius: 0.5rem; padding: 0.6rem 1.25rem; font-size: 0.9rem; font-weight: 700; cursor: pointer; width: auto; }
         .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+        .profile-bar-content { display: flex; align-items: stretch; }
+        .profile-bar-left { display: flex; gap: 16px; align-items: center; flex-shrink: 0; }
+        .profile-bar-divider { width: 1px; background: #e2e8f0; margin: 0 clamp(16px, 3vw, 32px); align-self: stretch; }
+        .profile-bar-hours { flex: 1; display: flex; flex-direction: column; justify-content: center; min-width: 0; }
         .accordion-header { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 1.1rem clamp(1rem, 3vw, 2rem); background: white; border: none; border-bottom: 1px solid #e2e8f0; cursor: pointer; transition: background 0.2s; font-family: inherit; font-size: inherit; }
         .accordion-header:hover { background: #f0f9ff; }
         .accordion-chevron { width: 16px; height: 16px; color: #64748b; transition: transform 0.3s ease; flex-shrink: 0; }
@@ -405,30 +409,27 @@ export default function ProfilePage() {
           .upload-icon { width: 16px; height: 16px; }
           .field-grid { grid-template-columns: 1fr; gap: 1rem; }
           .card-edit-btn, .card-save-btn, .card-cancel-btn { min-width: fit-content; }
+          .profile-bar-content { flex-direction: column; }
+          .profile-bar-divider { width: 100%; height: 1px; margin: 16px 0; }
         }
       `}</style>
       <AppNavbar />
 
       <main className="main-container">
         
-        {/* Card 1: Student Information (Full Width) */}
+        {/* Combined Profile & Hours Bar */}
         <RevealBox delay={0}>
-          <div className="ui-card" style={{ marginBottom: "24px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "16px" }}>
-              <div style={{ display: "flex", gap: "16px", alignItems: "center" }}>
-                <div className="profile-avatar">
-                  {displayName.split(" ").map((w: string) => w[0]).slice(0, 2).join("")}
-                </div>
-                <div>
-                  <h2 style={{ fontSize: "clamp(1.4rem, 4vw, 1.8rem)", fontWeight: 800, color: "#0f172a", margin: "0 0 0.25rem 0" }}>{displayName}</h2>
-                  <div style={{ fontSize: "clamp(0.95rem, 2.5vw, 1.1rem)", color: "#64748b", fontWeight: 600 }}>{displayProgram}</div>
-                </div>
-              </div>
-              {!editingGeneral && <button className="card-edit-btn" onClick={() => setEditingGeneral(true)}>Edit Profile</button>}
-            </div>
-            
+          <div className="ui-card" style={{ marginBottom: "16px" }}>
             {editingGeneral ? (
-              <div style={{ marginTop: "1rem" }}>
+              <>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "12px" }}>
+                  <div style={{ display: "flex", gap: "16px", alignItems: "center" }}>
+                    <div className="profile-avatar">
+                      {displayName.split(" ").map((w: string) => w[0]).slice(0, 2).join("")}
+                    </div>
+                    <h2 style={{ fontSize: "clamp(1.4rem, 4vw, 1.8rem)", fontWeight: 800, color: "#0f172a", margin: 0 }}>{displayName}</h2>
+                  </div>
+                </div>
                 <div className="field-grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))" }}>
                   <FieldInput label="Full Name" value={generalForm.name} onChange={(v) => setGeneralForm({ ...generalForm, name: v })} />
                   <FieldInput label="Program & Year" value={generalForm.program} onChange={(v) => setGeneralForm({ ...generalForm, program: v })} />
@@ -439,46 +440,51 @@ export default function ProfilePage() {
                   <button className="card-cancel-btn" onClick={() => setEditingGeneral(false)}>Cancel</button>
                   <button className="card-save-btn" onClick={handleSaveGeneral}>Save Profile</button>
                 </div>
-              </div>
+              </>
             ) : (
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "24px", marginTop: "16px" }}>
-                <FieldDisplay label="Email Address" value={profileData?.email || ""} />
-                <FieldDisplay label="Phone Number" value={profileData?.phone || ""} />
+              <div className="profile-bar-content">
+                <div className="profile-bar-left">
+                  <div className="profile-avatar">
+                    {displayName.split(" ").map((w: string) => w[0]).slice(0, 2).join("")}
+                  </div>
+                  <div>
+                    <h2 style={{ fontSize: "clamp(1.3rem, 3.5vw, 1.6rem)", fontWeight: 800, color: "#0f172a", margin: "0 0 0.15rem 0" }}>{displayName}</h2>
+                    <div style={{ fontSize: "clamp(0.85rem, 2vw, 0.95rem)", color: "#64748b", fontWeight: 600 }}>{displayProgram}</div>
+                    <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.35rem", fontSize: "0.8rem", color: "#94a3b8", fontWeight: 500, flexWrap: "wrap" }}>
+                      <span>{profileData?.email || "\u2014"}</span>
+                      <span style={{ color: "#cbd5e1" }}>\u00b7</span>
+                      <span>{profileData?.phone || "\u2014"}</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="profile-bar-divider" />
+                <div className="profile-bar-hours">
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px", flexWrap: "wrap", gap: "8px" }}>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: "8px", flexWrap: "wrap" }}>
+                      <span style={{ fontSize: "clamp(1.8rem, 4vw, 2.5rem)", fontWeight: 900, color: "#0f172a", lineHeight: 1 }}>{hoursRendered.toFixed(2)}</span>
+                      <span style={{ fontSize: "clamp(0.85rem, 2vw, 1rem)", color: "#64748b", fontWeight: 700 }}>/ 300 hrs</span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px", flexShrink: 0 }}>
+                      <StatusBadge status={hoursRendered >= 300 ? "approved" : hoursRendered > 0 ? "pending" : "not_submitted"} />
+                      <button className="card-edit-btn" onClick={() => setEditingGeneral(true)}>Edit Profile</button>
+                    </div>
+                  </div>
+                  <div style={{ width: "100%", height: 10, background: "#f1f5f9", borderRadius: 9999, overflow: "hidden" }}>
+                    <div style={{ width: `${Math.min((hoursRendered / 300) * 100, 100)}%`, height: "100%", background: "linear-gradient(90deg, #3b82f6, #6366f1)", transition: "width 0.5s ease" }} />
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginTop: "10px", fontSize: "clamp(0.8rem, 2vw, 0.9rem)", gap: "12px", flexWrap: "wrap" }}>
+                    <span style={{ color: "#3b82f6", fontWeight: 800 }}>{Math.round((hoursRendered / 300) * 100)}% Complete</span>
+                    <span style={{ color: "#64748b", fontWeight: 700 }}>{Math.max(0, 300 - hoursRendered).toFixed(2)} Hours Remaining</span>
+                  </div>
+                </div>
               </div>
             )}
           </div>
         </RevealBox>
 
-        {/* 2-Column Grid for Hours Rendered & OJT Deployment */}
-        <div className="responsive-grid-2">
-          
-          {/* Card 2: Hours Rendered */}
-          <RevealBox delay={0.1}>
-            <div className="ui-card">
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px", flexWrap: "wrap", gap: "16px" }}>
-                <h2 style={{ fontSize: "clamp(1.2rem, 3vw, 1.4rem)", fontWeight: 800, color: "#0f172a", margin: 0 }}>Hours Rendered</h2>
-                <StatusBadge status={hoursRendered >= 300 ? "approved" : hoursRendered > 0 ? "pending" : "not_submitted"} />
-              </div>
-              
-              <div style={{ display: "flex", flexDirection: "column", flex: 1, justifyContent: "center" }}>
-                <div style={{ display: "flex", alignItems: "baseline", gap: "12px", marginBottom: "16px", flexWrap: "wrap" }}>
-                  <span style={{ fontSize: "clamp(2.5rem, 6vw, 3.5rem)", fontWeight: 900, color: "#0f172a", lineHeight: 1 }}>{hoursRendered.toFixed(2)}</span>
-                  <span style={{ fontSize: "clamp(1rem, 2.5vw, 1.2rem)", color: "#64748b", fontWeight: 700 }}>/ 300 hrs</span>
-                </div>
-                
-                <div style={{ width: "100%", height: 16, background: "#f1f5f9", borderRadius: 9999, overflow: "hidden" }}>
-                  <div style={{ width: `${Math.min((hoursRendered / 300) * 100, 100)}%`, height: "100%", background: "linear-gradient(90deg, #3b82f6, #6366f1)", transition: "width 0.5s ease" }} />
-                </div>
-                
-                <div style={{ display: "flex", justifyContent: "space-between", marginTop: "16px", fontSize: "clamp(0.9rem, 2.5vw, 1.1rem)", gap: "16px", flexWrap: "wrap" }}>
-                  <span style={{ color: "#3b82f6", fontWeight: 800 }}>{Math.round((hoursRendered / 300) * 100)}% Complete</span>
-                  <span style={{ color: "#64748b", fontWeight: 700 }}>{Math.max(0, 300 - hoursRendered).toFixed(2)} Hours Remaining</span>
-                </div>
-              </div>
-            </div>
-          </RevealBox>
 
-          {/* Card 3: OJT Deployment */}
+        <div style={{ marginBottom: "16px" }}>
+          {/* OJT Deployment */}
           <RevealBox delay={0.2}>
             <div className="ui-card">
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px", flexWrap: "wrap", gap: "16px" }}>
@@ -529,7 +535,7 @@ export default function ProfilePage() {
 
         {/* Required Documents Section */}
         <RevealBox delay={0.3}>
-          <div id="req-docs" className="ui-card" style={{ padding: 0, overflow: "hidden", marginBottom: "24px" }}>
+          <div id="req-docs" className="ui-card" style={{ padding: 0, overflow: "hidden", marginBottom: "16px" }}>
             <div style={{ padding: "clamp(1.25rem, 3vw, 1.5rem)", borderBottom: "1px solid #e2e8f0", background: "#f8fafc" }}>
               <h2 style={{ fontSize: "clamp(1.3rem, 3vw, 1.6rem)", fontWeight: 800, color: "#0f172a", margin: 0 }}>Required Documents</h2>
             </div>
