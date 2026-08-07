@@ -7,12 +7,22 @@ A Next.js frontend application for a BSCpE OJT e-portfolio. The application feat
 **Status**: The student profile page (`frontend/app/profile/page.tsx`) has been refined and modernized.
 - The Required Documents section was successfully converted from a horizontal tab bar into a single-open accordion. The During OJT accordion body retains the complex week navigation, schedule card, and uploads grid functionality perfectly.
 - The top layout of the profile page was redesigned. The Student Information card and Hours Rendered card were merged into a single horizontal bar for a cleaner layout. OJT Deployment is now a standalone full-width card underneath the merged profile bar.
-- A global UI scale-down was executed to make the page feel less bulky: section headers were reduced in size, main metrics (0.00 / 300 hrs) were scaled down by roughly 30%, document upload cards were tightened vertically, and card paddings were unified to 20px (except OJT Deployment, which remained untouched).
+- An exact hardcoded UI scale-down was executed to strictly enforce smaller constraints and remove clamps: section headers are fixed at `16px`, main metrics (0.00) at `28px`, the student name at `20px`, and global card paddings are explicitly `16px` (except OJT Deployment, which remains completely untouched).
+- Fixed a bug where a native browser scrollbar appeared inside the Rejected box because fixed heights (`110px`) caused content overflow. Height restrictions were swapped for padding bounds to allow the content to breathe.
 - Crucially, the internal layout, data bindings, and specific styling of the OJT Deployment card were rigorously preserved through all layout changes to fulfill the scope-lock requirements.
 - All modifications are currently on the `feature/profile-accordion-and-merge` branch. No changes to the actual shared components' core structure (e.g. `RevealBox`, `StatusBadge`) were performed, preserving the design system.
 
 ## 3. Session Logs
-### 2026-08-07 - Global UI Scale-Down
+### 2026-08-07 - Strict Scaling Constraints & Bug Fix
+- **Agent:** Antigravity
+- **Summary of Changes:** 
+  - Fixed scrollbar bug on rejected document cards by replacing `height: 110px` with `padding: 16px`.
+  - Hardcoded "0.00" hours number to exactly `28px` `fontWeight: 800`.
+  - Hardcoded "Test Student" name to exactly `20px` `fontWeight: 700`.
+  - Hardcoded global card padding to `16px` across Profile Bar, Required Docs, and Submission History (bypassing OJT Deployment).
+  - Hardcoded "Required Documents" and "Submission History" headers to `16px` `fontWeight: 700`.
+  - Tightened empty document upload inner height by using `padding: 20px 0`.
+- **Branch:** `feature/profile-accordion-and-merge`
 - **Agent:** Antigravity
 - **Summary of Changes:** 
   - Reduced oversized fonts: "0.00 / 300 hrs" down to `clamp(1.4rem, 3vw, 1.8rem)`, "Test Student" name down to `clamp(1.1rem, 2.5vw, 1.3rem)`.
