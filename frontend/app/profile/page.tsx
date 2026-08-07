@@ -187,7 +187,6 @@ export default function ProfilePage() {
   const [savingOjt, setSavingOjt] = useState(false);
 
   const [openSection, setOpenSection] = useState<string | null>("before");
-  const [openHistorySection, setOpenHistorySection] = useState<string | null>(null);
   const [activeWeek, setActiveWeek] = useState<number>(1);
   const [weeksArray, setWeeksArray] = useState<number[]>([1]);
   const [viewingDoc, setViewingDoc] = useState<{title: string, link: string} | null>(null);
@@ -626,68 +625,44 @@ export default function ProfilePage() {
 
         {/* Submission History Table */}
         <RevealBox delay={0.4}>
-          <div className="ui-card" style={{ padding: 0, overflow: "hidden" }}>
-            <div style={{ padding: "16px", borderBottom: "1px solid #e2e8f0", background: "#f8fafc" }}>
-              <h2 style={{ fontSize: "16px", fontWeight: 700, color: "#0f172a", margin: 0 }}>Submission History</h2>
+          <div className="ui-card" style={{ padding: "16px" }}>
+            <h2 style={{ fontSize: "16px", fontWeight: 700, color: "#0f172a", margin: "0 0 20px 0" }}>Submission History</h2>
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "1rem", textAlign: "left" }}>
+                <thead>
+                  <tr style={{ borderBottom: "2px solid #e2e8f0", color: "#64748b" }}>
+                    <th style={{ padding: "1.25rem 1rem", fontWeight: 800, textTransform: "uppercase", fontSize: "0.85rem", letterSpacing: "0.05em" }}>Date Submitted</th>
+                    <th style={{ padding: "1.25rem 1rem", fontWeight: 800, textTransform: "uppercase", fontSize: "0.85rem", letterSpacing: "0.05em" }}>Document Name</th>
+                    <th style={{ padding: "1.25rem 1rem", fontWeight: 800, textTransform: "uppercase", fontSize: "0.85rem", letterSpacing: "0.05em" }}>Category</th>
+                    <th style={{ padding: "1.25rem 1rem", fontWeight: 800, textTransform: "uppercase", fontSize: "0.85rem", letterSpacing: "0.05em" }}>Week</th>
+                    <th style={{ padding: "1.25rem 1rem", fontWeight: 800, textTransform: "uppercase", fontSize: "0.85rem", letterSpacing: "0.05em" }}>Status</th>
+                    <th style={{ padding: "1.25rem 1rem", fontWeight: 800, textTransform: "uppercase", fontSize: "0.85rem", letterSpacing: "0.05em" }}>Professor Remarks</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {documents.filter(d => d.status === "submitted").length === 0 ? (
+                    <tr>
+                      <td colSpan={6} style={{ padding: "3rem", textAlign: "center", color: "#94a3b8", fontSize: "1.1rem", fontWeight: 600 }}>No submissions yet.</td>
+                    </tr>
+                  ) : (
+                    documents.filter(d => d.status === "submitted").map((doc, idx) => (
+                      <tr key={`${doc.id}-${idx}`} style={{ borderBottom: "1px solid #f1f5f9", transition: "background 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.background = "#f8fafc"} onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}>
+                        <td style={{ padding: "1.25rem 1rem", color: "#475569", fontWeight: 500 }}>{doc.date}</td>
+                        <td style={{ padding: "1.25rem 1rem", fontWeight: 700, color: "#0f172a" }}>{doc.name}</td>
+                        <td style={{ padding: "1.25rem 1rem", color: "#475569", textTransform: "capitalize" }}>{doc.phase === "other" ? "Other" : `${doc.phase} OJT`}</td>
+                        <td style={{ padding: "1.25rem 1rem", color: !doc.week ? "#cbd5e1" : "#475569", fontWeight: 600 }}>{doc.week || "—"}</td>
+                        <td style={{ padding: "1.25rem 1rem" }}>
+                          <StatusBadge status={doc.reviewStatus || "pending"} />
+                        </td>
+                        <td style={{ padding: "1.25rem 1rem", color: !doc.rejectionReason ? "#cbd5e1" : (doc.reviewStatus === "rejected" ? "#b91c1c" : "#475569"), fontStyle: doc.reviewStatus === "rejected" ? "normal" : "italic", fontWeight: doc.reviewStatus === "rejected" ? 600 : 400 }}>
+                          {doc.rejectionReason || "—"}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
             </div>
-            
-            {documentsLoading ? (
-              <div style={{ textAlign: "center", color: "#94a3b8", padding: "4rem", fontSize: "1.25rem", fontWeight: 600 }}>Loading history...</div>
-            ) : (
-              ["before", "during", "after", "other"].map(phase => {
-                const phaseDocs = documents.filter(d => d.status === "submitted" && d.phase === phase);
-                
-                return (
-                  <div key={`history-${phase}`}>
-                    <button className={`accordion-header${openHistorySection === phase ? " open" : ""}`} onClick={() => setOpenHistorySection(prev => prev === phase ? null : phase)}>
-                      <span style={{ fontWeight: 800, fontSize: "clamp(0.9rem, 2.5vw, 1.1rem)", color: "#0f172a", textTransform: "capitalize" }}>
-                        {phase === "other" ? "Other Documents" : `${phase} OJT`} <span style={{ color: "#64748b", fontWeight: 600, fontSize: "0.9rem", marginLeft: "8px" }}>({phaseDocs.length})</span>
-                      </span>
-                      <svg className={`accordion-chevron${openHistorySection === phase ? " open" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M9 18l6-6-6-6" />
-                      </svg>
-                    </button>
-
-                    {openHistorySection === phase && (
-                      <div style={{ background: "#f8fafc", borderBottom: "1px solid #e2e8f0" }}>
-                        {phaseDocs.length === 0 ? (
-                           <div style={{ padding: "3rem", textAlign: "center", color: "#94a3b8", fontSize: "1.1rem", fontWeight: 600 }}>No submissions in this category yet.</div>
-                        ) : (
-                          <div style={{ overflowX: "auto" }}>
-                            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "1rem", textAlign: "left" }}>
-                              <thead>
-                                <tr style={{ borderBottom: "2px solid #e2e8f0", color: "#64748b" }}>
-                                  <th style={{ padding: "1.25rem 1rem", fontWeight: 800, textTransform: "uppercase", fontSize: "0.85rem", letterSpacing: "0.05em" }}>Date Submitted</th>
-                                  <th style={{ padding: "1.25rem 1rem", fontWeight: 800, textTransform: "uppercase", fontSize: "0.85rem", letterSpacing: "0.05em" }}>Document Name</th>
-                                  <th style={{ padding: "1.25rem 1rem", fontWeight: 800, textTransform: "uppercase", fontSize: "0.85rem", letterSpacing: "0.05em" }}>Week</th>
-                                  <th style={{ padding: "1.25rem 1rem", fontWeight: 800, textTransform: "uppercase", fontSize: "0.85rem", letterSpacing: "0.05em" }}>Status</th>
-                                  <th style={{ padding: "1.25rem 1rem", fontWeight: 800, textTransform: "uppercase", fontSize: "0.85rem", letterSpacing: "0.05em" }}>Professor Remarks</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {phaseDocs.map((doc, idx) => (
-                                  <tr key={`${doc.id}-${idx}`} style={{ borderBottom: "1px solid #f1f5f9", transition: "background 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.background = "#f1f5f9"} onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}>
-                                    <td style={{ padding: "1.25rem 1rem", color: "#475569", fontWeight: 500 }}>{doc.date}</td>
-                                    <td style={{ padding: "1.25rem 1rem", fontWeight: 700, color: "#0f172a" }}>{doc.name}</td>
-                                    <td style={{ padding: "1.25rem 1rem", color: !doc.week ? "#cbd5e1" : "#475569", fontWeight: 600 }}>{doc.week || "—"}</td>
-                                    <td style={{ padding: "1.25rem 1rem" }}>
-                                      <StatusBadge status={doc.reviewStatus || "pending"} />
-                                    </td>
-                                    <td style={{ padding: "1.25rem 1rem", color: !doc.rejectionReason ? "#cbd5e1" : (doc.reviewStatus === "rejected" ? "#b91c1c" : "#475569"), fontStyle: doc.reviewStatus === "rejected" ? "normal" : "italic", fontWeight: doc.reviewStatus === "rejected" ? 600 : 400 }}>
-                                      {doc.rejectionReason || "—"}
-                                    </td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              })
-            )}
           </div>
         </RevealBox>
 
