@@ -56,13 +56,6 @@ function IconFileText() {
     </svg>
   );
 }
-function IconX() {
-  return (
-    <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M18 6L6 18M6 6l12 12"/>
-    </svg>
-  );
-}
 
 /* ═══════════════════════════ Page ════════════════════════════ */
 export default function AdminDashboard() {
@@ -72,11 +65,6 @@ export default function AdminDashboard() {
   const [pendingCount, setPendingCount] = useState<number | null>(null);
   const [studentCount, setStudentCount] = useState<number | null>(null);
 
-  const getStatusColor = (isActive: boolean) => {
-    return isActive
-      ? { color: "#1d4ed8", bg: "#dbeafe" }
-      : { color: "#991b1b", bg: "#fee2e2" };
-  };
 
   const handleConnectDrive = async () => {
     try {
