@@ -5,6 +5,7 @@ use App\Mail\AccountSetupMail;
 use App\Models\User;
 use App\Models\ActivityLog;
 use App\Services\AccountSetupService;
+use App\Services\DeploymentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
@@ -76,11 +77,11 @@ class UserController extends Controller
      * Full detail for a single student, including their documents —
      * powers the admin/prof review side panel. Admin/prof only (route middleware).
      */
-    public function show(Request $request, User $user)
+    public function show(Request $request, User $user, DeploymentService $deploymentService)
     {
         $user->load('company');
         $user->load(['documents' => fn ($q) => $q->orderBy('created_at', 'desc')]);
-
+        $user->setAttribute('deployment', $deploymentService->getForUser($user));
         return response()->json($user);
     }
 
@@ -256,9 +257,31 @@ class UserController extends Controller
         ]);
 
         $previousCompanyId = $user->company_id;
-        $user->update(['company_id' => $request->company_id]);
+        $newCompanyId = $request->company_id;
+
+        // 1. Update legacy user table column
+        $user->update(['company_id' => $newCompanyId]);
         $user->load('company:id,name');
 
+        // 2. Sync/upsert active deployment record
+        if ($newCompanyId) {
+            $deployment = \App\Models\Deployment::where('user_id', $user->id)
+                ->orderByRaw("status = 'confirmed' desc")
+                ->latest('id')
+                ->first();
+
+            if ($deployment) {
+                $deployment->update(['company_id' => $newCompanyId]);
+            } else {
+                \App\Models\Deployment::create([
+                    'user_id' => $user->id,
+                    'company_id' => $newCompanyId,
+                    'status' => 'pending_confirmation',
+                ]);
+            }
+        }
+
+        // 3. Log activity
         ActivityLog::create([
             'actor_id' => $request->user()->id,
             'action' => 'company_reassigned',

@@ -17,6 +17,8 @@ export interface ManagedUser {
   approved_documents_count?: number;
   pending_documents_count?: number;
   rejected_documents_count?: number;
+  hours_rendered?: string | null;
+  required_hours?: number | null;
 }
 function IconPlus() {
   return (
@@ -236,13 +238,53 @@ export default function ManageUsersSection({ onViewStudent, onCountChange }: Man
       setBusyId(null);
     }
   };
+  const handleExportCsv = async () => {
+    try {
+      const token = localStorage.getItem("auth_token");
+
+      if (!token) {
+        console.error("No auth token found in localStorage.");
+        return;
+      }
+
+      const response = await fetch("/api/admin/deployments/export", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "text/csv",
+        },
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Export endpoint returned error:", response.status, errorText);
+        throw new Error(`Export failed (${response.status}): ${errorText}`);
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `confirmed_deployments_${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Failed to download CSV export:", err);
+    }
+  };
   return (
     <div className="admin-card">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
         <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#0f172a", margin: 0 }}>Manage Users</h2>
-        <button className="btn-action btn-approve" onClick={openCreate} style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem" }}>
-          <IconPlus /> Create Account
-        </button>
+        <div style={{ display: "flex", gap: "0.5rem" }}>
+          <button className="btn-action" onClick={handleExportCsv} style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem" }}>
+            Export Deployments CSV
+          </button>
+          <button className="btn-action btn-approve" onClick={openCreate} style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem" }}>
+            <IconPlus /> Create Account
+          </button>
+        </div>
       </div>
       {loading ? (
         <div style={{ textAlign: "center", padding: "2rem", color: "#94a3b8" }}>Loading...</div>

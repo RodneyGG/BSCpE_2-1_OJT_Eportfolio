@@ -19,6 +19,7 @@ class Deployment extends Model
         'detected_at',
         'confirmed_at',
         'confirmed_by',
+        'is_manually_overridden',
     ];
     protected function casts(): array
     {
@@ -27,6 +28,7 @@ class Deployment extends Model
             'end_date' => 'date',
             'detected_at' => 'datetime',
             'confirmed_at' => 'datetime',
+            'is_manually_overridden' => 'boolean',
         ];
     }
     public function user(): BelongsTo
@@ -52,5 +54,9 @@ class Deployment extends Model
     public function isManual(): bool
     {
         return $this->source === 'manual';
+    }
+    public function isManuallyOverridden(): bool
+    {
+        return $this->is_manually_overridden === true;
     }
 }

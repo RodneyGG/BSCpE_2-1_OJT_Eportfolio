@@ -74,3 +74,5 @@ docker-compose.override.yml
 *.sqlite
 *.sqlite3
 *.db
+eslint-full.txt
+eslint-full.txt

@@ -8,6 +8,7 @@ import AppNavbar from "../components/AppNavbar";
 import ProtectedRoute from "../components/ProtectedRoute";
 import PendingApprovalSection from "../components/PendingApprovalSection";
 import ManageUsersSection, { ManagedUser } from "../components/ManageUsersSection";
+import AdminStudentPanel from "../components/AdminStudentPanel";
 
 /* ═══════════════════════════ Scroll reveal hook ════════════════════ */
 function useReveal() {
@@ -242,73 +243,15 @@ export default function AdminDashboard() {
 
         </div>
 
-      {/* ══ STUDENT DETAILS MODAL ══ */}
+   {/* ══ STUDENT DETAILS PANEL ══ */}
       {selectedStudent && (
-        <div style={{
-          position: "fixed", top: 0, left: 0, width: "100%", height: "100%",
-          background: "rgba(15, 23, 42, 0.6)", backdropFilter: "blur(4px)",
-          zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem"
-        }} onClick={() => setSelectedStudent(null)}>
-          <div style={{
-            background: "white", borderRadius: "1.5rem", width: "100%", maxWidth: "600px",
-            overflow: "hidden", animation: "fadeInScale 0.2s ease-out", boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)",
-            position: "relative"
-          }} onClick={e => e.stopPropagation()}>
-            
-            {/* Close Button */}
-            <button onClick={() => setSelectedStudent(null)} style={{
-              position: "absolute", top: "1rem", right: "1rem", background: "none", border: "none",
-              color: "#94a3b8", cursor: "pointer", padding: "0.5rem", borderRadius: "50%", transition: "background 0.2s"
-            }} onMouseEnter={(e) => e.currentTarget.style.background = "#f1f5f9"} onMouseLeave={(e) => e.currentTarget.style.background = "none"}>
-              <IconX />
-            </button>
-
-            {/* Modal Header */}
-            <div style={{ padding: "2rem", display: "flex", gap: "1.5rem", alignItems: "center", borderBottom: "1px solid #e2e8f0", background: "#f8fafc" }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img 
-                src={`https://ui-avatars.com/api/?name=${encodeURIComponent(selectedStudent.name)}&size=100&background=random&color=fff&bold=true`} 
-                alt={selectedStudent.name} 
-                style={{ width: 80, height: 80, borderRadius: "50%", border: "4px solid white", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1)" }} 
-              />
-              <div>
-                <h2 style={{ margin: 0, fontSize: "1.5rem", fontWeight: 800, color: "#0f172a", letterSpacing: "-0.02em" }}>{selectedStudent.name}</h2>
-                <p style={{ margin: "0.2rem 0 0", color: "#64748b", fontSize: "0.9rem", fontWeight: 500 }}>{selectedStudent.email}</p>
-                <div style={{ marginTop: "0.75rem", display: "flex", gap: "0.5rem" }}>
-                  <span style={{ 
-                    padding: "0.2rem 0.75rem", borderRadius: "999px", fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase",
-                    color: getStatusColor(selectedStudent.is_active).color, background: getStatusColor(selectedStudent.is_active).bg
-                  }}>
-                    {selectedStudent.is_active ? "Active" : "Deactivated"}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Modal Body */}
-            <div style={{ padding: "2rem", maxHeight: "60vh", overflowY: "auto" }}>
-
-              <h3 style={{ fontSize: "0.85rem", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "1rem" }}>OJT Progress</h3>
-              <div style={{ background: "#f8fafc", padding: "1.25rem", borderRadius: "1rem", border: "1px dashed #cbd5e1", marginBottom: "2rem", textAlign: "center", color: "#94a3b8", fontSize: "0.9rem" }}>
-                Not yet tracked — hours tracking is being redesigned.
-              </div>
-
-              <h3 style={{ fontSize: "0.85rem", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "1rem" }}>Uploaded DTR Proofs</h3>
-              <div style={{ padding: "1rem", textAlign: "center", color: "#94a3b8", fontSize: "0.9rem", border: "1px dashed #cbd5e1", borderRadius: "0.5rem" }}>
-                Not yet tracked — DTR proof tracking is being redesigned.
-              </div>
-
-            </div>
-            
-            {/* Modal Footer */}
-            <div style={{ padding: "1.5rem 2rem", background: "#f8fafc", borderTop: "1px solid #e2e8f0", display: "flex", justifyContent: "flex-end", gap: "1rem" }}>
-              <button onClick={() => setSelectedStudent(null)} style={{ padding: "0.6rem 1.25rem", borderRadius: "0.5rem", background: "white", border: "1px solid #cbd5e1", color: "#475569", fontWeight: 600, cursor: "pointer" }}>Close</button>
-            </div>
-          </div>
-        </div>
+        <AdminStudentPanel
+          student={selectedStudent}
+          onClose={() => setSelectedStudent(null)}
+          onStudentUpdated={(update) => setSelectedStudent((prev) => prev ? { ...prev, ...update } : prev)}
+        />
       )}
       </main>{/* closes admin-main */}
-
     </div>
     </ProtectedRoute>
   );

@@ -3,7 +3,6 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { useRole, Role } from "../context/RoleContext";
 import { fetchApi } from "../../lib/api";
-import CompanySelect from "./CompanySelect";
 import AppNavbar from "../components/AppNavbar";
 import ProtectedRoute from "../components/ProtectedRoute";
 import { REQUIRED_DOCUMENTS } from "../data/documentTypes";
@@ -93,7 +92,7 @@ function StatusBadge({ status }: { status: "not_submitted" | "submitted" | "pend
 }
 
 /* ═══════════════════════════ Document Card ══════════════════════ */
-function DocumentCardItem({ doc, onUpload, onRemove, onView }: { doc: { id: string, name: string, status: string, date: string, fileLink?: string, reviewStatus?: "pending" | "approved" | "rejected", rejectionReason?: string | null, week?: number }, onUpload: (id: string, file: File, week?: number) => void, onRemove: (id: string) => void, onView: (title: string, fileLink: string) => void }) {
+function DocumentCardItem({ doc, onUpload, onRemove, onView }: { doc: { id: string, name: string, status: "not_submitted" | "submitted" | "uploading", date: string, fileLink?: string, reviewStatus?: "pending" | "approved" | "rejected", rejectionReason?: string | null, week?: number }, onUpload: (id: string, file: File, week?: number) => void, onRemove: (id: string) => void, onView: (title: string, fileLink: string) => void }) {
   const [dragActive, setDragActive] = useState(false);
 
   const handleDrag = (e: React.DragEvent) => {
@@ -126,7 +125,6 @@ function DocumentCardItem({ doc, onUpload, onRemove, onView }: { doc: { id: stri
       {/* Header Area */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.25rem", gap: "1rem" }}>
         <h3 style={{ fontSize: "1.15rem", fontWeight: 700, color: "#0f172a", margin: 0, lineHeight: 1.3 }}>{doc.name}</h3>
-        {/* @ts-expect-error status prop type mismatch with StatusBadge */}
         <StatusBadge status={badgeStatus} />
       </div>
 
@@ -182,7 +180,9 @@ export default function ProfilePage() {
   const [savingGeneral, setSavingGeneral] = useState(false);
 
   const [editingOjt, setEditingOjt] = useState(false);
-  const [ojtForm, setOjtForm] = useState({ company_id: "", ojt_role: "", ojt_supervisor: "", ojt_start_date: "", ojt_end_date: "" });
+  const [deployment, setDeployment] = useState<any>(null);
+  const [deploymentLoading, setDeploymentLoading] = useState(true);
+  const [ojtForm, setOjtForm] = useState({ role: "", supervisor_name: "", supervisor_contact: "", start_date: "", end_date: "" });
   const [savingOjt, setSavingOjt] = useState(false);
 
   const [activeTab, setActiveTab] = useState("before");
@@ -200,16 +200,24 @@ export default function ProfilePage() {
           phone: data.phone || "",
           program: data.program || "",
         });
-        setOjtForm({
-          company_id: data.company_id ? String(data.company_id) : "",
-          ojt_role: data.ojt_role || "",
-          ojt_supervisor: data.ojt_supervisor || "",
-          ojt_start_date: data.ojt_start_date || "",
-          ojt_end_date: data.ojt_end_date || ""
-        });
       })
       .catch((err: any) => { if (err.status !== 401) console.error("Failed to load profile:", err); })
       .finally(() => setProfileLoading(false));
+    fetchApi('/deployments/mine')
+      .then((data) => {
+        setDeployment(data.deployment);
+        if (data.deployment) {
+          setOjtForm({
+            role: data.deployment.role || "",
+            supervisor_name: data.deployment.supervisor_name || "",
+            supervisor_contact: data.deployment.supervisor_contact || "",
+            start_date: data.deployment.start_date ? data.deployment.start_date.slice(0, 10) : "",
+            end_date: data.deployment.end_date ? data.deployment.end_date.slice(0, 10) : "",
+          });
+        }
+      })
+      .catch((err: any) => { if (err.status !== 401) console.error("Failed to load deployment:", err); })
+      .finally(() => setDeploymentLoading(false));
 
     fetchApi('/documents/mine')
       .then((data) => {
@@ -307,22 +315,31 @@ export default function ProfilePage() {
   };
 
   const handleSaveOjt = async () => {
+    if (!deployment) return;
     setSavingOjt(true);
     try {
-      const res = await fetchApi('/profile', {
-        method: 'PATCH',
+      // Choose endpoint based on status
+      const endpoint = deployment.status === "confirmed" 
+        ? `/deployments/${deployment.id}` 
+        : `/deployments/${deployment.id}/confirm`;
+        
+      const res = await fetchApi(endpoint, {
+        method: "PATCH",
         body: JSON.stringify({
-          company_id: ojtForm.company_id ? parseInt(ojtForm.company_id) : null,
-          ojt_role: ojtForm.ojt_role,
-          ojt_supervisor: ojtForm.ojt_supervisor,
-          ojt_start_date: ojtForm.ojt_start_date || null,
-          ojt_end_date: ojtForm.ojt_end_date || null
-        })
+          role: ojtForm.role || null,
+          supervisor_name: ojtForm.supervisor_name || null,
+          supervisor_contact: ojtForm.supervisor_contact || null,
+          start_date: ojtForm.start_date || null,
+          end_date: ojtForm.end_date || null,
+        }),
       });
-      setProfileData((prev: any) => prev ? { ...prev, ...res.user, company: res.user.company, company_id: res.user.company_id } : prev);
-      if (user) login({ ...user, company_id: res.user.company_id, company: res.user.company });
+      setDeployment(res.deployment);
       setEditingOjt(false);
-    } catch (err: any) { alert(err.message || "Failed to update OJT details."); } finally { setSavingOjt(false); }
+    } catch (err: any) {
+      if (err.status !== 401) console.error("Failed to save deployment:", err);
+    } finally {
+      setSavingOjt(false);
+    }
   };
 
   const hoursRendered = profileData ? (parseFloat(profileData.hours_rendered) || 0) : 0;
@@ -420,24 +437,38 @@ export default function ProfilePage() {
             <div className="ui-card">
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
                 <h2 style={{ fontSize: "1.4rem", fontWeight: 800, color: "#0f172a", margin: 0 }}>OJT Deployment</h2>
-                {!editingOjt && <button className="card-edit-btn" onClick={() => setEditingOjt(true)}>Edit Details</button>}
+                {!deploymentLoading && deployment?.status === "pending_confirmation" && !editingOjt && (
+                  <button className="card-edit-btn" onClick={() => setEditingOjt(true)}>Edit Details</button>
+                )}
               </div>
 
-              {editingOjt ? (
+              {deploymentLoading ? (
+                <div style={{ display: "flex", flexDirection: "column", flex: 1, justifyContent: "center", alignItems: "center", padding: "2rem 0", color: "#94a3b8", fontSize: "1rem", fontWeight: 600 }}>
+                  Loading deployment...
+                </div>
+              ) : !deployment ? (
+                <div style={{ display: "flex", flexDirection: "column", flex: 1, justifyContent: "center", alignItems: "center", padding: "2rem 0", textAlign: "center" }}>
+                  <div style={{ fontSize: "1.1rem", fontWeight: 700, color: "#334155", marginBottom: "0.5rem" }}>No OJT Deployment on Record</div>
+                  <div style={{ fontSize: "0.95rem", color: "#64748b" }}>Contact your coordinator once your company assignment has been synced.</div>
+                </div>
+              ) : editingOjt ? (
                 <div style={{ marginTop: "0.5rem" }}>
                   <div style={{ marginBottom: "1.5rem" }}>
-                    <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 700, color: "#475569", marginBottom: "0.5rem" }}>Company Assignment</label>
-                    <CompanySelect value={ojtForm.company_id} onChange={(val) => setOjtForm({ ...ojtForm, company_id: val })} />
+                    <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "#475569", marginBottom: "0.35rem", textTransform: "uppercase" }}>Company Assignment</div>
+                    <div style={{ fontSize: "1.1rem", fontWeight: 600, color: "#334155" }}>{profileData?.company?.name || "No Company Assigned"}</div>
                   </div>
                   <div className="field-grid">
-                    <FieldInput label="OJT Role" value={ojtForm.ojt_role} onChange={(v) => setOjtForm({ ...ojtForm, ojt_role: v })} />
-                    <FieldInput label="Supervisor" value={ojtForm.ojt_supervisor} onChange={(v) => setOjtForm({ ...ojtForm, ojt_supervisor: v })} />
-                    <FieldInput type="date" label="Start Date" value={ojtForm.ojt_start_date} onChange={(v) => setOjtForm({ ...ojtForm, ojt_start_date: v })} />
-                    <FieldInput type="date" label="End Date" value={ojtForm.ojt_end_date} onChange={(v) => setOjtForm({ ...ojtForm, ojt_end_date: v })} />
+                    <FieldInput label="OJT Role" value={ojtForm.role} onChange={(v) => setOjtForm({ ...ojtForm, role: v })} />
+                    <FieldInput label="Supervisor" value={ojtForm.supervisor_name} onChange={(v) => setOjtForm({ ...ojtForm, supervisor_name: v })} />
+                    <FieldInput label="Supervisor Contact" value={ojtForm.supervisor_contact} onChange={(v) => setOjtForm({ ...ojtForm, supervisor_contact: v })} />
+                    <FieldInput type="date" label="Start Date" value={ojtForm.start_date} onChange={(v) => setOjtForm({ ...ojtForm, start_date: v })} />
+                    <FieldInput type="date" label="End Date" value={ojtForm.end_date} onChange={(v) => setOjtForm({ ...ojtForm, end_date: v })} />
                   </div>
                   <div style={{ display: "flex", gap: "0.75rem", justifyContent: "flex-end", marginTop: "1.5rem" }}>
-                    <button className="card-cancel-btn" onClick={() => setEditingOjt(false)}>Cancel</button>
-                    <button className="card-save-btn" onClick={handleSaveOjt}>Save Details</button>
+                    <button className="card-cancel-btn" onClick={() => setEditingOjt(false)} disabled={savingOjt}>Cancel</button>
+                    <button className="card-save-btn" onClick={handleSaveOjt} disabled={savingOjt}>
+                      {savingOjt ? "Saving..." : "Confirm Details"}
+                    </button>
                   </div>
                 </div>
               ) : (
@@ -449,19 +480,20 @@ export default function ProfilePage() {
                     {profileData?.company?.address || "Location pending..."}
                   </div>
                   <div className="field-grid" style={{ marginBottom: "1.5rem" }}>
-                    <FieldDisplay label="Supervisor" value={profileData?.ojt_supervisor || ""} />
-                    <FieldDisplay label="Role" value={profileData?.ojt_role || ""} />
-                    <FieldDisplay label="Start Date" value={profileData?.ojt_start_date || ""} />
-                    <FieldDisplay label="End Date" value={profileData?.ojt_end_date || ""} />
+                    <FieldDisplay label="Supervisor" value={deployment.supervisor_name || ""} />
+                    <FieldDisplay label="Role" value={deployment.role || ""} />
+                    <FieldDisplay label="Start Date" value={deployment.start_date ? deployment.start_date.slice(0, 10) : ""} />
+                    <FieldDisplay label="End Date" value={deployment.end_date ? deployment.end_date.slice(0, 10) : ""} />
                   </div>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "auto", paddingTop: "1.25rem", borderTop: "2px solid #f1f5f9" }}>
                     <span style={{ fontSize: "0.85rem", fontWeight: 800, color: "#94a3b8", textTransform: "uppercase" }}>Deployment Status</span>
-                    <StatusBadge status={profileData?.company ? "approved" : "not_submitted"} />
+                    <StatusBadge status={deployment.status === "confirmed" ? "approved" : "pending"} />
                   </div>
                 </div>
               )}
             </div>
           </RevealBox>
+
         </div>
 
         {/* Required Documents Section */}
