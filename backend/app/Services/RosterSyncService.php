@@ -85,8 +85,14 @@ class RosterSyncService
 
                 // Dual-write: keep the old flat column working until the rest
                 // of the app (CompanySection, ManageUsersSection) is migrated
-                // onto the deployments table.
-                if (!$dryRun) {
+                // onto the deployments table. Skipped once the student has
+                // confirmed/overridden their deployment — same immunity
+                // reconcileDeployment() already grants the deployment record
+                // itself, extended here so the flat column can't silently
+                // drift back out from under a confirmed choice.
+                $existingDeployment = Deployment::where('user_id', $best->id)->orderByDesc('id')->first();
+                $isConfirmed = $existingDeployment && $existingDeployment->status === 'confirmed';
+                if (!$dryRun && !$isConfirmed) {
                     $best->update(['company_id' => $company?->id]);
                 }
 

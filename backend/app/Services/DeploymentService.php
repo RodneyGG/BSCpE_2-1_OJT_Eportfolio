@@ -103,6 +103,12 @@ class DeploymentService
         $deployment->confirmed_by = $user->id;
         $deployment->save();
 
+        // Dual-write: mirror the resolved company onto the flat user column
+        // so consumers still reading it directly (landing page company list,
+        // updateAddress authorization, admin user views) see the same
+        // company a student just confirmed, without waiting on a roster sync.
+        $user->update(['company_id' => $deployment->company_id]);
+
         return $deployment->fresh('company');
     }
 
@@ -185,6 +191,11 @@ class DeploymentService
         $deployment->confirmed_at = now();
         $deployment->confirmed_by = $user->id;
         $deployment->save();
+
+        // Dual-write: same mirroring as confirm() — keep the flat column
+        // in step with whatever the student just picked or typed in.
+        $user->update(['company_id' => $deployment->company_id]);
+
         if (!empty($changedFields)) {
             ActivityLog::create([
                 'actor_id' => $user->id,

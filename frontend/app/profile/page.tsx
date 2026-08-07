@@ -182,9 +182,11 @@ export default function ProfilePage() {
   const [editingOjt, setEditingOjt] = useState(false);
   const [deployment, setDeployment] = useState<any>(null);
   const [deploymentLoading, setDeploymentLoading] = useState(true);
-  const [ojtForm, setOjtForm] = useState({ role: "", supervisor_name: "", supervisor_contact: "", start_date: "", end_date: "", company_name: "" });
+  const [ojtForm, setOjtForm] = useState({ role: "", supervisor_name: "", supervisor_contact: "", start_date: "", end_date: "", company_id: null as number | null, company_name: "" });
   const [ojtFormOriginal, setOjtFormOriginal] = useState(ojtForm);
   const [savingOjt, setSavingOjt] = useState(false);
+  const [companies, setCompanies] = useState<{ id: number; name: string }[]>([]);
+  const [useCustomCompany, setUseCustomCompany] = useState(false);
 
   const [activeTab, setActiveTab] = useState("before");
   const [activeWeek, setActiveWeek] = useState<number>(1);
@@ -204,6 +206,9 @@ export default function ProfilePage() {
       })
       .catch((err: any) => { if (err.status !== 401) console.error("Failed to load profile:", err); })
       .finally(() => setProfileLoading(false));
+    fetchApi('/companies')
+      .then((data) => setCompanies(data.companies || []))
+      .catch((err: any) => { if (err.status !== 401) console.error("Failed to load companies:", err); });
     fetchApi('/deployments/mine')
       .then((data) => {
         setDeployment(data.deployment);
@@ -214,6 +219,7 @@ export default function ProfilePage() {
             supervisor_contact: data.deployment.supervisor_contact || "",
             start_date: data.deployment.start_date ? data.deployment.start_date.slice(0, 10) : "",
             end_date: data.deployment.end_date ? data.deployment.end_date.slice(0, 10) : "",
+            company_id: data.deployment.company?.id ?? null,
             company_name: data.deployment.company?.name || "",
           };
           setOjtForm(initialOjtForm);
@@ -323,19 +329,27 @@ export default function ProfilePage() {
     setSavingOjt(true);
     try {
       const changed = JSON.stringify(ojtForm) !== JSON.stringify(ojtFormOriginal);
-      const endpoint = changed
+      // Already-confirmed deployments can never use /confirm — the backend
+      // rejects re-confirming a confirmed record — so once confirmed, every
+      // save (changed or not) must go through /override.
+      const useOverride = changed || deployment.status === "confirmed";
+      const endpoint = useOverride
         ? `/deployments/${deployment.id}/override`
         : `/deployments/${deployment.id}/confirm`;
-
-      const payload: Record<string, string | null> = {
+      const payload: Record<string, string | number | null> = {
         role: ojtForm.role || null,
         supervisor_name: ojtForm.supervisor_name || null,
         supervisor_contact: ojtForm.supervisor_contact || null,
         start_date: ojtForm.start_date || null,
         end_date: ojtForm.end_date || null,
       };
-      if (changed) payload.company_name = ojtForm.company_name || null;
-
+      if (useOverride) {
+        if (useCustomCompany) {
+          payload.company_name = ojtForm.company_name || null;
+        } else {
+          payload.company_id = ojtForm.company_id ?? null;
+        }
+      }
       const res = await fetchApi(endpoint, {
         method: "PATCH",
         body: JSON.stringify(payload),
@@ -352,7 +366,15 @@ export default function ProfilePage() {
 
   const hoursRendered = profileData ? (parseFloat(profileData.hours_rendered) || 0) : 0;
   const displayName = profileData?.name || "—";
-  const displayProgram = profileData?.program || "BSCpE 2-1";
+  const displayProgram = profileData?.program || "Bachelor of Science in Computer Engineering | 2-1";
+  const deploymentIncomplete = !!deployment && (
+    !deployment.company?.name ||
+    !deployment.role ||
+    !deployment.supervisor_name ||
+    !deployment.supervisor_contact ||
+    !deployment.start_date ||
+    !deployment.end_date
+  );
 
   return (
     <ProtectedRoute>
@@ -444,9 +466,14 @@ export default function ProfilePage() {
           <RevealBox delay={0.2}>
             <div className="ui-card">
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
-                <h2 style={{ fontSize: "1.4rem", fontWeight: 800, color: "#0f172a", margin: 0 }}>OJT Deployment</h2>
-                {!deploymentLoading && deployment?.status === "pending_confirmation" && !editingOjt && (
-                  <button className="card-edit-btn" onClick={() => { setOjtFormOriginal(ojtForm); setEditingOjt(true); }}>Edit Details</button>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+                  <h2 style={{ fontSize: "1.4rem", fontWeight: 800, color: "#0f172a", margin: 0 }}>OJT Deployment</h2>
+                  {deploymentIncomplete && (
+                    <span title="Some deployment details are still blank" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 22, height: 22, borderRadius: "50%", background: "#fef3c7", color: "#b45309", fontSize: "0.85rem", fontWeight: 800 }}>!</span>
+                  )}
+                </div>
+                {!deploymentLoading && (deployment?.status === "pending_confirmation" || deployment?.status === "confirmed") && !editingOjt && (
+                  <button className="card-edit-btn" onClick={() => { setOjtFormOriginal(ojtForm); setUseCustomCompany(false); setEditingOjt(true); }}>Edit Details</button>
                 )}
               </div>
 
@@ -462,7 +489,32 @@ export default function ProfilePage() {
               ) : editingOjt ? (
                 <div style={{ marginTop: "0.5rem" }}>
                   <div style={{ marginBottom: "1.5rem" }}>
-                    <FieldInput label="Company Assignment" value={ojtForm.company_name} onChange={(v) => setOjtForm({ ...ojtForm, company_name: v })} />
+                    <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 700, color: "#475569", marginBottom: "0.5rem" }}>Company Assignment</label>
+                    <select
+                      value={useCustomCompany ? "other" : (ojtForm.company_id ?? "")}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        if (v === "other") {
+                          setUseCustomCompany(true);
+                          setOjtForm({ ...ojtForm, company_id: null });
+                        } else {
+                          setUseCustomCompany(false);
+                          setOjtForm({ ...ojtForm, company_id: v ? parseInt(v, 10) : null, company_name: "" });
+                        }
+                      }}
+                      style={{ width: "100%", padding: "0.8rem 1rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1", fontSize: "1rem", outline: "none", boxSizing: "border-box", background: "white" }}
+                    >
+                      <option value="">-- Select Company --</option>
+                      {companies.map((c) => (
+                        <option key={c.id} value={c.id}>{c.name}</option>
+                      ))}
+                      <option value="other">Other — not listed</option>
+                    </select>
+                    {useCustomCompany && (
+                      <div style={{ marginTop: "1rem" }}>
+                        <FieldInput label="Company Name" value={ojtForm.company_name} onChange={(v) => setOjtForm({ ...ojtForm, company_name: v })} />
+                      </div>
+                    )}
                   </div>
                   <div className="field-grid">
                     <FieldInput label="OJT Role" value={ojtForm.role} onChange={(v) => setOjtForm({ ...ojtForm, role: v })} />
@@ -489,10 +541,10 @@ export default function ProfilePage() {
                     </div>
                   )}
                   <div style={{ fontSize: "1.3rem", fontWeight: 800, color: "#0f172a", marginBottom: "0.35rem" }}>
-                    {profileData?.company?.name || "No Company Assigned"}
+                    {deployment.company?.name || "No Company Assigned"}
                   </div>
                   <div style={{ fontSize: "1rem", color: "#64748b", marginBottom: "2rem" }}>
-                    {profileData?.company?.address || "Location pending..."}
+                    {deployment.company?.address || "Location pending..."}
                   </div>
                   <div className="field-grid" style={{ marginBottom: "1.5rem" }}>
                     <FieldDisplay label="Supervisor" value={deployment.supervisor_name || ""} />
