@@ -454,18 +454,21 @@ export default function ProfilePage() {
                   <div className="profile-avatar">
                     {displayName.split(" ").map((w: string) => w[0]).slice(0, 2).join("")}
                   </div>
-                  <div>
-                    <h2 style={{ fontSize: "20px", fontWeight: 700, color: displayName === "—" ? "#cbd5e1" : "#0f172a", margin: "0 0 0.15rem 0" }}>{displayName}</h2>
-                    <div style={{ fontSize: "clamp(0.85rem, 2vw, 0.95rem)", color: displayProgram === "—" ? "#cbd5e1" : "#64748b", fontWeight: 600 }}>{displayProgram}</div>
-                    <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.35rem", fontSize: "0.8rem", color: "#94a3b8", fontWeight: 500, flexWrap: "wrap", alignItems: "center" }}>
-                      <span>{profileData?.email || "—"}</span>
-                      {profileData?.phone && (
-                        <>
-                          <span style={{ color: "#cbd5e1" }}>&middot;</span>
-                          <span>{profileData.phone}</span>
-                        </>
-                      )}
+                  <div style={{ flex: 1, minWidth: 0, display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "16px", flexWrap: "wrap" }}>
+                    <div>
+                      <h2 style={{ fontSize: "20px", fontWeight: 700, color: displayName === "—" ? "#cbd5e1" : "#0f172a", margin: "0 0 0.15rem 0" }}>{displayName}</h2>
+                      <div style={{ fontSize: "clamp(0.85rem, 2vw, 0.95rem)", color: displayProgram === "—" ? "#cbd5e1" : "#64748b", fontWeight: 600 }}>{displayProgram}</div>
+                      <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.35rem", fontSize: "0.8rem", color: "#94a3b8", fontWeight: 500, flexWrap: "wrap", alignItems: "center" }}>
+                        <span>{profileData?.email || "—"}</span>
+                        {profileData?.phone && (
+                          <>
+                            <span style={{ color: "#cbd5e1" }}>&middot;</span>
+                            <span>{profileData.phone}</span>
+                          </>
+                        )}
+                      </div>
                     </div>
+                    <button className="card-edit-btn" onClick={() => setEditingGeneral(true)} style={{ flexShrink: 0 }}>Edit Profile</button>
                   </div>
                 </div>
                 <div className="profile-bar-divider" />
@@ -477,7 +480,6 @@ export default function ProfilePage() {
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: "10px", flexShrink: 0, flexWrap: "wrap", justifyContent: "flex-end" }}>
                       <StatusBadge status={hoursRendered >= 300 ? "approved" : hoursRendered > 0 ? "pending" : "not_submitted"} />
-                      <button className="card-edit-btn" onClick={() => setEditingGeneral(true)}>Edit Profile</button>
                     </div>
                   </div>
                   <div style={{ width: "100%", height: 10, background: "#f1f5f9", borderRadius: 9999, overflow: "hidden", marginBottom: "10px" }}>
