@@ -147,9 +147,9 @@ function DocumentCardItem({ doc, onUpload, onRemove, onView }: { doc: { id: stri
             )}
             <div style={{ display: "flex", gap: "0.75rem", marginTop: "auto" }}>
               {doc.fileLink && (
-                <button onClick={() => onView(doc.name, doc.fileLink!)} style={{ flex: 1, background: "#e0f2fe", color: "#0369a1", border: "none", padding: "0.75rem", borderRadius: "0.5rem", fontSize: "0.9rem", fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}>Preview File</button>
+                <button onClick={() => onView(doc.name, doc.fileLink!)} className="rejected-preview-btn" style={{ flex: 1 }}>Preview File</button>
               )}
-              <button onClick={() => onRemove(doc.id)} style={{ flex: 1, background: doc.reviewStatus === "rejected" ? "#ef4444" : "#fee2e2", color: doc.reviewStatus === "rejected" ? "white" : "#b91c1c", border: "none", padding: "0.75rem", borderRadius: "0.5rem", fontSize: "0.9rem", fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}>
+              <button onClick={() => onRemove(doc.id)} className="rejected-delete-btn" style={{ flex: 1, ...(doc.reviewStatus !== "rejected" && { background: "#f8fafc", borderColor: "#e2e8f0", color: "#64748b" }) }}>
                 {doc.reviewStatus === "rejected" ? "Delete & Re-upload" : "Delete File"}
               </button>
             </div>
@@ -386,13 +386,19 @@ export default function ProfilePage() {
         .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
         .profile-bar-content { display: flex; align-items: stretch; }
         .profile-bar-left { display: flex; gap: 16px; align-items: center; flex-shrink: 0; }
-        .profile-bar-divider { width: 1px; background: #e2e8f0; margin: 0 clamp(16px, 3vw, 32px); align-self: stretch; }
+        .profile-bar-divider { width: 1px; background: #e2e8f0; margin: 0 clamp(24px, 4vw, 40px); align-self: stretch; }
         .profile-bar-hours { flex: 1; display: flex; flex-direction: column; justify-content: center; min-width: 0; }
-        .accordion-header { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 1.1rem clamp(1rem, 3vw, 2rem); background: white; border: none; border-bottom: 1px solid #e2e8f0; cursor: pointer; transition: background 0.2s; font-family: inherit; font-size: inherit; }
-        .accordion-header:hover { background: #f0f9ff; }
-        .accordion-chevron { width: 16px; height: 16px; color: #64748b; transition: transform 0.3s ease; flex-shrink: 0; }
+        .accordion-header { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 1.1rem 24px; background: white; border: none; border-bottom: 1px solid #e2e8f0; border-left: 4px solid transparent; cursor: pointer; transition: all 0.2s ease; font-family: inherit; font-size: inherit; }
+        .accordion-header:hover { background: #f8fafc; border-left-color: #cbd5e1; }
+        .accordion-header.open { background: #f0f9ff; border-left-color: #3b82f6; }
+        .accordion-chevron { width: 16px; height: 16px; color: #64748b; transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); flex-shrink: 0; }
         .accordion-chevron.open { transform: rotate(90deg); color: #3b82f6; }
-        .pdf-upload-box:hover { background: #e2e8f0 !important; border-color: #94a3b8 !important; }
+        .pdf-upload-box { transition: all 0.2s ease-in-out; }
+        .pdf-upload-box:hover { background: #f1f5f9 !important; border-color: #94a3b8 !important; }
+        .rejected-preview-btn { background: white; border: 1px solid #cbd5e1; color: #475569; border-radius: 0.5rem; padding: 0.6rem 1.2rem; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: all 0.15s; }
+        .rejected-preview-btn:hover { background: #f8fafc; color: #0f172a; }
+        .rejected-delete-btn { background: #fee2e2; border: 1px solid #fca5a5; color: #b91c1c; border-radius: 0.5rem; padding: 0.6rem 1.2rem; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: all 0.15s; }
+        .rejected-delete-btn:hover { background: #fecaca; color: #991b1b; }
         
         @media (max-width: 1024px) {
           .main-container { padding: 2rem 0; width: 92%; }
@@ -419,7 +425,7 @@ export default function ProfilePage() {
         
         {/* Combined Profile & Hours Bar */}
         <RevealBox delay={0}>
-          <div className="ui-card" style={{ marginBottom: "16px" }}>
+          <div className="ui-card" style={{ marginBottom: "32px" }}>
             {editingGeneral ? (
               <>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "12px" }}>
@@ -427,7 +433,7 @@ export default function ProfilePage() {
                     <div className="profile-avatar">
                       {displayName.split(" ").map((w: string) => w[0]).slice(0, 2).join("")}
                     </div>
-                    <h2 style={{ fontSize: "clamp(1.4rem, 4vw, 1.8rem)", fontWeight: 800, color: "#0f172a", margin: 0 }}>{displayName}</h2>
+                    <h2 style={{ fontSize: "clamp(1.4rem, 4vw, 1.8rem)", fontWeight: 800, color: displayName === "—" ? "#cbd5e1" : "#0f172a", margin: 0 }}>{displayName}</h2>
                   </div>
                 </div>
                 <div className="field-grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))" }}>
@@ -448,33 +454,37 @@ export default function ProfilePage() {
                     {displayName.split(" ").map((w: string) => w[0]).slice(0, 2).join("")}
                   </div>
                   <div>
-                    <h2 style={{ fontSize: "clamp(1.3rem, 3.5vw, 1.6rem)", fontWeight: 800, color: "#0f172a", margin: "0 0 0.15rem 0" }}>{displayName}</h2>
-                    <div style={{ fontSize: "clamp(0.85rem, 2vw, 0.95rem)", color: "#64748b", fontWeight: 600 }}>{displayProgram}</div>
-                    <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.35rem", fontSize: "0.8rem", color: "#94a3b8", fontWeight: 500, flexWrap: "wrap" }}>
-                      <span>{profileData?.email || "\u2014"}</span>
-                      <span style={{ color: "#cbd5e1" }}>\u00b7</span>
-                      <span>{profileData?.phone || "\u2014"}</span>
+                    <h2 style={{ fontSize: "clamp(1.3rem, 3.5vw, 1.6rem)", fontWeight: 800, color: displayName === "—" ? "#cbd5e1" : "#0f172a", margin: "0 0 0.15rem 0" }}>{displayName}</h2>
+                    <div style={{ fontSize: "clamp(0.85rem, 2vw, 0.95rem)", color: displayProgram === "—" ? "#cbd5e1" : "#64748b", fontWeight: 600 }}>{displayProgram}</div>
+                    <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.35rem", fontSize: "0.8rem", color: "#94a3b8", fontWeight: 500, flexWrap: "wrap", alignItems: "center" }}>
+                      <span>{profileData?.email || "—"}</span>
+                      {profileData?.phone && (
+                        <>
+                          <span style={{ color: "#cbd5e1" }}>&middot;</span>
+                          <span>{profileData.phone}</span>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
                 <div className="profile-bar-divider" />
-                <div className="profile-bar-hours">
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px", flexWrap: "wrap", gap: "8px" }}>
+                <div className="profile-bar-hours" style={{ justifyContent: "space-between", paddingTop: "4px", paddingBottom: "2px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px", flexWrap: "wrap", gap: "12px" }}>
                     <div style={{ display: "flex", alignItems: "baseline", gap: "8px", flexWrap: "wrap" }}>
                       <span style={{ fontSize: "clamp(1.8rem, 4vw, 2.5rem)", fontWeight: 900, color: "#0f172a", lineHeight: 1 }}>{hoursRendered.toFixed(2)}</span>
                       <span style={{ fontSize: "clamp(0.85rem, 2vw, 1rem)", color: "#64748b", fontWeight: 700 }}>/ 300 hrs</span>
                     </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "10px", flexShrink: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px", flexShrink: 0, flexWrap: "wrap", justifyContent: "flex-end" }}>
                       <StatusBadge status={hoursRendered >= 300 ? "approved" : hoursRendered > 0 ? "pending" : "not_submitted"} />
                       <button className="card-edit-btn" onClick={() => setEditingGeneral(true)}>Edit Profile</button>
                     </div>
                   </div>
-                  <div style={{ width: "100%", height: 10, background: "#f1f5f9", borderRadius: 9999, overflow: "hidden" }}>
+                  <div style={{ width: "100%", height: 10, background: "#f1f5f9", borderRadius: 9999, overflow: "hidden", marginBottom: "10px" }}>
                     <div style={{ width: `${Math.min((hoursRendered / 300) * 100, 100)}%`, height: "100%", background: "linear-gradient(90deg, #3b82f6, #6366f1)", transition: "width 0.5s ease" }} />
                   </div>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginTop: "10px", fontSize: "clamp(0.8rem, 2vw, 0.9rem)", gap: "12px", flexWrap: "wrap" }}>
-                    <span style={{ color: "#3b82f6", fontWeight: 800 }}>{Math.round((hoursRendered / 300) * 100)}% Complete</span>
-                    <span style={{ color: "#64748b", fontWeight: 700 }}>{Math.max(0, 300 - hoursRendered).toFixed(2)} Hours Remaining</span>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "clamp(0.8rem, 2vw, 0.9rem)", gap: "12px" }}>
+                    <span style={{ color: "#3b82f6", fontWeight: 800, whiteSpace: "nowrap" }}>{Math.round((hoursRendered / 300) * 100)}% Complete</span>
+                    <span style={{ color: "#64748b", fontWeight: 700, whiteSpace: "nowrap" }}>{Math.max(0, 300 - hoursRendered).toFixed(2)} Hours Remaining</span>
                   </div>
                 </div>
               </div>
@@ -483,7 +493,7 @@ export default function ProfilePage() {
         </RevealBox>
 
 
-        <div style={{ marginBottom: "16px" }}>
+        <div style={{ marginBottom: "32px" }}>
           {/* OJT Deployment */}
           <RevealBox delay={0.2}>
             <div className="ui-card">
@@ -535,8 +545,8 @@ export default function ProfilePage() {
 
         {/* Required Documents Section */}
         <RevealBox delay={0.3}>
-          <div id="req-docs" className="ui-card" style={{ padding: 0, overflow: "hidden", marginBottom: "16px" }}>
-            <div style={{ padding: "clamp(1.25rem, 3vw, 1.5rem)", borderBottom: "1px solid #e2e8f0", background: "#f8fafc" }}>
+          <div id="req-docs" className="ui-card" style={{ padding: 0, overflow: "hidden", marginBottom: "32px" }}>
+            <div style={{ padding: "24px", borderBottom: "1px solid #e2e8f0", background: "#f8fafc" }}>
               <h2 style={{ fontSize: "clamp(1.3rem, 3vw, 1.6rem)", fontWeight: 800, color: "#0f172a", margin: 0 }}>Required Documents</h2>
             </div>
             
@@ -545,7 +555,7 @@ export default function ProfilePage() {
             ) : (
               ["before", "during", "after", "other"].map(phase => (
                 <div key={phase}>
-                  <button className="accordion-header" onClick={() => setOpenSection(prev => prev === phase ? null : phase)}>
+                  <button className={`accordion-header${openSection === phase ? " open" : ""}`} onClick={() => setOpenSection(prev => prev === phase ? null : phase)}>
                     <span style={{ fontWeight: 800, fontSize: "clamp(0.9rem, 2.5vw, 1.1rem)", color: "#0f172a", textTransform: "capitalize" }}>
                       {phase === "other" ? "Other Documents" : `${phase} OJT`}
                     </span>
@@ -613,7 +623,7 @@ export default function ProfilePage() {
 
         {/* Submission History Table */}
         <RevealBox delay={0.4}>
-          <div className="ui-card" style={{ padding: "clamp(1.25rem, 3vw, 1.5rem)" }}>
+          <div className="ui-card" style={{ padding: "24px" }}>
             <h2 style={{ fontSize: "clamp(1.3rem, 3vw, 1.6rem)", fontWeight: 800, color: "#0f172a", margin: "0 0 24px 0" }}>Submission History</h2>
             <div style={{ overflowX: "auto" }}>
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "1rem", textAlign: "left" }}>
@@ -638,11 +648,11 @@ export default function ProfilePage() {
                         <td style={{ padding: "1.25rem 1rem", color: "#475569", fontWeight: 500 }}>{doc.date}</td>
                         <td style={{ padding: "1.25rem 1rem", fontWeight: 700, color: "#0f172a" }}>{doc.name}</td>
                         <td style={{ padding: "1.25rem 1rem", color: "#475569", textTransform: "capitalize" }}>{doc.phase === "other" ? "Other" : `${doc.phase} OJT`}</td>
-                        <td style={{ padding: "1.25rem 1rem", color: "#475569", fontWeight: 600 }}>{doc.week || "—"}</td>
+                        <td style={{ padding: "1.25rem 1rem", color: !doc.week ? "#cbd5e1" : "#475569", fontWeight: 600 }}>{doc.week || "—"}</td>
                         <td style={{ padding: "1.25rem 1rem" }}>
                           <StatusBadge status={doc.reviewStatus || "pending"} />
                         </td>
-                        <td style={{ padding: "1.25rem 1rem", color: doc.reviewStatus === "rejected" ? "#b91c1c" : "#475569", fontStyle: doc.reviewStatus === "rejected" ? "normal" : "italic", fontWeight: doc.reviewStatus === "rejected" ? 600 : 400 }}>
+                        <td style={{ padding: "1.25rem 1rem", color: !doc.rejectionReason ? "#cbd5e1" : (doc.reviewStatus === "rejected" ? "#b91c1c" : "#475569"), fontStyle: doc.reviewStatus === "rejected" ? "normal" : "italic", fontWeight: doc.reviewStatus === "rejected" ? 600 : 400 }}>
                           {doc.rejectionReason || "—"}
                         </td>
                       </tr>
