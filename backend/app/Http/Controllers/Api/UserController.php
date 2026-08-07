@@ -1,17 +1,22 @@
 <?php
+
 namespace App\Http\Controllers\Api;
+
 use App\Http\Controllers\Controller;
 use App\Mail\AccountSetupMail;
+use App\Models\Deployment;
 use App\Models\User;
 use App\Models\ActivityLog;
 use App\Services\AccountSetupService;
 use App\Services\DeploymentService;
 use App\Services\UserService;
+use App\Services\BulkImportService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rule;
+
 class UserController extends Controller
 {
     /**
@@ -194,6 +199,7 @@ class UserController extends Controller
             'temp_password' => $tempPassword,
         ]);
     }
+
     /**
      * Toggle an admin's fallback review permission. Prof only (enforced via route middleware).
      */
@@ -216,6 +222,7 @@ class UserController extends Controller
             'can_review' => $user->can_review,
         ]);
     }
+
     /**
      * Deactivate (soft-disable) a user account. Preserves document history.
      */
@@ -232,6 +239,7 @@ class UserController extends Controller
             'is_active' => $user->is_active,
         ]);
     }
+
     public function updateCompany(Request $request, User $user)
     {
         if ($user->role !== 'normal') {
@@ -253,7 +261,7 @@ class UserController extends Controller
 
         // 2. Sync/upsert active deployment record
         if ($newCompanyId) {
-            $deployment = \App\Models\Deployment::where('user_id', $user->id)
+            $deployment = Deployment::where('user_id', $user->id)
                 ->orderByRaw("status = 'confirmed' desc")
                 ->latest('id')
                 ->first();
@@ -261,7 +269,7 @@ class UserController extends Controller
             if ($deployment) {
                 $deployment->update(['company_id' => $newCompanyId]);
             } else {
-                \App\Models\Deployment::create([
+                Deployment::create([
                     'user_id' => $user->id,
                     'company_id' => $newCompanyId,
                     'status' => 'pending_confirmation',
@@ -285,6 +293,7 @@ class UserController extends Controller
             'company' => $user->company,
         ]);
     }
+
     /**
      * Reactivate a previously deactivated user account.
      */
@@ -302,7 +311,7 @@ class UserController extends Controller
         ]);
     }
 
-/**
+    /**
      * Permanently delete a user account. No longer blocks on existing
      * documents — the frontend warns with a document count and requires
      * explicit confirmation before calling this. Cascades documents/DTRs
@@ -336,5 +345,46 @@ class UserController extends Controller
             'message' => 'Account permanently deleted.',
             'documents_deleted' => $documentCount,
         ]);
+    }
+
+    /**
+     * Preview bulk import from Google Sheet URL.
+     */
+    public function previewBulkImport(Request $request, BulkImportService $bulkImportService)
+    {
+        $sheetUrl = $request->query('url');
+
+        if (!$sheetUrl) {
+            return response()->json([
+                'message' => 'A valid Google Sheet URL is required.'
+            ], 400);
+        }
+
+        try {
+            $previewData = $bulkImportService->preview($sheetUrl);
+            return response()->json($previewData);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to fetch sheet preview: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Commit bulk import from Google Sheet URL.
+     */
+    public function commitBulkImport(Request $request, BulkImportService $bulkImportService)
+    {
+        $sheetUrl = $request->input('url');
+        $actorId = $request->user()->id;
+
+        try {
+            $result = $bulkImportService->commit($actorId, $sheetUrl);
+            return response()->json($result);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to commit bulk import: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }
