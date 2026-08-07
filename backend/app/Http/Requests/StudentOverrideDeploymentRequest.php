@@ -11,6 +11,7 @@ class StudentOverrideDeploymentRequest extends FormRequest
     {
         return [
             'role'               => ['nullable', 'string', 'max:255'],
+            'company_id'         => ['nullable', 'integer', 'exists:companies,id'],
             'company_name'       => ['nullable', 'string', 'max:255'],
             'supervisor_name'    => ['nullable', 'string', 'max:255'],
             'supervisor_contact' => ['nullable', 'string', 'max:255'],

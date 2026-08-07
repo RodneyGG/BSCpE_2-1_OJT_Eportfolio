@@ -1,5 +1,6 @@
 <?php
 namespace App\Services;
+use App\Models\ActivityLog;
 use App\Models\Deployment;
 use App\Models\DeploymentMatchConflict;
 use App\Models\User;
@@ -165,19 +166,59 @@ class DeploymentService
                 'deployment' => 'You may only override your own deployment.',
             ]);
         }
+        // A picked company_id (exact DB match from the dropdown) always wins
+        // over free-text company_name (the "not listed, add new" path) —
+        // avoids re-resolving a name that's already a known record.
+        $companyId = $data['company_id'] ?? null;
         $companyName = trim($data['company_name'] ?? '');
-        unset($data['company_name']);
+        unset($data['company_id'], $data['company_name']);
         $fillable = array_filter($data, fn ($v) => $v !== null && $v !== '');
-        if ($companyName !== '') {
+        if ($companyId) {
+            $fillable['company_id'] = $companyId;
+        } elseif ($companyName !== '') {
             $fillable['company_id'] = $this->resolveCompanyByName($companyName)->id;
         }
+        $changedFields = $this->diffChangedFields($deployment, $fillable);
         $deployment->fill($fillable);
         $deployment->is_manually_overridden = true;
         $deployment->status = 'confirmed';
         $deployment->confirmed_at = now();
         $deployment->confirmed_by = $user->id;
         $deployment->save();
+        if (!empty($changedFields)) {
+            ActivityLog::create([
+                'actor_id' => $user->id,
+                'action' => 'deployment_manual_override',
+                'target_id' => $user->id,
+                'metadata' => [
+                    'deployment_id' => $deployment->id,
+                    'fields' => $changedFields,
+                ],
+            ]);
+        }
         return $deployment->fresh('company');
+    }
+    /**
+     * Compares each field about to be written against the deployment's
+     * current value, so ActivityLog only records fields that actually
+     * changed — re-saving identical values (e.g. re-confirming an
+     * already-correct record) shouldn't produce a log entry.
+     */
+    private function diffChangedFields(Deployment $deployment, array $fillable): array
+    {
+        $changed = [];
+        foreach ($fillable as $field => $newValue) {
+            $oldValue = $deployment->{$field};
+            if ($oldValue instanceof \Carbon\Carbon) {
+                $oldValue = $oldValue->toDateString();
+            }
+            $oldComparable = $oldValue === null ? null : (string) $oldValue;
+            $newComparable = (string) $newValue;
+            if ($oldComparable !== $newComparable) {
+                $changed[] = $field;
+            }
+        }
+        return $changed;
     }
     /**
      * Case-insensitive find-or-create lookup for a company by name, used
