@@ -182,7 +182,8 @@ export default function ProfilePage() {
   const [editingOjt, setEditingOjt] = useState(false);
   const [deployment, setDeployment] = useState<any>(null);
   const [deploymentLoading, setDeploymentLoading] = useState(true);
-  const [ojtForm, setOjtForm] = useState({ role: "", supervisor_name: "", supervisor_contact: "", start_date: "", end_date: "" });
+  const [ojtForm, setOjtForm] = useState({ role: "", supervisor_name: "", supervisor_contact: "", start_date: "", end_date: "", company_name: "" });
+  const [ojtFormOriginal, setOjtFormOriginal] = useState(ojtForm);
   const [savingOjt, setSavingOjt] = useState(false);
 
   const [activeTab, setActiveTab] = useState("before");
@@ -207,13 +208,16 @@ export default function ProfilePage() {
       .then((data) => {
         setDeployment(data.deployment);
         if (data.deployment) {
-          setOjtForm({
+          const initialOjtForm = {
             role: data.deployment.role || "",
             supervisor_name: data.deployment.supervisor_name || "",
             supervisor_contact: data.deployment.supervisor_contact || "",
             start_date: data.deployment.start_date ? data.deployment.start_date.slice(0, 10) : "",
             end_date: data.deployment.end_date ? data.deployment.end_date.slice(0, 10) : "",
-          });
+            company_name: data.deployment.company?.name || "",
+          };
+          setOjtForm(initialOjtForm);
+          setOjtFormOriginal(initialOjtForm);
         }
       })
       .catch((err: any) => { if (err.status !== 401) console.error("Failed to load deployment:", err); })
@@ -318,22 +322,26 @@ export default function ProfilePage() {
     if (!deployment) return;
     setSavingOjt(true);
     try {
-      // Choose endpoint based on status
-      const endpoint = deployment.status === "confirmed" 
-        ? `/deployments/${deployment.id}` 
+      const changed = JSON.stringify(ojtForm) !== JSON.stringify(ojtFormOriginal);
+      const endpoint = changed
+        ? `/deployments/${deployment.id}/override`
         : `/deployments/${deployment.id}/confirm`;
-        
+
+      const payload: Record<string, string | null> = {
+        role: ojtForm.role || null,
+        supervisor_name: ojtForm.supervisor_name || null,
+        supervisor_contact: ojtForm.supervisor_contact || null,
+        start_date: ojtForm.start_date || null,
+        end_date: ojtForm.end_date || null,
+      };
+      if (changed) payload.company_name = ojtForm.company_name || null;
+
       const res = await fetchApi(endpoint, {
         method: "PATCH",
-        body: JSON.stringify({
-          role: ojtForm.role || null,
-          supervisor_name: ojtForm.supervisor_name || null,
-          supervisor_contact: ojtForm.supervisor_contact || null,
-          start_date: ojtForm.start_date || null,
-          end_date: ojtForm.end_date || null,
-        }),
+        body: JSON.stringify(payload),
       });
       setDeployment(res.deployment);
+      setOjtFormOriginal(ojtForm);
       setEditingOjt(false);
     } catch (err: any) {
       if (err.status !== 401) console.error("Failed to save deployment:", err);
@@ -438,7 +446,7 @@ export default function ProfilePage() {
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
                 <h2 style={{ fontSize: "1.4rem", fontWeight: 800, color: "#0f172a", margin: 0 }}>OJT Deployment</h2>
                 {!deploymentLoading && deployment?.status === "pending_confirmation" && !editingOjt && (
-                  <button className="card-edit-btn" onClick={() => setEditingOjt(true)}>Edit Details</button>
+                  <button className="card-edit-btn" onClick={() => { setOjtFormOriginal(ojtForm); setEditingOjt(true); }}>Edit Details</button>
                 )}
               </div>
 
@@ -454,8 +462,7 @@ export default function ProfilePage() {
               ) : editingOjt ? (
                 <div style={{ marginTop: "0.5rem" }}>
                   <div style={{ marginBottom: "1.5rem" }}>
-                    <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "#475569", marginBottom: "0.35rem", textTransform: "uppercase" }}>Company Assignment</div>
-                    <div style={{ fontSize: "1.1rem", fontWeight: 600, color: "#334155" }}>{profileData?.company?.name || "No Company Assigned"}</div>
+                    <FieldInput label="Company Assignment" value={ojtForm.company_name} onChange={(v) => setOjtForm({ ...ojtForm, company_name: v })} />
                   </div>
                   <div className="field-grid">
                     <FieldInput label="OJT Role" value={ojtForm.role} onChange={(v) => setOjtForm({ ...ojtForm, role: v })} />

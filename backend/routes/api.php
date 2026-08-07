@@ -54,6 +54,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Deployments
     Route::get('/deployments/mine', [DeploymentController::class, 'mine']);
     Route::patch('/deployments/{deployment}/confirm', [DeploymentController::class, 'confirm']);
+    Route::patch('/deployments/{deployment}/override', [DeploymentController::class, 'studentOverride']);
     Route::patch('/deployments/{deployment}', [DeploymentController::class, 'update']);
     Route::get('/admin/deployments/export', [DeploymentController::class, 'exportCsv'])->middleware('role:admin,prof');
 

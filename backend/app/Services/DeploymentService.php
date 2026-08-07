@@ -141,15 +141,56 @@ class DeploymentService
         $fillable = array_filter($data, fn ($v) => $v !== null && $v !== '');
         $deployment->fill($fillable);
         $deployment->is_manually_overridden = true;
-
         if ($deployment->status !== 'confirmed') {
             $deployment->status = 'confirmed';
             $deployment->confirmed_at = now();
         }
-
         $deployment->save();
-
         return $deployment->fresh('company');
+    }
+    /**
+     * Student override: like adminOverride(), but ownership-scoped to the
+     * student's own deployment, and additionally resolves a free-text
+     * company_name into a company_id (find-or-create, case-insensitive)
+     * since students correct their company by typing it rather than
+     * picking an ID directly. Once a student overrides, the record is
+     * locked (is_manually_overridden = true, status = confirmed) against
+     * all future roster-sync writes — same protection adminOverride()
+     * already relies on.
+     */
+    public function studentOverride(Deployment $deployment, User $user, array $data): Deployment
+    {
+        if ($deployment->user_id !== $user->id) {
+            throw ValidationException::withMessages([
+                'deployment' => 'You may only override your own deployment.',
+            ]);
+        }
+        $companyName = trim($data['company_name'] ?? '');
+        unset($data['company_name']);
+        $fillable = array_filter($data, fn ($v) => $v !== null && $v !== '');
+        if ($companyName !== '') {
+            $fillable['company_id'] = $this->resolveCompanyByName($companyName)->id;
+        }
+        $deployment->fill($fillable);
+        $deployment->is_manually_overridden = true;
+        $deployment->status = 'confirmed';
+        $deployment->confirmed_at = now();
+        $deployment->confirmed_by = $user->id;
+        $deployment->save();
+        return $deployment->fresh('company');
+    }
+    /**
+     * Case-insensitive find-or-create lookup for a company by name, used
+     * when a student types in a company correction rather than picking
+     * from an existing record. Mirrors RosterSyncService::upsertCompany()'s
+     * lookup logic, but only sets the name on creation — a student
+     * shouldn't be able to set address/contact fields via free text here.
+     */
+    private function resolveCompanyByName(string $name): \App\Models\Company
+    {
+        $normalized = mb_strtolower(trim($name));
+        $company = \App\Models\Company::whereRaw('LOWER(TRIM(name)) = ?', [$normalized])->first();
+        return $company ?? \App\Models\Company::create(['name' => trim($name)]);
     }
 
     /**

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ConfirmDeploymentRequest;
+use App\Http\Requests\StudentOverrideDeploymentRequest;
 use App\Models\Deployment;
 use App\Services\DeploymentService;
 use Illuminate\Http\JsonResponse;
@@ -61,6 +62,18 @@ class DeploymentController extends Controller
         );
         return response()->json([
             'message' => 'Deployment updated by admin',
+            'deployment' => $updated,
+        ]);
+    }
+    public function studentOverride(StudentOverrideDeploymentRequest $request, Deployment $deployment): JsonResponse
+    {
+        $updated = $this->deploymentService->studentOverride(
+            $deployment,
+            $request->user(),
+            $request->validated()
+        );
+        return response()->json([
+            'message' => 'Deployment overridden successfully',
             'deployment' => $updated,
         ]);
     }
