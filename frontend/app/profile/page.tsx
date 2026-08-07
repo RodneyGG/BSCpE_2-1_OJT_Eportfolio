@@ -122,7 +122,7 @@ function DocumentCardItem({ doc, onUpload, onRemove, onView }: { doc: { id: stri
   const badgeStatus = doc.status === "submitted" ? (doc.reviewStatus || "pending") : doc.status;
 
   return (
-    <div style={{ height: "100%", display: "flex", flexDirection: "column", background: "white", border: "1px solid #e2e8f0", borderRadius: "1rem", padding: "20px", boxShadow: "0 4px 15px rgba(0,0,0,0.03)" }}>
+    <div style={{ height: "100%", display: "flex", flexDirection: "column", background: "white", border: "1px solid #e2e8f0", borderRadius: "1rem", padding: "16px", boxShadow: "0 4px 15px rgba(0,0,0,0.03)" }}>
       
       {/* Header Area */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.25rem", gap: "1rem" }}>
@@ -134,7 +134,7 @@ function DocumentCardItem({ doc, onUpload, onRemove, onView }: { doc: { id: stri
       {/* Upload/Action Area */}
       <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end", marginTop: "auto" }}>
         {doc.status === "submitted" ? (
-          <div style={{ background: doc.reviewStatus === "rejected" ? "#fef2f2" : "#f8fafc", border: `1px solid ${doc.reviewStatus === "rejected" ? "#fecaca" : "#f1f5f9"}`, borderRadius: "0.75rem", padding: "1.25rem", height: "110px", display: "flex", flexDirection: "column" }}>
+          <div style={{ background: doc.reviewStatus === "rejected" ? "#fef2f2" : "#f8fafc", border: `1px solid ${doc.reviewStatus === "rejected" ? "#fecaca" : "#f1f5f9"}`, borderRadius: "0.75rem", padding: "16px", display: "flex", flexDirection: "column" }}>
             {doc.reviewStatus === "rejected" && doc.rejectionReason ? (
               <div style={{ flex: 1, overflowY: "auto", marginBottom: "0.5rem" }}>
                 <div style={{ fontSize: "0.75rem", fontWeight: 800, color: "#b91c1c", textTransform: "uppercase", letterSpacing: "0.05em" }}>Reason for Rejection</div>
@@ -155,11 +155,11 @@ function DocumentCardItem({ doc, onUpload, onRemove, onView }: { doc: { id: stri
             </div>
           </div>
         ) : doc.status === "uploading" ? (
-          <div style={{ background: "#eff6ff", borderRadius: "0.75rem", height: "110px", display: "flex", justifyContent: "center", alignItems: "center" }}>
+          <div style={{ background: "#eff6ff", borderRadius: "0.75rem", padding: "20px 0", display: "flex", justifyContent: "center", alignItems: "center" }}>
             <span style={{ color: "#3b82f6", fontSize: "1rem", fontWeight: 700 }}>Uploading...</span>
           </div>
         ) : (
-          <div className="pdf-upload-box" onDragEnter={handleDrag} onDragLeave={handleDrag} onDragOver={handleDrag} onDrop={handleDrop} style={{ position: "relative", background: dragActive ? "#eff6ff" : "#f8fafc", border: `2px dashed ${dragActive ? "#3b82f6" : "#cbd5e1"}`, borderRadius: "0.75rem", height: "110px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "all 0.2s" }}>
+          <div className="pdf-upload-box" onDragEnter={handleDrag} onDragLeave={handleDrag} onDragOver={handleDrag} onDrop={handleDrop} style={{ position: "relative", background: dragActive ? "#eff6ff" : "#f8fafc", border: `2px dashed ${dragActive ? "#3b82f6" : "#cbd5e1"}`, borderRadius: "0.75rem", padding: "20px 0", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "all 0.2s" }}>
             <input type="file" accept="application/pdf" onChange={handleChange} style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer", width: "100%" }} />
             <IconUpload />
             <span style={{ fontSize: "0.95rem", fontWeight: 600, color: dragActive ? "#3b82f6" : "#64748b", marginTop: "0.75rem" }}>{dragActive ? "Drop PDF here" : "Drag PDF or Click to browse"}</span>
@@ -388,7 +388,7 @@ export default function ProfilePage() {
         .profile-bar-left { display: flex; gap: 16px; align-items: center; flex-shrink: 0; }
         .profile-bar-divider { width: 1px; background: #e2e8f0; margin: 0 clamp(24px, 4vw, 40px); align-self: stretch; }
         .profile-bar-hours { flex: 1; display: flex; flex-direction: column; justify-content: center; min-width: 0; }
-        .accordion-header { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 1rem 20px; background: white; border: none; border-bottom: 1px solid #e2e8f0; border-left: 4px solid transparent; cursor: pointer; transition: all 0.2s ease; font-family: inherit; font-size: inherit; }
+        .accordion-header { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 1rem 16px; background: white; border: none; border-bottom: 1px solid #e2e8f0; border-left: 4px solid transparent; cursor: pointer; transition: all 0.2s ease; font-family: inherit; font-size: inherit; }
         .accordion-header:hover { background: #f8fafc; border-left-color: #cbd5e1; }
         .accordion-header.open { background: #f0f9ff; border-left-color: #3b82f6; }
         .accordion-chevron { width: 16px; height: 16px; color: #64748b; transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); flex-shrink: 0; }
@@ -425,7 +425,7 @@ export default function ProfilePage() {
         
         {/* Combined Profile & Hours Bar */}
         <RevealBox delay={0}>
-          <div className="ui-card" style={{ marginBottom: "32px", padding: "20px" }}>
+          <div className="ui-card" style={{ marginBottom: "32px", padding: "16px" }}>
             {editingGeneral ? (
               <>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "12px" }}>
@@ -433,7 +433,7 @@ export default function ProfilePage() {
                     <div className="profile-avatar">
                       {displayName.split(" ").map((w: string) => w[0]).slice(0, 2).join("")}
                     </div>
-                    <h2 style={{ fontSize: "clamp(1.2rem, 3vw, 1.4rem)", fontWeight: 800, color: displayName === "—" ? "#cbd5e1" : "#0f172a", margin: 0 }}>{displayName}</h2>
+                    <h2 style={{ fontSize: "20px", fontWeight: 700, color: displayName === "—" ? "#cbd5e1" : "#0f172a", margin: 0 }}>{displayName}</h2>
                   </div>
                 </div>
                 <div className="field-grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))" }}>
@@ -454,7 +454,7 @@ export default function ProfilePage() {
                     {displayName.split(" ").map((w: string) => w[0]).slice(0, 2).join("")}
                   </div>
                   <div>
-                    <h2 style={{ fontSize: "clamp(1.1rem, 2.5vw, 1.3rem)", fontWeight: 800, color: displayName === "—" ? "#cbd5e1" : "#0f172a", margin: "0 0 0.15rem 0" }}>{displayName}</h2>
+                    <h2 style={{ fontSize: "20px", fontWeight: 700, color: displayName === "—" ? "#cbd5e1" : "#0f172a", margin: "0 0 0.15rem 0" }}>{displayName}</h2>
                     <div style={{ fontSize: "clamp(0.85rem, 2vw, 0.95rem)", color: displayProgram === "—" ? "#cbd5e1" : "#64748b", fontWeight: 600 }}>{displayProgram}</div>
                     <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.35rem", fontSize: "0.8rem", color: "#94a3b8", fontWeight: 500, flexWrap: "wrap", alignItems: "center" }}>
                       <span>{profileData?.email || "—"}</span>
@@ -471,7 +471,7 @@ export default function ProfilePage() {
                 <div className="profile-bar-hours" style={{ justifyContent: "space-between", paddingTop: "4px", paddingBottom: "2px" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px", flexWrap: "wrap", gap: "12px" }}>
                     <div style={{ display: "flex", alignItems: "baseline", gap: "8px", flexWrap: "wrap" }}>
-                      <span style={{ fontSize: "clamp(1.4rem, 3vw, 1.8rem)", fontWeight: 900, color: "#0f172a", lineHeight: 1 }}>{hoursRendered.toFixed(2)}</span>
+                      <span style={{ fontSize: "28px", fontWeight: 800, color: "#0f172a", lineHeight: 1 }}>{hoursRendered.toFixed(2)}</span>
                       <span style={{ fontSize: "clamp(0.8rem, 1.5vw, 0.9rem)", color: "#64748b", fontWeight: 700 }}>/ 300 hrs</span>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: "10px", flexShrink: 0, flexWrap: "wrap", justifyContent: "flex-end" }}>
@@ -546,8 +546,8 @@ export default function ProfilePage() {
         {/* Required Documents Section */}
         <RevealBox delay={0.3}>
           <div id="req-docs" className="ui-card" style={{ padding: 0, overflow: "hidden", marginBottom: "32px" }}>
-            <div style={{ padding: "20px", borderBottom: "1px solid #e2e8f0", background: "#f8fafc" }}>
-              <h2 style={{ fontSize: "clamp(1.1rem, 2.5vw, 1.3rem)", fontWeight: 800, color: "#0f172a", margin: 0 }}>Required Documents</h2>
+            <div style={{ padding: "16px", borderBottom: "1px solid #e2e8f0", background: "#f8fafc" }}>
+              <h2 style={{ fontSize: "16px", fontWeight: 700, color: "#0f172a", margin: 0 }}>Required Documents</h2>
             </div>
             
             {documentsLoading ? (
@@ -565,7 +565,7 @@ export default function ProfilePage() {
                   </button>
 
                   {openSection === phase && (
-                    <div style={{ padding: "24px 20px", background: "#f8fafc", borderBottom: "1px solid #e2e8f0" }}>
+                    <div style={{ padding: "16px", background: "#f8fafc", borderBottom: "1px solid #e2e8f0" }}>
                       {phase === "during" ? (
                         <div>
                           {/* Week Navigation */}
@@ -623,8 +623,8 @@ export default function ProfilePage() {
 
         {/* Submission History Table */}
         <RevealBox delay={0.4}>
-          <div className="ui-card" style={{ padding: "20px" }}>
-            <h2 style={{ fontSize: "clamp(1.1rem, 2.5vw, 1.3rem)", fontWeight: 800, color: "#0f172a", margin: "0 0 20px 0" }}>Submission History</h2>
+          <div className="ui-card" style={{ padding: "16px" }}>
+            <h2 style={{ fontSize: "16px", fontWeight: 700, color: "#0f172a", margin: "0 0 20px 0" }}>Submission History</h2>
             <div style={{ overflowX: "auto" }}>
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "1rem", textAlign: "left" }}>
                 <thead>
