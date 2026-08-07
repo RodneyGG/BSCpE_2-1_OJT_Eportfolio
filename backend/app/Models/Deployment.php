@@ -15,6 +15,7 @@ class Deployment extends Model
         'start_date',
         'end_date',
         'source',
+        'sheet_name',
         'status',
         'detected_at',
         'confirmed_at',

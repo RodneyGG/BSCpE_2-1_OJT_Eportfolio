@@ -9,6 +9,7 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use App\Support\NameMatcher;
 
 class RosterSyncService
 {
@@ -123,6 +124,18 @@ class RosterSyncService
                     'company' => $companyName,
                 ];
             } else {
+                $company = $this->upsertCompany($companyName, $address, $contactPerson, $contactNumber, $dryRun);
+                $startDate = $this->parseSheetDate($startDateRaw);
+                $endDate = $this->parseSheetDate($endDateRaw);
+                $this->reconcileUnlinkedDeployment(
+                    sheetName: $sheetName,
+                    company: $company,
+                    supervisorName: $contactPerson,
+                    supervisorContact: $contactNumber,
+                    startDate: $startDate,
+                    endDate: $endDate,
+                    dryRun: $dryRun,
+                );
                 $unmatched[] = [
                     'sheet_name' => $sheetName,
                     'company' => $companyName,
@@ -246,13 +259,57 @@ class RosterSyncService
             'fields' => array_keys($diffs),
         ];
     }
-
+    /**
+     * Mirrors reconcileDeployment() but for sheet rows with no confident
+     * account match. Persists (or refreshes) an unlinked (`user_id = null`)
+     * deployment row keyed by `sheet_name`, so login-time auto-detection has
+     * something to match against later. Idempotent across re-syncs, and
+     * never overwrites a confirmed row or a manual pending row — mirrors the
+     * same protections reconcileDeployment() applies to matched students.
+     */
+    private function reconcileUnlinkedDeployment(
+        string $sheetName,
+        ?Company $company,
+        string $supervisorName,
+        string $supervisorContact,
+        ?Carbon $startDate,
+        ?Carbon $endDate,
+        bool $dryRun,
+    ): void {
+        $existing = Deployment::where('sheet_name', $sheetName)->orderByDesc('id')->first();
+        $proposedAttributes = [
+            'user_id' => null,
+            'company_id' => $company?->id,
+            'sheet_name' => $sheetName,
+            'supervisor_name' => $supervisorName ?: null,
+            'supervisor_contact' => $supervisorContact ?: null,
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+            'source' => 'roster_sync_detected',
+            'status' => 'pending_confirmation',
+            'detected_at' => now(),
+        ];
+        if (!$existing) {
+            if (!$dryRun) {
+                Deployment::create($proposedAttributes);
+            }
+            return;
+        }
+        if ($existing->status === 'pending_confirmation' && $existing->source === 'roster_sync_detected') {
+            if (!$dryRun) {
+                $existing->update($proposedAttributes);
+            }
+            return;
+        }
+        // status === 'confirmed', or pending_confirmation with source === 'manual':
+        // a human already claimed/locked this record — leave it untouched.
+    }
     /**
      * Compares a confirmed deployment's stored values against what the sheet
      * currently says. Returns only the fields that actually differ, each as
      * ['old' => ..., 'new' => ...], keyed by field name.
      */
-        private function diffAgainstConfirmed(
+    private function diffAgainstConfirmed(
         Deployment $existing,
         ?Company $company,
         string $supervisorName,
@@ -354,11 +411,7 @@ class RosterSyncService
      */
     private function tokenize(string $name): array
     {
-        $clean = preg_replace('/[^\p{L}\s]/u', ' ', $name);
-        $clean = mb_strtolower(trim($clean));
-        $tokens = preg_split('/\s+/', $clean, -1, PREG_SPLIT_NO_EMPTY);
-        sort($tokens);
-        return array_values(array_unique($tokens));
+        return NameMatcher::tokenize($name);
     }
 
     /**

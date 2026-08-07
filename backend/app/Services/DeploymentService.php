@@ -1,16 +1,23 @@
 <?php
-
 namespace App\Services;
-
 use App\Models\Deployment;
+use App\Models\DeploymentMatchConflict;
 use App\Models\User;
+use App\Support\NameMatcher;
 use Illuminate\Validation\ValidationException;
-
 class DeploymentService
 {
     /**
      * Retrieve the user's deployment record.
-     * Auto-detects and links unassigned Google Sheet sync records matching student email.
+     *
+     * Auto-detection fallback: if the user has no deployment yet, look for
+     * unlinked roster-sync rows (created by RosterSyncService for sheet rows
+     * it couldn't confidently match to an account) whose sheet_name is an
+     * EXACT token-set match against the user's name — stricter than the
+     * subset-containment matching RosterSyncService itself uses, since this
+     * runs unsupervised on every login with no admin reviewing it in the
+     * moment. If more than one unlinked row matches, link NONE of them —
+     * ambiguity is flagged for admin review instead of guessed at.
      */
     public function getForUser(User $user): ?Deployment
     {
@@ -19,23 +26,49 @@ class DeploymentService
             ->orderByRaw("status = 'confirmed' desc")
             ->latest('id')
             ->first();
-
-        // Auto-detection fallback: Link unassigned sync record by email if user has no deployment assigned yet
-        if (!$deployment && $user->email) {
-            $unlinked = Deployment::whereNull('user_id')
-                ->where('student_email', $user->email)
-                ->latest('id')
-                ->first();
-
-            if ($unlinked) {
-                $unlinked->user_id = $user->id;
-                $unlinked->save();
-
-                $deployment = $unlinked->load('company');
-            }
+        if ($deployment) {
+            return $deployment;
         }
-
-        return $deployment;
+        if (!$user->name) {
+            return null;
+        }
+        $userTokens = NameMatcher::tokenize($user->name);
+        $candidates = Deployment::whereNull('user_id')
+            ->whereNotNull('sheet_name')
+            ->get();
+        $matches = $candidates->filter(
+            fn (Deployment $candidate) => NameMatcher::tokenize($candidate->sheet_name) === $userTokens
+        );
+        if ($matches->count() === 1) {
+            $unlinked = $matches->first();
+            $unlinked->user_id = $user->id;
+            $unlinked->save();
+            return $unlinked->load('company');
+        }
+        if ($matches->count() > 1) {
+            $this->flagMatchConflict($user, $matches->pluck('id')->all());
+        }
+        return null;
+    }
+    /**
+     * Records (or refreshes) an unresolved ambiguous-match conflict for an
+     * admin to resolve manually. Idempotent per user — re-running login
+     * matching while a conflict is still unresolved updates the candidate
+     * list rather than creating duplicate conflict rows.
+     */
+    private function flagMatchConflict(User $user, array $deploymentIds): void
+    {
+        $existing = DeploymentMatchConflict::where('user_id', $user->id)
+            ->whereNull('resolved_at')
+            ->first();
+        if ($existing) {
+            $existing->update(['candidate_deployment_ids' => $deploymentIds]);
+            return;
+        }
+        DeploymentMatchConflict::create([
+            'user_id' => $user->id,
+            'candidate_deployment_ids' => $deploymentIds,
+        ]);
     }
 
     /**
