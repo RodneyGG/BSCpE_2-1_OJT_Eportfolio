@@ -24,6 +24,24 @@ class GoogleOAuthController extends Controller
     }
 
     /**
+     * Check if Google Drive is currently connected (has a valid token).
+     */
+    public function status(Request $request): JsonResponse
+    {
+        $token = GoogleOAuthToken::first();
+
+        if (!$token || !$token->refresh_token) {
+            return response()->json(['connected' => false]);
+        }
+
+        // Check if we can still use the token (has refresh_token for auto-renewal)
+        return response()->json([
+            'connected' => true,
+            'last_refreshed' => $token->updated_at?->toISOString(),
+        ]);
+    }
+
+    /**
      * Generate Google OAuth login URL.
      */
     public function redirect(Request $request): JsonResponse

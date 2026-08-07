@@ -7,6 +7,7 @@ import AppNavbar from "../components/AppNavbar";
 import ProtectedRoute from "../components/ProtectedRoute";
 import { REQUIRED_DOCUMENTS } from "../data/documentTypes";
 import DocumentViewerModal from "../components/DocumentViewerModal";
+import ConfirmDialog from "../components/ConfirmDialog";
 
 /* ═══════════════════════════ Scroll reveal hook ════════════════════ */
 function useReveal() {
@@ -43,7 +44,7 @@ function RevealBox({ children, delay = 0, style = {} }: { children: React.ReactN
 /* ═══════════════════════════ Icons ═══════════════════════════ */
 function IconUpload() {
   return (
-    <svg width={28} height={28} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+    <svg className="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
     </svg>
   );
@@ -85,7 +86,7 @@ function StatusBadge({ status }: { status: "not_submitted" | "submitted" | "pend
   };
   const s = map[status] || map.not_submitted;
   return (
-    <span style={{ background: s.bg, color: s.color, padding: "0.4rem 1rem", borderRadius: "9999px", fontSize: "0.85rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.05em", whiteSpace: "nowrap" }}>
+    <span style={{ background: s.bg, color: s.color, padding: "0.4rem 1rem", borderRadius: "9999px", fontSize: "clamp(0.65rem, 2.5vw, 0.85rem)", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.05em", whiteSpace: "nowrap" }}>
       {s.label}
     </span>
   );
@@ -120,7 +121,7 @@ function DocumentCardItem({ doc, onUpload, onRemove, onView }: { doc: { id: stri
   const badgeStatus = doc.status === "submitted" ? (doc.reviewStatus || "pending") : doc.status;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", background: "white", border: "1px solid #e2e8f0", borderRadius: "1rem", padding: "1.75rem", boxShadow: "0 4px 15px rgba(0,0,0,0.03)" }}>
+    <div style={{ height: "100%", display: "flex", flexDirection: "column", background: "white", border: "1px solid #e2e8f0", borderRadius: "1rem", padding: "24px", boxShadow: "0 4px 15px rgba(0,0,0,0.03)" }}>
       
       {/* Header Area */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.25rem", gap: "1rem" }}>
@@ -128,35 +129,35 @@ function DocumentCardItem({ doc, onUpload, onRemove, onView }: { doc: { id: stri
         <StatusBadge status={badgeStatus} />
       </div>
 
-      {doc.reviewStatus === "rejected" && doc.rejectionReason && (
-        <div style={{ marginBottom: "1.25rem", padding: "1rem", background: "#fef2f2", borderRadius: "0.75rem", borderLeft: "4px solid #ef4444" }}>
-          <div style={{ fontSize: "0.8rem", fontWeight: 800, color: "#b91c1c", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "0.25rem" }}>Reason for Rejection</div>
-          <div style={{ fontSize: "1rem", color: "#991b1b" }}>"{doc.rejectionReason}"</div>
-        </div>
-      )}
-      
       {/* Upload/Action Area */}
       <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end", marginTop: "auto" }}>
         {doc.status === "submitted" ? (
-          <div style={{ background: "#f8fafc", border: "1px solid #f1f5f9", borderRadius: "0.75rem", padding: "1.25rem" }}>
-            <div style={{ fontSize: "0.9rem", color: "#475569", marginBottom: "1rem" }}>
-              Uploaded on <strong>{doc.date}</strong>
-            </div>
-            <div style={{ display: "flex", gap: "0.75rem" }}>
+          <div style={{ background: doc.reviewStatus === "rejected" ? "#fef2f2" : "#f8fafc", border: `1px solid ${doc.reviewStatus === "rejected" ? "#fecaca" : "#f1f5f9"}`, borderRadius: "0.75rem", padding: "1.25rem", height: "140px", display: "flex", flexDirection: "column" }}>
+            {doc.reviewStatus === "rejected" && doc.rejectionReason ? (
+              <div style={{ flex: 1, overflowY: "auto", marginBottom: "0.5rem" }}>
+                <div style={{ fontSize: "0.75rem", fontWeight: 800, color: "#b91c1c", textTransform: "uppercase", letterSpacing: "0.05em" }}>Reason for Rejection</div>
+                <div style={{ fontSize: "0.9rem", color: "#991b1b", lineHeight: 1.3, marginTop: "0.25rem" }}>"{doc.rejectionReason}"</div>
+              </div>
+            ) : (
+              <div style={{ fontSize: "0.9rem", color: "#475569" }}>
+                Uploaded on <strong>{doc.date}</strong>
+              </div>
+            )}
+            <div style={{ display: "flex", gap: "0.75rem", marginTop: "auto" }}>
               {doc.fileLink && (
                 <button onClick={() => onView(doc.name, doc.fileLink!)} style={{ flex: 1, background: "#e0f2fe", color: "#0369a1", border: "none", padding: "0.75rem", borderRadius: "0.5rem", fontSize: "0.9rem", fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}>Preview File</button>
               )}
               <button onClick={() => onRemove(doc.id)} style={{ flex: 1, background: doc.reviewStatus === "rejected" ? "#ef4444" : "#fee2e2", color: doc.reviewStatus === "rejected" ? "white" : "#b91c1c", border: "none", padding: "0.75rem", borderRadius: "0.5rem", fontSize: "0.9rem", fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}>
-                {doc.reviewStatus === "rejected" ? "Re-upload Document" : "Replace File"}
+                {doc.reviewStatus === "rejected" ? "Delete & Re-upload" : "Delete File"}
               </button>
             </div>
           </div>
         ) : doc.status === "uploading" ? (
-          <div style={{ background: "#eff6ff", borderRadius: "0.75rem", padding: "2rem", display: "flex", justifyContent: "center" }}>
+          <div style={{ background: "#eff6ff", borderRadius: "0.75rem", height: "140px", display: "flex", justifyContent: "center", alignItems: "center" }}>
             <span style={{ color: "#3b82f6", fontSize: "1rem", fontWeight: 700 }}>Uploading...</span>
           </div>
         ) : (
-          <div className="pdf-upload-box" onDragEnter={handleDrag} onDragLeave={handleDrag} onDragOver={handleDrag} onDrop={handleDrop} style={{ position: "relative", background: dragActive ? "#eff6ff" : "#f8fafc", border: `2px dashed ${dragActive ? "#3b82f6" : "#cbd5e1"}`, borderRadius: "0.75rem", padding: "2.5rem 1.5rem", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "all 0.2s" }}>
+          <div className="pdf-upload-box" onDragEnter={handleDrag} onDragLeave={handleDrag} onDragOver={handleDrag} onDrop={handleDrop} style={{ position: "relative", background: dragActive ? "#eff6ff" : "#f8fafc", border: `2px dashed ${dragActive ? "#3b82f6" : "#cbd5e1"}`, borderRadius: "0.75rem", height: "140px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "all 0.2s" }}>
             <input type="file" accept="application/pdf" onChange={handleChange} style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer", width: "100%" }} />
             <IconUpload />
             <span style={{ fontSize: "0.95rem", fontWeight: 600, color: dragActive ? "#3b82f6" : "#64748b", marginTop: "0.75rem" }}>{dragActive ? "Drop PDF here" : "Drag PDF or Click to browse"}</span>
@@ -192,6 +193,7 @@ export default function ProfilePage() {
   const [activeWeek, setActiveWeek] = useState<number>(1);
   const [weeksArray, setWeeksArray] = useState<number[]>([1]);
   const [viewingDoc, setViewingDoc] = useState<{title: string, link: string} | null>(null);
+  const [deletingDoc, setDeletingDoc] = useState<string | null>(null);
 
   useEffect(() => {
     fetchApi('/me')
@@ -307,7 +309,46 @@ export default function ProfilePage() {
   };
 
   const handleRemoveDocument = (id: string) => {
-    setDocuments(docs => docs.map(d => d.id === id ? { ...d, status: "not_submitted", date: "", fileLink: undefined, reviewStatus: undefined, rejectionReason: undefined } : d));
+    setDeletingDoc(id);
+  };
+
+  const confirmDeleteDocument = async () => {
+    if (!deletingDoc) return;
+    
+    // Check if it is just a local state replace (if not a DB ID)
+    const docToDelete = documents.find(d => d.id === deletingDoc);
+    if (!docToDelete) {
+      setDeletingDoc(null);
+      return;
+    }
+    
+    try {
+      if (!isNaN(Number(docToDelete.id))) {
+        await fetchApi(`/documents/${docToDelete.id}`, { method: 'DELETE' });
+      }
+      
+      setDocuments(docs => docs.map(d => {
+        if (d.id === deletingDoc) {
+          const reqDef = REQUIRED_DOCUMENTS.find(r => r.title === d.name);
+          return {
+            id: reqDef ? reqDef.id : d.name,
+            name: d.name,
+            phase: d.phase,
+            status: "not_submitted",
+            date: "",
+            fileLink: undefined,
+            reviewStatus: undefined,
+            rejectionReason: undefined,
+            week: d.week
+          };
+        }
+        return d;
+      }));
+    } catch (err: any) {
+      alert(err.message || 'Failed to delete document.');
+    } finally {
+      setDeletingDoc(null);
+    }
   };
 
   const handleViewPdf = async (title: string, link: string) => {
@@ -379,33 +420,54 @@ export default function ProfilePage() {
   return (
     <ProtectedRoute>
     <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)", fontFamily: "var(--font-geist-sans, system-ui, sans-serif)", display: "flex", flexDirection: "column" }}>      <style>{`
-        .ui-card { background: white; border-radius: 1.25rem; padding: 2rem; box-shadow: 0 10px 30px rgba(0,0,0,0.04); border: 1px solid rgba(255,255,255,0.8); display: flex; flex-direction: column; height: 100%; }
-        .card-edit-btn { background: none; border: 1px solid #cbd5e1; color: #475569; border-radius: 0.5rem; padding: 0.6rem 1.2rem; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: all 0.15s; }
+        .main-container { width: 95%; max-width: 1600px; margin: 0 auto; padding: 3rem 0; flex: 1; }
+        .ui-card { background: white; border-radius: 1.25rem; padding: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.04); border: 1px solid rgba(255,255,255,0.8); display: flex; flex-direction: column; height: auto; min-height: fit-content; }
+        .responsive-grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 350px), 1fr)); gap: 24px; margin-bottom: 24px; align-items: stretch; }
+        .profile-avatar { width: 56px; height: 56px; font-size: 1.5rem; border-radius: 50%; background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%); color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; flex-shrink: 0; }
+        .upload-icon { width: 18px; height: 18px; }
+        .card-edit-btn { background: none; border: 1px solid #cbd5e1; color: #475569; border-radius: 0.5rem; padding: 0.6rem 1.2rem; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: all 0.15s; width: auto; }
         .card-edit-btn:hover { background: #f1f5f9; color: #0f172a; }
-        .card-save-btn { background: #2563eb; color: white; border: none; border-radius: 0.5rem; padding: 0.6rem 1.25rem; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: background 0.15s; }
+        .card-save-btn { background: #2563eb; color: white; border: none; border-radius: 0.5rem; padding: 0.6rem 1.25rem; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: background 0.15s; width: auto; }
         .card-save-btn:hover { background: #1d4ed8; }
-        .card-cancel-btn { background: transparent; color: #64748b; border: 1px solid #cbd5e1; border-radius: 0.5rem; padding: 0.6rem 1.25rem; font-size: 0.9rem; font-weight: 700; cursor: pointer; }
+        .card-cancel-btn { background: transparent; color: #64748b; border: 1px solid #cbd5e1; border-radius: 0.5rem; padding: 0.6rem 1.25rem; font-size: 0.9rem; font-weight: 700; cursor: pointer; width: auto; }
         .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
-        .tab-btn { flex: 1; padding: 1.25rem; border: none; background: transparent; border-bottom: 3px solid transparent; font-size: 1.1rem; font-weight: 800; color: #64748b; cursor: pointer; transition: all 0.2s; text-transform: capitalize; }
+        .tab-btn { flex: 1; min-width: 120px; padding: 1.25rem; border: none; background: transparent; border-bottom: 3px solid transparent; font-size: clamp(0.9rem, 2.5vw, 1.1rem); font-weight: 800; color: #64748b; cursor: pointer; transition: all 0.2s; text-transform: capitalize; }
         .tab-btn.active { color: #0f172a; border-bottom-color: #3b82f6; }
         .tab-btn:hover:not(.active) { color: #334155; }
         .pdf-upload-box:hover { background: #e2e8f0 !important; border-color: #94a3b8 !important; }
+        
+        @media (max-width: 1024px) {
+          .main-container { padding: 2rem 0; width: 92%; }
+          .ui-card { padding: 20px; }
+          .responsive-grid-2 { gap: 20px; margin-bottom: 20px; }
+          .card-edit-btn, .card-save-btn, .card-cancel-btn { padding: 0.5rem 1rem; font-size: 0.85rem; }
+        }
+        
+        @media (max-width: 768px) {
+          .main-container { padding: 1.5rem 1rem; width: 100%; }
+          .ui-card { padding: 16px; }
+          .responsive-grid-2 { gap: 16px; margin-bottom: 16px; }
+          .profile-avatar { width: 44px; height: 44px; font-size: 1.2rem; }
+          .upload-icon { width: 16px; height: 16px; }
+          .field-grid { grid-template-columns: 1fr; gap: 1rem; }
+          .card-edit-btn, .card-save-btn, .card-cancel-btn { min-width: fit-content; }
+        }
       `}</style>
       <AppNavbar />
 
-      <main style={{ width: "95%", maxWidth: 1600, margin: "0 auto", padding: "3rem 0", flex: 1 }}>
+      <main className="main-container">
         
         {/* Card 1: Student Information (Full Width) */}
         <RevealBox delay={0}>
-          <div className="ui-card" style={{ marginBottom: "2rem" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.5rem" }}>
-              <div style={{ display: "flex", gap: "1.5rem", alignItems: "center" }}>
-                <div style={{ width: 90, height: 90, borderRadius: "50%", background: "linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "2.5rem", fontWeight: 800, flexShrink: 0 }}>
+          <div className="ui-card" style={{ marginBottom: "24px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "16px" }}>
+              <div style={{ display: "flex", gap: "16px", alignItems: "center" }}>
+                <div className="profile-avatar">
                   {displayName.split(" ").map((w: string) => w[0]).slice(0, 2).join("")}
                 </div>
                 <div>
-                  <h2 style={{ fontSize: "1.8rem", fontWeight: 800, color: "#0f172a", margin: "0 0 0.5rem 0" }}>{displayName}</h2>
-                  <div style={{ fontSize: "1.1rem", color: "#64748b", fontWeight: 600 }}>{displayProgram}</div>
+                  <h2 style={{ fontSize: "clamp(1.4rem, 4vw, 1.8rem)", fontWeight: 800, color: "#0f172a", margin: "0 0 0.25rem 0" }}>{displayName}</h2>
+                  <div style={{ fontSize: "clamp(0.95rem, 2.5vw, 1.1rem)", color: "#64748b", fontWeight: 600 }}>{displayProgram}</div>
                 </div>
               </div>
               {!editingGeneral && <button className="card-edit-btn" onClick={() => setEditingGeneral(true)}>Edit Profile</button>}
@@ -425,7 +487,7 @@ export default function ProfilePage() {
                 </div>
               </div>
             ) : (
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "2.5rem", marginTop: "1.5rem" }}>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "24px", marginTop: "16px" }}>
                 <FieldDisplay label="Email Address" value={profileData?.email || ""} />
                 <FieldDisplay label="Phone Number" value={profileData?.phone || ""} />
               </div>
@@ -434,27 +496,27 @@ export default function ProfilePage() {
         </RevealBox>
 
         {/* 2-Column Grid for Hours Rendered & OJT Deployment */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))", gap: "2rem", marginBottom: "3rem", alignItems: "stretch" }}>
+        <div className="responsive-grid-2">
           
           {/* Card 2: Hours Rendered */}
           <RevealBox delay={0.1}>
             <div className="ui-card">
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2rem" }}>
-                <h2 style={{ fontSize: "1.4rem", fontWeight: 800, color: "#0f172a", margin: 0 }}>Hours Rendered</h2>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px", flexWrap: "wrap", gap: "16px" }}>
+                <h2 style={{ fontSize: "clamp(1.2rem, 3vw, 1.4rem)", fontWeight: 800, color: "#0f172a", margin: 0 }}>Hours Rendered</h2>
                 <StatusBadge status={hoursRendered >= 300 ? "approved" : hoursRendered > 0 ? "pending" : "not_submitted"} />
               </div>
               
               <div style={{ display: "flex", flexDirection: "column", flex: 1, justifyContent: "center" }}>
-                <div style={{ display: "flex", alignItems: "baseline", gap: "0.75rem", marginBottom: "1rem" }}>
-                  <span style={{ fontSize: "3.5rem", fontWeight: 900, color: "#0f172a", lineHeight: 1 }}>{hoursRendered.toFixed(2)}</span>
-                  <span style={{ fontSize: "1.2rem", color: "#64748b", fontWeight: 700 }}>/ 300 hrs</span>
+                <div style={{ display: "flex", alignItems: "baseline", gap: "12px", marginBottom: "16px", flexWrap: "wrap" }}>
+                  <span style={{ fontSize: "clamp(2.5rem, 6vw, 3.5rem)", fontWeight: 900, color: "#0f172a", lineHeight: 1 }}>{hoursRendered.toFixed(2)}</span>
+                  <span style={{ fontSize: "clamp(1rem, 2.5vw, 1.2rem)", color: "#64748b", fontWeight: 700 }}>/ 300 hrs</span>
                 </div>
                 
                 <div style={{ width: "100%", height: 16, background: "#f1f5f9", borderRadius: 9999, overflow: "hidden" }}>
                   <div style={{ width: `${Math.min((hoursRendered / 300) * 100, 100)}%`, height: "100%", background: "linear-gradient(90deg, #3b82f6, #6366f1)", transition: "width 0.5s ease" }} />
                 </div>
                 
-                <div style={{ display: "flex", justifyContent: "space-between", marginTop: "1rem", fontSize: "1.1rem" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginTop: "16px", fontSize: "clamp(0.9rem, 2.5vw, 1.1rem)", gap: "16px", flexWrap: "wrap" }}>
                   <span style={{ color: "#3b82f6", fontWeight: 800 }}>{Math.round((hoursRendered / 300) * 100)}% Complete</span>
                   <span style={{ color: "#64748b", fontWeight: 700 }}>{Math.max(0, 300 - hoursRendered).toFixed(2)} Hours Remaining</span>
                 </div>
@@ -565,12 +627,12 @@ export default function ProfilePage() {
 
         {/* Required Documents Section */}
         <RevealBox delay={0.3}>
-          <div id="req-docs" className="ui-card" style={{ padding: 0, overflow: "hidden", marginBottom: "3rem" }}>
-            <div style={{ padding: "2rem", borderBottom: "1px solid #e2e8f0", background: "#f8fafc" }}>
-              <h2 style={{ fontSize: "1.6rem", fontWeight: 800, color: "#0f172a", margin: 0 }}>Required Documents</h2>
+          <div id="req-docs" className="ui-card" style={{ padding: 0, overflow: "hidden", marginBottom: "24px" }}>
+            <div style={{ padding: "clamp(1.25rem, 3vw, 1.5rem)", borderBottom: "1px solid #e2e8f0", background: "#f8fafc" }}>
+              <h2 style={{ fontSize: "clamp(1.3rem, 3vw, 1.6rem)", fontWeight: 800, color: "#0f172a", margin: 0 }}>Required Documents</h2>
             </div>
             
-            <div style={{ display: "flex", borderBottom: "1px solid #e2e8f0", background: "white" }}>
+            <div style={{ display: "flex", borderBottom: "1px solid #e2e8f0", background: "white", flexWrap: "wrap" }}>
               {["before", "during", "after", "other"].map(tab => (
                 <button key={tab} className={`tab-btn ${activeTab === tab ? "active" : ""}`} onClick={() => setActiveTab(tab)}>
                   {tab === "other" ? "Other Documents" : `${tab} OJT`}
@@ -578,7 +640,7 @@ export default function ProfilePage() {
               ))}
             </div>
 
-            <div style={{ padding: "3rem 2rem", background: "#f8fafc" }}>
+            <div style={{ padding: "clamp(1.5rem, 4vw, 2.5rem) clamp(1rem, 3vw, 2rem)", background: "#f8fafc" }}>
               {documentsLoading ? (
                 <div style={{ textAlign: "center", color: "#94a3b8", padding: "4rem", fontSize: "1.25rem", fontWeight: 600 }}>Loading documents...</div>
               ) : activeTab === "during" ? (
@@ -609,7 +671,7 @@ export default function ProfilePage() {
                   </div>
 
                   {/* Week Uploads Grid */}
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(380px, 1fr))", gap: "2rem" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(380px, 1fr))", gap: "24px" }}>
                     {REQUIRED_DOCUMENTS.filter(r => r.phase === "during").map(req => {
                       let existingDoc = documents.find(d => d.week === activeWeek && d.name === req.title);
                       if (!existingDoc) {
@@ -622,7 +684,7 @@ export default function ProfilePage() {
                   </div>
                 </div>
               ) : (
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(380px, 1fr))", gap: "2rem" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(380px, 1fr))", gap: "24px" }}>
                   {documents.filter(d => d.phase === activeTab).map(doc => (
                     <DocumentCardItem key={doc.id} doc={doc} onUpload={handleUpload} onRemove={handleRemoveDocument} onView={handleViewPdf} />
                   ))}
@@ -634,8 +696,8 @@ export default function ProfilePage() {
 
         {/* Submission History Table */}
         <RevealBox delay={0.4}>
-          <div className="ui-card" style={{ padding: "2.5rem" }}>
-            <h2 style={{ fontSize: "1.6rem", fontWeight: 800, color: "#0f172a", margin: "0 0 2rem 0" }}>Submission History</h2>
+          <div className="ui-card" style={{ padding: "clamp(1.25rem, 3vw, 1.5rem)" }}>
+            <h2 style={{ fontSize: "clamp(1.3rem, 3vw, 1.6rem)", fontWeight: 800, color: "#0f172a", margin: "0 0 24px 0" }}>Submission History</h2>
             <div style={{ overflowX: "auto" }}>
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "1rem", textAlign: "left" }}>
                 <thead>
@@ -684,6 +746,17 @@ export default function ProfilePage() {
           onClose={() => setViewingDoc(null)}
         />
       )}
+
+      <ConfirmDialog
+        open={!!deletingDoc}
+        variant="confirm"
+        title="Delete Uploaded File"
+        message="Are you sure you want to delete this uploaded file? This action cannot be undone."
+        confirmLabel="Delete"
+        danger={true}
+        onConfirm={confirmDeleteDocument}
+        onCancel={() => setDeletingDoc(null)}
+      />
     </div>
     </ProtectedRoute>
   );

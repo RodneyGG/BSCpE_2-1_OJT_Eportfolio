@@ -32,10 +32,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/profile', [AuthController::class, 'updateProfile']);
     Route::post('/change-password', [AuthController::class, 'changePassword']);
     Route::get('/students', [UserController::class, 'index']);
-
-    // Google Auth Redirect
-    Route::get('/google/auth', [GoogleOAuthController::class, 'redirect']);
-
+    // Google Auth
+    Route::get('/google/auth', [\App\Http\Controllers\Api\GoogleOAuthController::class, 'redirect']);
+    Route::get('/google/status', [\App\Http\Controllers\Api\GoogleOAuthController::class, 'status']);
     // Companies
     Route::get('/companies/{company}', [CompanyController::class, 'show']);
     Route::patch('/companies/{company}/address', [CompanyController::class, 'updateAddress']);
@@ -44,10 +43,13 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Notifications
     Route::get('/notifications', [NotificationController::class, 'index']);
-
+    Route::patch('/notifications/read-all', [NotificationController::class, 'markAllAsRead']);
+    Route::patch('/notifications/{notification}/read', [NotificationController::class, 'markAsRead']);
+    
     // Documents
     Route::post('/documents/upload', [DocumentController::class, 'upload']);
     Route::get('/documents/mine', [DocumentController::class, 'mine']);
+    Route::delete('/documents/{document}', [DocumentController::class, 'destroy']);
     Route::get('/documents/pending', [DocumentController::class, 'pending'])->middleware('role:admin,prof');
     Route::patch('/documents/{document}/review', [DocumentController::class, 'review'])->middleware('role:admin,prof');
 

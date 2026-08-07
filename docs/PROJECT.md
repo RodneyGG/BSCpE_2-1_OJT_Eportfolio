@@ -23,20 +23,23 @@ Built with **Next.js 16 + React 19 + TypeScript** on the frontend and **Laravel*
 
 ## Project Structure
 
+A basic structure of the workspace is shown below. For a complete directory map, schema outlines, and routing table, please see the detailed [Project Map & System Architecture](file:///home/lloyd/project-bscpe2-1/BSCpE_2-1_OJT_Eportfolio/docs/PROJECT_MAP.md).
+
 ```
 BSCpE_2-1_OJT_Eportfolio/
 ├── frontend/           # Next.js application
-│   ├── app/
-│   │   ├── components/ # Reusable UI components
-│   │   ├── globals.css
-│   │   ├── layout.tsx
-│   │   └── page.tsx
-│   └── public/
-├── backend/            # Laravel API
-├── nginx/              # Nginx reverse proxy config
-├── compose.yaml        # Docker Compose
-└── docs/               # Project documentation
+├── backend/            # Laravel API (PHP FrankenPHP / Octane)
+├── nginx/              # Nginx reverse proxy gateway
+├── compose.yaml        # Docker Compose orchestration
+└── docs/               # Project documentation (including features & mapping)
 ```
+
+---
+
+## 🗺️ Master Project Map & Architecture
+
+For a comprehensive guide on database schemas, relationship logic, API endpoints mapping, Next.js page routing, UI components, and known architecture limits, please refer to:
+👉 **[PROJECT_MAP.md](file:///home/lloyd/project-bscpe2-1/BSCpE_2-1_OJT_Eportfolio/docs/PROJECT_MAP.md)**
 
 ---
 
@@ -75,12 +78,17 @@ See individual feature docs in `docs/features/`.
 
 ## Testing Credentials
 
-Use the following dummy accounts to access the portal:
+Use the following default database-seeded accounts to access the local portal:
 
 **Student Account:**
-- **Email**: `student@university.edu.ph`
-- **Password**: `password123`
+- **Email**: `student@ojt.dev`
+- **Password**: `Student@2026`
 
-**Admin / Professor Account:**
-- **Email**: `admin@university.edu.ph`
-- **Password**: `admin123`
+**Professor Account:**
+- **Email**: `prof@ojt.dev`
+- **Password**: `Prof@2026`
+
+**Admin / Coordinator Account:**
+- **Email**: `admin@ojt.dev`
+- **Password**: `Admin@2026`
+
