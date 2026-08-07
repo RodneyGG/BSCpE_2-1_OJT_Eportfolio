@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\ActivityLog;
 use App\Services\AccountSetupService;
 use App\Services\DeploymentService;
+use App\Services\UserService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
@@ -107,24 +108,11 @@ class UserController extends Controller
         }
 
         if ($validated['role'] === 'normal') {
-            $user = User::create([
-                'name' => $validated['name'],
-                'email' => $validated['email'],
-                'role' => $validated['role'],
-                'password' => Hash::make(Str::random(32)),
-                'must_change_password' => false,
-                'is_active' => false,
-            ]);
-
-            $plainToken = (new AccountSetupService())->generate($user);
-            Mail::to($user->email)->send(new AccountSetupMail($user, $plainToken));
-
-            ActivityLog::create([
-                'actor_id' => $request->user()->id,
-                'action' => 'account_created',
-                'target_id' => $user->id,
-                'metadata' => ['created_role' => $user->role, 'setup_method' => 'email_link'],
-            ]);
+            $user = (new UserService())->createStudentAccount(
+                $validated['name'],
+                $validated['email'],
+                $request->user()->id
+            );
 
             return response()->json([
                 'user' => $user,
