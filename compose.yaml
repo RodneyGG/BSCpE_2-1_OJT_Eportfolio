@@ -136,6 +136,39 @@ services:
     networks:
       - app-network
 
+  # ─────────────────────────────────────────────
+  # Laravel Queue Worker (processes queued mail/jobs)
+  # ─────────────────────────────────────────────
+  queue-worker:
+    build:
+      context: ./backend
+    container_name: laravel_queue_worker
+    restart: unless-stopped
+    command: php artisan queue:work --sleep=3 --tries=3
+    healthcheck:
+      disable: true
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=true
+      - DB_CONNECTION=mysql
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_DATABASE=${MYSQL_DATABASE:-eportfolio_db}
+      - DB_USERNAME=${MYSQL_USER:-bscpe21}
+      - DB_PASSWORD=${MYSQL_PASSWORD:-bscpe21}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    volumes:
+      - ./backend:/app
+      - /app/vendor
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - app-network
+
 volumes:
   mysql_data:
   redis_data:
