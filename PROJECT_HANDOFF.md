@@ -12,10 +12,21 @@ A Next.js frontend application for a BSCpE OJT e-portfolio. The application feat
 - Submission History retains its original flat-table layout, making all historical data visible at a glance. (An accordion design was temporarily tested but reverted).
 - Fixed a bug where a native browser scrollbar appeared inside the Rejected box because fixed heights (`110px`) caused content overflow. Height restrictions were swapped for padding bounds to allow the content to breathe. The empty "Drag PDF" upload box was also tightened vertically.
 - Executed a global mobile responsiveness audit: The global `AppNavbar` collapses text elements at `< 768px` to prevent horizontal overflow, the upload card grid properly drops to 1 column using `min(100%, 350px)`, and the profile/hours bar properly stacks vertically.
+- The Required Documents accordion was redesigned to match the visual language of the Companies list (subtle hover states, gradient active backgrounds, 180-degree chevron rotation, and doc count badges).
+- The upload card grid was restricted to a strict 3-column maximum (`repeat(3, 1fr)`) to prevent overly wide rows on large monitors.
 - Crucially, the internal layout, data bindings, and specific styling of the OJT Deployment card were rigorously preserved through all layout changes to fulfill the scope-lock requirements.
+- Added detailed error logging to the deployment fetch catch block to capture status codes and server messages for debugging "No OJT Deployment on Record" failures.
 - All modifications are currently on the `feature/profile-accordion-and-merge` branch. No changes to the actual shared components' core structure (e.g. `RevealBox`, `StatusBadge`) were performed, preserving the design system.
 
 ## 3. Session Logs
+### 2026-08-08 - Accordion UI & Grid Restrictions
+- **Agent:** Antigravity
+- **Summary of Changes:** 
+  - Improved error logging in `page.tsx` for the `/deployments/mine` endpoint to print full status, message, and error payloads instead of an empty `{}` object.
+  - Replaced the `auto-fill` CSS grid on the Required Documents upload section with a strict `.upload-grid` class that maxes out at 3 columns and steps down to 2 and 1 on smaller breakpoints.
+  - Restyled the `.accordion-header` and `.accordion-chevron` to exactly mimic the visual styling of `HeroCompanyRow` (padding, 180deg chevrons, number circles, gradient active state, and doc count pill).
+- **Branch:** `feature/profile-accordion-and-merge`
+
 ### 2026-08-07 - Mobile Responsiveness Audit
 - **Agent:** Antigravity
 - **Summary of Changes:** 
