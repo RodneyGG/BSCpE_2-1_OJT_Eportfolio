@@ -14,6 +14,7 @@ import {
   PHASE_COLORS,
   normalize,
   getDocumentsByPhase,
+  TOTAL_REQUIRED_DOCS,
   type DocumentPhase,
   type RequiredDocument,
 } from "../../data/documentTypes";
@@ -51,6 +52,7 @@ function getDocStatus(docs: StudentDoc[], reqDoc: RequiredDocument): DocStatus {
 
 function countSubmitted(docs: StudentDoc[]): number {
   return REQUIRED_DOCUMENTS.filter((rd) => {
+    if (rd.required === false) return false;
     const s = getDocStatus(docs, rd);
     return s === "approved" || s === "pending";
   }).length;
@@ -213,8 +215,8 @@ export default function ChecklistPage() {
       /* Status filter */
       if (statusFilter !== "all") {
         const submitted = countSubmitted(s.documents);
-        if (statusFilter === "complete" && submitted < REQUIRED_DOCUMENTS.length) return false;
-        if (statusFilter === "incomplete" && submitted >= REQUIRED_DOCUMENTS.length) return false;
+        if (statusFilter === "complete" && submitted < TOTAL_REQUIRED_DOCS) return false;
+        if (statusFilter === "incomplete" && submitted >= TOTAL_REQUIRED_DOCS) return false;
         if (statusFilter === "none" && s.documents.length > 0) return false;
       }
       return true;
@@ -224,7 +226,7 @@ export default function ChecklistPage() {
   /* Stats */
   const stats = useMemo(() => {
     const total = students.length;
-    const complete = students.filter((s) => countSubmitted(s.documents) >= REQUIRED_DOCUMENTS.length).length;
+    const complete = students.filter((s) => countSubmitted(s.documents) >= TOTAL_REQUIRED_DOCS).length;
     return { total, complete, incomplete: total - complete };
   }, [students]);
 
@@ -358,13 +360,21 @@ export default function ChecklistPage() {
           .cl-print-header { display: block !important; margin-bottom: 1rem; }
           .cl-main { padding: 0 !important; max-width: 100% !important; margin: 0 !important; }
           .cl-card { box-shadow: none !important; border: none !important; padding: 0 !important; }
-          .cl-table-wrap { overflow: visible !important; box-shadow: none !important; border-radius: 0 !important; border: none !important; }
-          .cl-table { font-size: 7pt !important; width: 100%; table-layout: fixed; border-collapse: collapse; }
-          .cl-table th { padding: 4px 2px !important; font-size: 6pt !important; white-space: normal !important; word-wrap: break-word; line-height: 1.1; }
+          .cl-table-wrap { 
+            overflow: visible !important; 
+            box-shadow: none !important; 
+            border-radius: 0 !important; 
+            border: none !important; 
+            transform: scale(0.78) !important; 
+            transform-origin: top left !important;
+            width: 128% !important; /* 1 / 0.78 to counteract the scale visually keeping right edge */
+          }
+          .cl-table { font-size: 8pt !important; width: 100%; table-layout: fixed; border-collapse: collapse; }
+          .cl-table th { padding: 4px 2px !important; font-size: 7pt !important; white-space: nowrap !important; line-height: 1.1; overflow: hidden; }
           .cl-table td { padding: 4px 2px !important; }
-          .cl-table th.cl-th-name { width: 14%; min-width: auto; position: static !important; }
-          .cl-table th.cl-th-company { width: 12%; min-width: auto; }
-          .cl-table th.cl-th-progress { width: 8%; min-width: auto; }
+          .cl-table th.cl-th-name { width: 13%; min-width: auto; position: static !important; }
+          .cl-table th.cl-th-company { width: 10%; min-width: auto; }
+          .cl-table th.cl-th-progress { width: 7%; min-width: auto; }
           .cl-table td.cl-td-name { position: static !important; }
           .cl-dot { width: 14px; height: 14px; font-size: 6pt; border-radius: 3px; border: 1px solid #cbd5e1; }
           .cl-progress-bar { height: 4px; }
@@ -406,7 +416,7 @@ export default function ChecklistPage() {
               OJT Submission Checklist
             </h1>
             <p style={{ fontSize: "1rem", color: "#64748b", margin: 0, fontWeight: 500 }}>
-              Track document submissions for all students. {REQUIRED_DOCUMENTS.length} required documents across {PHASE_ORDER.length} phases.
+              Track document submissions for all students. {TOTAL_REQUIRED_DOCS} required documents across {PHASE_ORDER.length} phases.
             </p>
           </div>
         </RevealBox>
@@ -574,7 +584,7 @@ export default function ChecklistPage() {
                       getDocumentsByPhase(phase).map((doc, i, arr) => (
                         <th
                           key={doc.id}
-                          title={doc.title}
+                          title={doc.title + (doc.required === false ? " (Optional)" : "")}
                           style={{
                             borderRight: i === arr.length - 1 ? "1px solid #e2e8f0" : undefined,
                             maxWidth: 60,
@@ -582,6 +592,8 @@ export default function ChecklistPage() {
                             textOverflow: "ellipsis",
                             fontSize: "0.6rem",
                             padding: "0.4rem 0.2rem",
+                            fontStyle: doc.required === false ? "italic" : "normal",
+                            color: doc.required === false ? "#94a3b8" : "inherit"
                           }}
                         >
                           {doc.shortTitle}
@@ -593,8 +605,8 @@ export default function ChecklistPage() {
                 <tbody>
                   {filtered.map((student, idx) => {
                     const submitted = countSubmitted(student.documents);
-                    const pct = Math.round((submitted / REQUIRED_DOCUMENTS.length) * 100);
-                    const isComplete = submitted >= REQUIRED_DOCUMENTS.length;
+                    const pct = Math.round((submitted / TOTAL_REQUIRED_DOCS) * 100);
+                    const isComplete = submitted >= TOTAL_REQUIRED_DOCS;
                     return (
                       <tr key={student.id}>
                         <td style={{ fontWeight: 700, color: "#94a3b8", fontSize: "0.75rem", borderRight: "1px solid #f1f5f9", width: 30, textAlign: "center" }}>{idx + 1}</td>
@@ -607,7 +619,7 @@ export default function ChecklistPage() {
                         </td>
                         <td style={{ borderRight: "1px solid #f1f5f9", minWidth: 90 }}>
                           <div style={{ fontSize: "0.78rem", fontWeight: 700, color: isComplete ? "#16a34a" : "#0f172a" }}>
-                            {submitted}/{REQUIRED_DOCUMENTS.length}
+                            {submitted}/{TOTAL_REQUIRED_DOCS}
                           </div>
                           <div className="cl-progress-bar">
                             <div
@@ -635,9 +647,13 @@ export default function ChecklistPage() {
                                 title={`${doc.title}: ${cfg.label}`}
                                 style={{ borderRight: i === arr.length - 1 ? "1px solid #f1f5f9" : undefined }}
                               >
-                                <div className="cl-dot" style={{ background: cfg.bg, color: cfg.color, margin: "0 auto" }}>
-                                  {cfg.icon}
-                                </div>
+                                {doc.required === false && status === "none" ? (
+                                  <div style={{ color: "#94a3b8", fontSize: "0.65rem", fontWeight: 700, fontStyle: "italic" }}>OPTIONAL</div>
+                                ) : (
+                                  <div className="cl-dot" style={{ background: cfg.bg, color: cfg.color, margin: "0 auto" }}>
+                                    {cfg.icon}
+                                  </div>
+                                )}
                               </td>
                             );
                           })
@@ -661,7 +677,7 @@ export default function ChecklistPage() {
                 <strong style={{ color: "#d97706" }}>{stats.incomplete}</strong> incomplete
               </span>
               <span style={{ fontSize: "0.75rem", color: "#cbd5e1" }}>
-                {REQUIRED_DOCUMENTS.length} required documents
+                {TOTAL_REQUIRED_DOCS} required documents
               </span>
             </div>
           </RevealBox>

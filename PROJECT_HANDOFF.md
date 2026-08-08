@@ -13,14 +13,24 @@ A Next.js frontend application for a BSCpE OJT e-portfolio. The application feat
 - Fixed a bug where a native browser scrollbar appeared inside the Rejected box because fixed heights (`110px`) caused content overflow. Height restrictions were swapped for padding bounds to allow the content to breathe. The empty "Drag PDF" upload box was also tightened vertically.
 - Executed a global mobile responsiveness audit: The global `AppNavbar` collapses text elements at `< 768px` to prevent horizontal overflow, the upload card grid properly drops to 1 column using `min(100%, 350px)`, and the profile/hours bar properly stacks vertically.
 - The Required Documents accordion was redesigned to match the visual language of the Companies list (subtle hover states, gradient active backgrounds, 180-degree chevron rotation). The document count badges were recently removed to declutter the UI.
+- The Overtime Agreement document is now officially **optional**. It is excluded from the global `17` required documents count, has an "Optional" label rendered on its upload card if unsubmitted, and displays a muted "OPTIONAL" placeholder instead of a missing dot on the checklist table.
+- A new **"Ongoing"** status (blue badge) was introduced on the Student Profile's overall Hours Rendered tracker. It renders for all active deployments under 300 hours, transitioning to "Approved" at 300+.
 - The upload card grid was restricted to a strict 3-column maximum (`repeat(3, 1fr)`) to prevent overly wide rows on large monitors.
 - Crucially, the internal layout, data bindings, and specific styling of the OJT Deployment card were rigorously preserved through all layout changes to fulfill the scope-lock requirements.
 - The `profile/page.tsx` `.main-container` outer bounds were fully synchronized with the Companies page layout constraints (`1280px` max-width, `2rem 2rem 3rem` padding) for seamless cross-page navigation.
-- The Admin Checklist page now has robust `@media print` styles enforcing a landscape orientation, `overflow: visible` to prevent table cutoff, forced table wrapping (`word-wrap: break-word`), and properly hidden UI chrome (navbars, search bars, filters).
+- The Admin Checklist page now has robust `@media print` styles enforcing a landscape orientation, and a meticulously scaled table (`transform: scale(0.78); width: 128%`) allowing the 18-column table to fit gracefully on one page without cutting off or force-wrapping text headers (`white-space: nowrap`).
 - Added detailed error logging to the deployment fetch catch block to capture status codes and server messages for debugging "No OJT Deployment on Record" failures. Diagnosed an issue where Laravel Octane (FrankenPHP) needed a container restart (`docker compose restart backend`) to load new routes into memory.
-- All modifications are currently on the `feature/profile-accordion-and-merge` branch. No changes to the actual shared components' core structure (e.g. `RevealBox`, `StatusBadge`) were performed, preserving the design system.
+- All modifications are currently on the `feature/profile-accordion-and-merge` branch. No changes to the actual shared components' core structure (e.g. `RevealBox`) were performed, preserving the design system.
 
 ## 3. Session Logs
+### 2026-08-08 - Optional Documents, Ongoing Status, & Print Scale Fix
+- **Agent:** Antigravity
+- **Summary of Changes:**
+  - Audited the codebase to confirm "X DOCS" category badges were fully scrubbed.
+  - Made the "Overtime Agreement" optional: updated `documentTypes.ts` with a `required: false` flag and updated the global `TOTAL_REQUIRED_DOCS` to 17. Modified Checklist logic to ignore optional documents when checking completeness and calculating the fraction (`submitted/17`).
+  - Implemented an "Ongoing" (blue) overall status badge in `StatusBadge.tsx` and applied it to the overall Hours Rendered status in `profile/page.tsx` for students with `< 300` hours.
+  - Improved the Admin Checklist print layout by enforcing `transform: scale(0.78)`, `width: 128%`, and `white-space: nowrap` within `@media print` to guarantee the 18 columns fit one landscape page perfectly without letter-stacking. Appended an italicized "(Optional)" modifier to the Overtime Agreement print header.
+- **Branch:** `feature/profile-accordion-and-merge`
 ### 2026-08-08 - UI Fixes & Backend Route Debugging
 - **Agent:** Antigravity
 - **Summary of Changes:**

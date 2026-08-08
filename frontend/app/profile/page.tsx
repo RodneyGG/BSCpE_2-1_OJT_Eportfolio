@@ -75,7 +75,7 @@ function FieldInput({ label, value, onChange, type = "text" }: { label: string; 
 }
 
 /* ═══════════════════════════ Status Badge ══════════════════════ */
-function StatusBadge({ status }: { status: "not_submitted" | "submitted" | "pending" | "approved" | "rejected" | "uploading" }) {
+function StatusBadge({ status }: { status: "not_submitted" | "submitted" | "pending" | "approved" | "rejected" | "uploading" | "ongoing" }) {
   const map = {
     not_submitted: { bg: "#f1f5f9", color: "#64748b", label: "Not Submitted" },
     submitted: { bg: "#dbeafe", color: "#1e40af", label: "Submitted" },
@@ -83,6 +83,7 @@ function StatusBadge({ status }: { status: "not_submitted" | "submitted" | "pend
     approved: { bg: "#dcfce7", color: "#166534", label: "Approved" },
     rejected: { bg: "#fee2e2", color: "#b91c1c", label: "Rejected" },
     uploading: { bg: "#eff6ff", color: "#3b82f6", label: "Uploading..." },
+    ongoing: { bg: "#e0f2fe", color: "#0369a1", label: "Ongoing" },
   };
   const s = map[status] || map.not_submitted;
   return (
@@ -93,7 +94,7 @@ function StatusBadge({ status }: { status: "not_submitted" | "submitted" | "pend
 }
 
 /* ═══════════════════════════ Document Card ══════════════════════ */
-function DocumentCardItem({ doc, onUpload, onRemove, onView }: { doc: { id: string, name: string, status: "not_submitted" | "submitted" | "uploading", date: string, fileLink?: string, reviewStatus?: "pending" | "approved" | "rejected", rejectionReason?: string | null, week?: number }, onUpload: (id: string, file: File, week?: number) => void, onRemove: (id: string) => void, onView: (title: string, fileLink: string) => void }) {
+function DocumentCardItem({ doc, onUpload, onRemove, onView }: { doc: { id: string, name: string, status: "not_submitted" | "submitted" | "uploading", date: string, fileLink?: string, reviewStatus?: "pending" | "approved" | "rejected", rejectionReason?: string | null, week?: number, required?: boolean }, onUpload: (id: string, file: File, week?: number) => void, onRemove: (id: string) => void, onView: (title: string, fileLink: string) => void }) {
   const [dragActive, setDragActive] = useState(false);
 
   const handleDrag = (e: React.DragEvent) => {
@@ -126,7 +127,13 @@ function DocumentCardItem({ doc, onUpload, onRemove, onView }: { doc: { id: stri
       {/* Header Area */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.25rem", gap: "1rem" }}>
         <h3 style={{ fontSize: "1.15rem", fontWeight: 700, color: "#0f172a", margin: 0, lineHeight: 1.3 }}>{doc.name}</h3>
-        <StatusBadge status={badgeStatus} />
+        {doc.required === false && doc.status === "not_submitted" ? (
+          <span style={{ background: "#f8fafc", color: "#94a3b8", padding: "0.4rem 1rem", borderRadius: "9999px", fontSize: "clamp(0.65rem, 2.5vw, 0.85rem)", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.05em", whiteSpace: "nowrap" }}>
+            Optional
+          </span>
+        ) : (
+          <StatusBadge status={badgeStatus} />
+        )}
       </div>
 
       {/* Upload/Action Area */}
@@ -259,7 +266,11 @@ export default function ProfilePage() {
         
         const baseDocs = REQUIRED_DOCUMENTS.map(req => {
           const found = existingDocs.find((ed: any) => ed.name === req.title && ed.week == null);
-          return found || { id: req.id, name: req.title, phase: req.phase, status: "not_submitted", date: "" };
+          if (found) {
+            found.required = req.required;
+            return found;
+          }
+          return { id: req.id, name: req.title, phase: req.phase, status: "not_submitted", date: "", required: req.required };
         });
 
         const weeklyDocs = existingDocs.filter((ed: any) => ed.week != null);
@@ -538,7 +549,7 @@ export default function ProfilePage() {
                       <span style={{ fontSize: "clamp(0.8rem, 1.5vw, 0.9rem)", color: "#64748b", fontWeight: 700 }}>/ 300 hrs</span>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: "10px", flexShrink: 0, flexWrap: "wrap", justifyContent: "flex-end" }}>
-                      <StatusBadge status={hoursRendered >= 300 ? "approved" : hoursRendered > 0 ? "pending" : "not_submitted"} />
+                      <StatusBadge status={hoursRendered >= 300 ? "approved" : "ongoing"} />
                     </div>
                   </div>
                   <div style={{ width: "100%", height: 10, background: "#f1f5f9", borderRadius: 9999, overflow: "hidden", marginBottom: "10px" }}>

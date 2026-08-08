@@ -17,7 +17,10 @@ export interface RequiredDocument {
   shortTitle: string;
   phase: DocumentPhase;
   aliases?: string[];
+  required?: boolean;
 }
+
+export const TOTAL_REQUIRED_DOCS = 17; // Updated from 18 by excluding optional docs
 
 /* ═══════════════════════════════════════════════════════════════════ */
 /*  Canonical required-document catalog — 18 items                    */
@@ -62,6 +65,7 @@ export const REQUIRED_DOCUMENTS: RequiredDocument[] = [
     title: "Overtime Agreement",
     shortTitle: "OT Agreement",
     phase: "before",
+    required: false,
   },
   {
     id: "pup-consent-form",
