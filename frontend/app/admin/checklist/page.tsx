@@ -58,11 +58,11 @@ function countSubmitted(docs: StudentDoc[]): number {
   }).length;
 }
 
-const STATUS_CFG: Record<DocStatus, { bg: string; color: string; label: string; icon: string }> = {
-  approved: { bg: "#dcfce7", color: "#16a34a", label: "Approved", icon: "✓" },
-  pending:  { bg: "#fef9c3", color: "#ca8a04", label: "Pending",  icon: "⏳" },
-  rejected: { bg: "#fee2e2", color: "#dc2626", label: "Rejected", icon: "✗" },
-  none:     { bg: "#f1f5f9", color: "#94a3b8", label: "Not Submitted", icon: "—" },
+const STATUS_CFG: Record<DocStatus, { bg: string; color: string; label: string; iconKey: "check" | "clock" | "x" | "dash" }> = {
+  approved: { bg: "#dcfce7", color: "#16a34a", label: "Approved", iconKey: "check" },
+  pending:  { bg: "#fef9c3", color: "#ca8a04", label: "Pending",  iconKey: "clock" },
+  rejected: { bg: "#fee2e2", color: "#dc2626", label: "Rejected", iconKey: "x" },
+  none:     { bg: "#f1f5f9", color: "#94a3b8", label: "Not Submitted", iconKey: "dash" },
 };
 
 /* ═══════════════════════════ Scroll reveal ═══════════════════ */
@@ -153,6 +153,13 @@ function IconChevron() {
       <path d="M9 18l6-6-6-6" />
     </svg>
   );
+}
+
+function StatusIconSVG({ iconKey }: { iconKey: "check" | "clock" | "x" | "dash" }) {
+  if (iconKey === "check") return <svg width="60%" height="60%" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={4} strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>;
+  if (iconKey === "clock") return <svg width="65%" height="65%" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>;
+  if (iconKey === "x") return <svg width="60%" height="60%" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={4} strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12" /></svg>;
+  return <svg width="60%" height="60%" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={4} strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12" /></svg>;
 }
 
 /* ═══════════════════════════ Page ═══════════════════════════ */
@@ -543,8 +550,8 @@ export default function ChecklistPage() {
           <div style={{ display: "flex", gap: "1.25rem", flexWrap: "wrap", marginBottom: "1rem", fontSize: "0.75rem", color: "#64748b" }}>
             {(["approved", "pending", "rejected", "none"] as DocStatus[]).map((s) => (
               <div key={s} style={{ display: "flex", alignItems: "center", gap: "0.35rem" }}>
-                <div className="cl-dot" style={{ width: 18, height: 18, fontSize: "0.6rem", background: STATUS_CFG[s].bg, color: STATUS_CFG[s].color }}>
-                  {STATUS_CFG[s].icon}
+                <div className="cl-dot" style={{ width: 18, height: 18, background: STATUS_CFG[s].bg, color: STATUS_CFG[s].color }}>
+                  <StatusIconSVG iconKey={STATUS_CFG[s].iconKey} />
                 </div>
                 <span style={{ fontWeight: 600 }}>{STATUS_CFG[s].label}</span>
               </div>
@@ -663,7 +670,7 @@ export default function ChecklistPage() {
                                   <div style={{ color: "#94a3b8", fontSize: "0.65rem", fontWeight: 700, fontStyle: "italic" }}>OPTIONAL</div>
                                 ) : (
                                   <div className="cl-dot" style={{ background: cfg.bg, color: cfg.color, margin: "0 auto" }}>
-                                    {cfg.icon}
+                                    <StatusIconSVG iconKey={cfg.iconKey} />
                                   </div>
                                 )}
                               </td>

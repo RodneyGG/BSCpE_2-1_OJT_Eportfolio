@@ -48,6 +48,12 @@ A Next.js frontend application for a BSCpE OJT e-portfolio. The application feat
     - Added horizontal sticky-scrolling for the first three columns ("Student", "Company", "Progress"), ensuring identity remains visible while scrolling horizontally across the dense document columns.
     - Redesigned status dots to be larger and highly visible (`border-radius: 50%`, `28px` diameter) mimicking standard admin dashboard status pips, and increased base font size across the table.
     - Converted the "Abbreviations Legend" at the bottom of the screen to a card-based collapsible accordion (collapsed by default), reducing visual clutter.
+  - **Checklist Print Layout Fix:**
+    - Adjusted print CSS to shrink the new status dots down to 13px specifically for `@media print` (`.cl-dot`).
+    - Tightened `th` and `td` padding to `4px 1px` and bumped font sizes down slightly (`6pt` for `th`) to ensure the full list of abbreviations perfectly fit horizontally without overlapping or getting clipped.
+    - Replaced text-based status characters (`✓`, `✗`, `⏳`) with robust explicit SVG icons (`StatusIconSVG`) inside the `STATUS_CFG` to prevent them from rendering as generic fallback "info" icons in print output. Verified the page CSS only uses standard `@page { size: landscape; }` without forced manual rotation, so print logic dictates natural layout.
+  - **Student Detail Modal Tweaks:** 
+    - Increased `maxHeight` to `90vh` and stripped out the visible scrollbar using native CSS (`::-webkit-scrollbar { display: none; }` and `scrollbar-width: none;`) to make the UI look like a seamless unbroken panel even if slight scrolling is needed.
 - **Branch:** `feature/profile-accordion-and-merge`
 
 ### 2026-08-08 - Profile Avatar Upload Feature

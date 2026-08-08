@@ -198,8 +198,9 @@ export default function AdminStudentPanel({
       onClick={onClose}
     >
       <div
+        className="hide-scroll"
         style={{
-          background: "white", width: "100%", maxWidth: "560px", maxHeight: "85vh",
+          background: "white", width: "100%", maxWidth: "560px", maxHeight: "90vh",
           overflowY: "auto", boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)",
           borderRadius: "1rem",
           display: "flex", flexDirection: "column", animation: "modalFadeScale 0.25s ease-out",
@@ -207,6 +208,8 @@ export default function AdminStudentPanel({
         onClick={(e) => e.stopPropagation()}
       >
         <style>{`
+          .hide-scroll::-webkit-scrollbar { display: none; }
+          .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
           @keyframes modalFadeScale {
             from { opacity: 0; transform: scale(0.95) translateY(10px); }
             to   { opacity: 1; transform: scale(1) translateY(0); }
