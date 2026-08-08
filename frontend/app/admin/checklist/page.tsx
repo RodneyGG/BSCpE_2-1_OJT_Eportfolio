@@ -385,15 +385,15 @@ export default function ChecklistPage() {
             width: 128% !important; /* 1 / 0.78 to counteract the scale visually keeping right edge */
           }
           .cl-table { font-size: 8pt !important; width: 100%; table-layout: fixed; border-collapse: collapse; }
-          .cl-table th { padding: 6px 2px !important; font-size: 7pt !important; white-space: nowrap !important; line-height: 1.1; }
-          .cl-table td { padding: 6px 2px !important; }
-          .cl-table th.cl-th-name { width: 16%; min-width: auto; position: static !important; box-shadow: none !important; border-right: 1px solid #e2e8f0 !important; }
+          .cl-table th { padding: 4px 1px !important; font-size: 6pt !important; white-space: nowrap !important; line-height: 1.1; }
+          .cl-table td { padding: 4px 1px !important; }
+          .cl-table th.cl-th-name { width: 15%; min-width: auto; position: static !important; box-shadow: none !important; border-right: 1px solid #e2e8f0 !important; }
           .cl-table td.cl-td-name { position: static !important; box-shadow: none !important; border-right: 1px solid #e2e8f0 !important; }
-          .cl-table th.cl-th-company { width: 10%; min-width: auto; position: static !important; box-shadow: none !important; border-right: 1px solid #e2e8f0 !important; }
+          .cl-table th.cl-th-company { width: 9%; min-width: auto; position: static !important; box-shadow: none !important; border-right: 1px solid #e2e8f0 !important; }
           .cl-table td.cl-td-company { position: static !important; box-shadow: none !important; border-right: 1px solid #e2e8f0 !important; }
-          .cl-table th.cl-th-progress { width: 7%; min-width: auto; position: static !important; border-right: 2px solid #94a3b8 !important; box-shadow: none !important; }
+          .cl-table th.cl-th-progress { width: 6.5%; min-width: auto; position: static !important; border-right: 2px solid #94a3b8 !important; box-shadow: none !important; }
           .cl-table td.cl-td-progress { position: static !important; border-right: 2px solid #94a3b8 !important; box-shadow: none !important; }
-          .cl-dot { width: 16px; height: 16px; font-size: 7pt; border-radius: 50%; border: 1px solid #cbd5e1; }
+          .cl-dot { width: 13px; height: 13px; font-size: 5pt; border-radius: 50%; border: 1px solid #cbd5e1; margin: 0 auto; }
           .cl-progress-bar { height: 4px; }
           .cl-stat-row { gap: 0.5rem !important; }
         }
