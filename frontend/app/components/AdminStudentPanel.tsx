@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { fetchApi } from "../../lib/api";
 import DocumentReviewList, { ReviewableDocument } from "./DocumentReviewList";
 import DocumentViewerModal from "./DocumentViewerModal";
+import { REQUIRED_DOCUMENTS, PHASE_ORDER, PHASE_LABELS, normalize, DocumentPhase } from "../data/documentTypes";
 
 interface StudentCompany {
   id: number;
@@ -89,6 +90,7 @@ export default function AdminStudentPanel({
   const [editingDeployment, setEditingDeployment] = useState(false);
   const [deploymentForm, setDeploymentForm] = useState({ role: "", supervisor_name: "", supervisor_contact: "", start_date: "", end_date: "" });
   const [savingDeployment, setSavingDeployment] = useState(false);
+  const [openSection, setOpenSection] = useState<string | null>("before");
 
   useEffect(() => {
     fetchApi(`/admin/users/${student.id}`)
@@ -168,6 +170,16 @@ export default function AdminStudentPanel({
     }
   };
 
+  const getPhaseForDoc = (docType: string): DocumentPhase => {
+    const norm = normalize(docType);
+    const reqDef = REQUIRED_DOCUMENTS.find(r => 
+      normalize(r.id) === norm || 
+      normalize(r.title) === norm || 
+      (r.aliases || []).some(a => normalize(a) === norm)
+    );
+    return reqDef ? reqDef.phase : "other";
+  };
+
   return (
     <div
       style={{
@@ -189,6 +201,11 @@ export default function AdminStudentPanel({
             from { transform: translateX(100%); }
             to   { transform: translateX(0); }
           }
+          .accordion-header { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.25rem; background: white; border: none; border-bottom: 1px solid #e2e8f0; cursor: pointer; transition: background 0.3s ease; font-family: inherit; font-size: inherit; }
+          .accordion-header:hover { background: #f8fafc; }
+          .accordion-header.open { background: linear-gradient(90deg, #eff6ff 0%, #f0f9ff 100%); }
+          .accordion-chevron { width: 18px; height: 18px; color: #64748b; transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1); flex-shrink: 0; }
+          .accordion-chevron.open { transform: rotate(180deg); color: #1d4ed8; }
         `}</style>
 
         <div style={{ padding: "1.75rem 2rem", borderBottom: "1px solid #e2e8f0", background: "#f8fafc", display: "flex", gap: "1rem", alignItems: "center" }}>
@@ -366,36 +383,84 @@ export default function AdminStudentPanel({
               No documents submitted yet.
             </div>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-              {detail.documents.map((doc) => (
-                <div key={doc.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "1rem", border: "1px solid #e2e8f0", borderRadius: "0.75rem", background: "white" }}>
-                  <div>
-                    <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "#0f172a" }}>{doc.document_type}</div>
-                    <div style={{ fontSize: "0.75rem", color: "#64748b", marginTop: "0.2rem" }}>
-                      Submitted on {doc.created_at.slice(0, 10)}
+            <div style={{ borderRadius: "1rem", border: "1px solid #e2e8f0", overflow: "hidden", background: "white", flexShrink: 0 }}>
+              {PHASE_ORDER.map((phase, phaseIdx) => {
+                const phaseDocs = detail.documents.filter(d => getPhaseForDoc(d.document_type) === phase);
+                if (phaseDocs.length === 0) return null;
+                const isOpen = openSection === phase;
+                return (
+                  <div key={phase}>
+                    <button className={`accordion-header${isOpen ? " open" : ""}`} onClick={() => setOpenSection(prev => prev === phase ? null : phase)}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.85rem", flex: 1 }}>
+                        <div style={{
+                          width: 30, height: 30, borderRadius: "50%", flexShrink: 0,
+                          backgroundColor: isOpen ? "#1d4ed8" : "#f1f5f9",
+                          color: isOpen ? "white" : "#64748b",
+                          fontSize: "0.7rem", fontWeight: 800,
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          transition: "all 0.3s cubic-bezier(0.34,1.56,0.64,1)",
+                          boxShadow: isOpen ? "0 4px 12px rgba(29,78,216,0.35)" : "none",
+                        }}>
+                          {String(phaseIdx + 1).padStart(2, "0")}
+                        </div>
+                        <span style={{ fontWeight: 700, fontSize: "0.85rem", color: "#0f172a", textTransform: "capitalize", letterSpacing: "-0.01em" }}>
+                          {phase === "other" ? "Other Documents" : `${phase} OJT`}
+                        </span>
+                      </div>
+                      
+                      <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+                        <div style={{ fontSize: "0.7rem", fontWeight: 600, color: "#64748b", background: "#f8fafc", padding: "0.2rem 0.6rem", borderRadius: "999px", border: "1px solid #e2e8f0" }}>
+                          {phaseDocs.length} Docs
+                        </div>
+                        <svg className={`accordion-chevron${isOpen ? " open" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M6 9l6 6 6-6"/>
+                        </svg>
+                      </div>
+                    </button>
+                    <div style={{
+                      display: "grid", gridTemplateRows: isOpen ? "1fr" : "0fr",
+                      transition: "grid-template-rows 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                      background: "#f8fafc",
+                    }}>
+                      <div style={{ overflow: "hidden" }}>
+                        <div style={{ padding: "1rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                          {phaseDocs.map((doc) => (
+                            <div key={doc.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "1rem", border: "1px solid #e2e8f0", borderRadius: "0.75rem", background: "white" }}>
+                              <div>
+                                <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "#0f172a" }}>{doc.document_type}</div>
+                                <div style={{ fontSize: "0.75rem", color: "#64748b", marginTop: "0.2rem" }}>
+                                  Submitted on {doc.created_at.slice(0, 10)}
+                                </div>
+                              </div>
+                              <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+                                <span style={{
+                                  fontSize: "0.7rem", fontWeight: 700, padding: "0.2rem 0.6rem", borderRadius: "999px", textTransform: "uppercase",
+                                  background: doc.status === "approved" ? "#dcfce7" : doc.status === "rejected" ? "#fee2e2" : "#fef3c7",
+                                  color: doc.status === "approved" ? "#166534" : doc.status === "rejected" ? "#991b1b" : "#92400e"
+                                }}>
+                                  {doc.status}
+                                </span>
+                                <button
+                                  onClick={() => setViewingDoc({ title: doc.document_type, link: doc.file_link })}
+                                  style={{
+                                    background: "none", border: "1px solid #cbd5e1", borderRadius: "0.4rem",
+                                    padding: "0.3rem 0.75rem", fontSize: "0.75rem", fontWeight: 600, color: "#3b82f6",
+                                    cursor: "pointer", transition: "all 0.2s"
+                                  }}
+                                  onMouseEnter={(e) => (e.currentTarget.style.background = "#eff6ff")}
+                                  onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
+                                >
+                                  Preview File
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     </div>
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-                    <span style={{
-                      fontSize: "0.7rem", fontWeight: 700, padding: "0.2rem 0.6rem", borderRadius: "999px", textTransform: "uppercase",
-                      background: doc.status === "approved" ? "#dcfce7" : doc.status === "rejected" ? "#fee2e2" : "#fef3c7",
-                      color: doc.status === "approved" ? "#166534" : doc.status === "rejected" ? "#991b1b" : "#92400e"
-                    }}>
-                      {doc.status}
-                    </span>
-                    <button
-                      onClick={() => setViewingDoc({ title: doc.document_type, link: doc.file_link })}
-                      style={{
-                        background: "none", border: "1px solid #cbd5e1", borderRadius: "0.4rem",
-                        padding: "0.3rem 0.75rem", fontSize: "0.75rem", fontWeight: 600, color: "#3b82f6",
-                        cursor: "pointer", transition: "all 0.2s"
-                      }}
-                    >
-                      Preview File
-                    </button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

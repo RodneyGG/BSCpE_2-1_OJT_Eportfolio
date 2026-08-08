@@ -37,7 +37,8 @@ A Next.js frontend application for a BSCpE OJT e-portfolio. The application feat
 - **Agent:** Antigravity
 - **Summary of Changes:**
   - **Submitted Documents Viewer:** Added a "Submitted Documents" section to the `AdminStudentPanel` slide-out (used by prof/admin users) showing all uploaded documents regardless of category.
-  - Implemented the same `DocumentViewerModal` used in `DocumentReviewList` to allow inline previewing of these submitted documents.
+  - Reorganized the "Submitted Documents" section into a Before/During/After/Other OJT accordion structure, matching the styling and logic used on the student profile page.
+  - Integrated the `DocumentViewerModal` used in `DocumentReviewList` to allow inline previewing of these submitted documents (modal pop-up instead of new tab).
   - Verified and confirmed that the underlying API endpoint (`GET /api/admin/users/{user}`) natively loads all related documents and is strictly role-protected by Laravel middleware `->middleware('role:admin,prof')`, ensuring proper server-side access control.
   - **Checklist Row Removal:** Removed the leftmost `#` column (row number) from the OJT Submission Checklist (`frontend/app/admin/checklist/page.tsx`).
   - Adjusted the print layout CSS (`width: 16%` for `cl-th-name`) to compensate for the removed column.
