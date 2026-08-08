@@ -23,6 +23,16 @@ A Next.js frontend application for a BSCpE OJT e-portfolio. The application feat
 - All modifications are currently on the `feature/profile-accordion-and-merge` branch. No changes to the actual shared components' core structure (e.g. `RevealBox`) were performed, preserving the design system.
 
 ## 3. Session Logs
+### 2026-08-08 - Document Viewer in Student Panel & Checklist Refactor
+- **Agent:** Antigravity
+- **Summary of Changes:**
+  - **Submitted Documents Viewer:** Added a "Submitted Documents" section to the `AdminStudentPanel` slide-out (used by prof/admin users) showing all uploaded documents regardless of category.
+  - Implemented the same `DocumentViewerModal` used in `DocumentReviewList` to allow inline previewing of these submitted documents.
+  - Verified and confirmed that the underlying API endpoint (`GET /api/admin/users/{user}`) natively loads all related documents and is strictly role-protected by Laravel middleware `->middleware('role:admin,prof')`, ensuring proper server-side access control.
+  - **Checklist Row Removal:** Removed the leftmost `#` column (row number) from the OJT Submission Checklist (`frontend/app/admin/checklist/page.tsx`).
+  - Adjusted the print layout CSS (`width: 16%` for `cl-th-name`) to compensate for the removed column.
+- **Branch:** `feature/profile-accordion-and-merge`
+
 ### 2026-08-08 - Profile Avatar Upload Feature
 - **Agent:** Antigravity
 - **Summary of Changes:**

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { fetchApi } from "../../lib/api";
 import DocumentReviewList, { ReviewableDocument } from "./DocumentReviewList";
+import DocumentViewerModal from "./DocumentViewerModal";
 
 interface StudentCompany {
   id: number;
@@ -75,6 +76,7 @@ export default function AdminStudentPanel({
 }) {
   const [detail, setDetail] = useState<AdminStudentFullDetail | null>(null);
   const [detailError, setDetailError] = useState(false);
+  const [viewingDoc, setViewingDoc] = useState<{title: string, link: string} | null>(null);
 
   // Optimistic local override for the summary "Hours Rendered" block.
   // `student.hours_rendered` comes from the parent roster list (stale once
@@ -347,8 +349,65 @@ export default function AdminStudentPanel({
               emptyMessage="Nothing pending for this student right now."
             />
           )}
+
+          <h3 style={{ fontSize: "0.75rem", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "0.75rem", marginTop: "1.75rem" }}>
+            Submitted Documents
+          </h3>
+          {detailError ? (
+            <div style={{ border: "1px dashed #cbd5e1", borderRadius: "1rem", padding: "1.25rem", textAlign: "center", color: "#94a3b8", fontSize: "0.85rem" }}>
+              Couldn&apos;t load documents.
+            </div>
+          ) : !detail ? (
+            <div style={{ border: "1px dashed #cbd5e1", borderRadius: "1rem", padding: "1.25rem", textAlign: "center", color: "#94a3b8", fontSize: "0.85rem" }}>
+              Loading...
+            </div>
+          ) : detail.documents.length === 0 ? (
+            <div style={{ border: "1px dashed #cbd5e1", borderRadius: "1rem", padding: "1.25rem", textAlign: "center", color: "#94a3b8", fontSize: "0.85rem" }}>
+              No documents submitted yet.
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+              {detail.documents.map((doc) => (
+                <div key={doc.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "1rem", border: "1px solid #e2e8f0", borderRadius: "0.75rem", background: "white" }}>
+                  <div>
+                    <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "#0f172a" }}>{doc.document_type}</div>
+                    <div style={{ fontSize: "0.75rem", color: "#64748b", marginTop: "0.2rem" }}>
+                      Submitted on {doc.created_at.slice(0, 10)}
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+                    <span style={{
+                      fontSize: "0.7rem", fontWeight: 700, padding: "0.2rem 0.6rem", borderRadius: "999px", textTransform: "uppercase",
+                      background: doc.status === "approved" ? "#dcfce7" : doc.status === "rejected" ? "#fee2e2" : "#fef3c7",
+                      color: doc.status === "approved" ? "#166534" : doc.status === "rejected" ? "#991b1b" : "#92400e"
+                    }}>
+                      {doc.status}
+                    </span>
+                    <button
+                      onClick={() => setViewingDoc({ title: doc.document_type, link: doc.file_link })}
+                      style={{
+                        background: "none", border: "1px solid #cbd5e1", borderRadius: "0.4rem",
+                        padding: "0.3rem 0.75rem", fontSize: "0.75rem", fontWeight: 600, color: "#3b82f6",
+                        cursor: "pointer", transition: "all 0.2s"
+                      }}
+                    >
+                      Preview File
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
+      
+      {viewingDoc && (
+        <DocumentViewerModal
+          title={viewingDoc.title}
+          fileLink={viewingDoc.link}
+          onClose={() => setViewingDoc(null)}
+        />
+      )}
     </div>
   );
 }

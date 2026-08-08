@@ -372,7 +372,7 @@ export default function ChecklistPage() {
           .cl-table { font-size: 8pt !important; width: 100%; table-layout: fixed; border-collapse: collapse; }
           .cl-table th { padding: 4px 2px !important; font-size: 7pt !important; white-space: nowrap !important; line-height: 1.1; overflow: hidden; }
           .cl-table td { padding: 4px 2px !important; }
-          .cl-table th.cl-th-name { width: 13%; min-width: auto; position: static !important; }
+          .cl-table th.cl-th-name { width: 16%; min-width: auto; position: static !important; }
           .cl-table th.cl-th-company { width: 10%; min-width: auto; }
           .cl-table th.cl-th-progress { width: 7%; min-width: auto; }
           .cl-table td.cl-td-name { position: static !important; }
@@ -558,7 +558,6 @@ export default function ChecklistPage() {
                 <thead>
                   {/* Phase group row */}
                   <tr>
-                    <th className="cl-th-name" rowSpan={2} style={{ borderRight: "1px solid #e2e8f0" }}>#</th>
                     <th className="cl-th-name" rowSpan={2} style={{ borderRight: "1px solid #e2e8f0" }}>Student</th>
                     <th className="cl-th-company" rowSpan={2} style={{ borderRight: "1px solid #e2e8f0" }}>Company</th>
                     <th className="cl-th-progress" rowSpan={2} style={{ borderRight: "1px solid #e2e8f0" }}>Progress</th>
@@ -609,7 +608,6 @@ export default function ChecklistPage() {
                     const isComplete = submitted >= TOTAL_REQUIRED_DOCS;
                     return (
                       <tr key={student.id}>
-                        <td style={{ fontWeight: 700, color: "#94a3b8", fontSize: "0.75rem", borderRight: "1px solid #f1f5f9", width: 30, textAlign: "center" }}>{idx + 1}</td>
                         <td className="cl-td-name" style={{ borderRight: "1px solid #f1f5f9" }}>
                           <div style={{ fontWeight: 700, color: "#0f172a", fontSize: "0.85rem", lineHeight: 1.3 }}>{student.name}</div>
                           <div style={{ fontSize: "0.7rem", color: "#94a3b8", marginTop: "0.1rem" }}>{student.email}</div>
