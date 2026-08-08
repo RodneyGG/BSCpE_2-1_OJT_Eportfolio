@@ -36,7 +36,8 @@ A Next.js frontend application for a BSCpE OJT e-portfolio. The application feat
 ### 2026-08-08 - Document Viewer in Student Panel & Checklist Refactor
 - **Agent:** Antigravity
 - **Summary of Changes:**
-  - **Submitted Documents Viewer:** Added a "Submitted Documents" section to the `AdminStudentPanel` slide-out (used by prof/admin users) showing all uploaded documents regardless of category.
+  - **AdminStudentPanel Refactor:** Converted the student detail panel from a right-aligned slide-out into a centered floating modal window. Features a max-width of 560px, 85vh max-height with internal scrolling, and a fade/scale entrance animation (`modalFadeScale`). Added keyboard support (Escape key to close) and preserved click-outside-to-close behavior, while ensuring inner modals (like the document preview) don't trigger outer closure. Fixed grammatical pluralization for the document accordion badge ("1 Doc" vs "2 Docs").
+  - **Submitted Documents Viewer:** Added a "Submitted Documents" section to the `AdminStudentPanel` modal (used by prof/admin users) showing all uploaded documents.
   - Reorganized the "Submitted Documents" section into a Before/During/After/Other OJT accordion structure, matching the styling and logic used on the student profile page.
   - Integrated the `DocumentViewerModal` used in `DocumentReviewList` to allow inline previewing of these submitted documents (modal pop-up instead of new tab).
   - Verified and confirmed that the underlying API endpoint (`GET /api/admin/users/{user}`) natively loads all related documents and is strictly role-protected by Laravel middleware `->middleware('role:admin,prof')`, ensuring proper server-side access control.

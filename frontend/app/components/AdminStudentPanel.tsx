@@ -109,6 +109,14 @@ export default function AdminStudentPanel({
       .catch(() => setDetailError(true));
   }, [student.id]);
 
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !viewingDoc) onClose();
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [onClose, viewingDoc]);
+
   const rendered = parseFloat(renderedHoursOverride ?? student.hours_rendered ?? "0");
   const required = typeof student.required_hours === "number" ? student.required_hours : 0;
   const isComplete = required > 0 && rendered >= required;
@@ -184,22 +192,24 @@ export default function AdminStudentPanel({
     <div
       style={{
         position: "fixed", top: 0, left: 0, width: "100%", height: "100%",
-        background: "rgba(15, 23, 42, 0.5)", zIndex: 100, display: "flex", justifyContent: "flex-end",
+        background: "rgba(15, 23, 42, 0.5)", zIndex: 100, display: "flex", justifyContent: "center", alignItems: "center",
+        padding: "1rem", boxSizing: "border-box"
       }}
       onClick={onClose}
     >
       <div
         style={{
-          background: "white", width: "100%", maxWidth: "480px", height: "100%",
-          overflowY: "auto", boxShadow: "-10px 0 30px rgba(0,0,0,0.15)",
-          display: "flex", flexDirection: "column", animation: "slideIn 0.2s ease-out",
+          background: "white", width: "100%", maxWidth: "560px", maxHeight: "85vh",
+          overflowY: "auto", boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)",
+          borderRadius: "1rem",
+          display: "flex", flexDirection: "column", animation: "modalFadeScale 0.25s ease-out",
         }}
         onClick={(e) => e.stopPropagation()}
       >
         <style>{`
-          @keyframes slideIn {
-            from { transform: translateX(100%); }
-            to   { transform: translateX(0); }
+          @keyframes modalFadeScale {
+            from { opacity: 0; transform: scale(0.95) translateY(10px); }
+            to   { opacity: 1; transform: scale(1) translateY(0); }
           }
           .accordion-header { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.25rem; background: white; border: none; border-bottom: 1px solid #e2e8f0; cursor: pointer; transition: background 0.3s ease; font-family: inherit; font-size: inherit; }
           .accordion-header:hover { background: #f8fafc; }
@@ -410,7 +420,7 @@ export default function AdminStudentPanel({
                       
                       <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
                         <div style={{ fontSize: "0.7rem", fontWeight: 600, color: "#64748b", background: "#f8fafc", padding: "0.2rem 0.6rem", borderRadius: "999px", border: "1px solid #e2e8f0" }}>
-                          {phaseDocs.length} Docs
+                          {phaseDocs.length} {phaseDocs.length === 1 ? "Doc" : "Docs"}
                         </div>
                         <svg className={`accordion-chevron${isOpen ? " open" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
                           <path d="M6 9l6 6 6-6"/>
