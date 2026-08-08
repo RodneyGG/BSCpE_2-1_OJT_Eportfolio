@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import BulkImportModal from "./BulkImportModal";
 import { fetchApi } from "../../lib/api";
 import { useRole } from "../context/RoleContext";
@@ -65,6 +66,9 @@ export default function ManageUsersSection({ onViewStudent, onCountChange }: Man
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>("");
   const [savingCompany, setSavingCompany] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
 
   const profExists = users.some((u) => u.role === "prof");
 
@@ -412,7 +416,7 @@ export default function ManageUsersSection({ onViewStudent, onCountChange }: Man
           ))}
         </div>
       )}
-      {showCreate && (
+      {showCreate && mounted && createPortal(
         <div style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50 }}>
           <div style={{ background: "#fff", borderRadius: "1rem", padding: "1.5rem", width: "100%", maxWidth: "26rem" }}>
             <h3 style={{ fontSize: "1rem", fontWeight: 700, margin: "0 0 1rem" }}>Create Account</h3>
@@ -453,9 +457,10 @@ export default function ManageUsersSection({ onViewStudent, onCountChange }: Man
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
-      {revealPassword && (
+      {revealPassword && mounted && createPortal(
         <div style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50 }}>
           <div style={{ background: "#fff", borderRadius: "1rem", padding: "1.5rem", width: "100%", maxWidth: "26rem" }}>
             <h3 style={{ fontSize: "1rem", fontWeight: 700, margin: "0 0 0.5rem" }}>Temporary Password</h3>
@@ -471,9 +476,10 @@ export default function ManageUsersSection({ onViewStudent, onCountChange }: Man
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
-      {companyModalUser && (
+      {companyModalUser && mounted && createPortal(
         <div style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50 }}>
           <div style={{ background: "#fff", borderRadius: "1rem", padding: "1.5rem", width: "100%", maxWidth: "26rem" }}>
             <h3 style={{ fontSize: "1rem", fontWeight: 700, margin: "0 0 1rem" }}>Change Company</h3>
@@ -495,7 +501,8 @@ export default function ManageUsersSection({ onViewStudent, onCountChange }: Man
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
       <BulkImportModal
         isOpen={isImportModalOpen}
@@ -517,4 +524,4 @@ export default function ManageUsersSection({ onViewStudent, onCountChange }: Man
       />
     </div>
   );
-}
+} 

@@ -387,4 +387,44 @@ class UserController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Preview bulk import from a directly-uploaded CSV file.
+     */
+    public function previewBulkImportFile(Request $request, BulkImportService $bulkImportService)
+    {
+        $request->validate([
+            'csv' => ['required', 'file', 'mimes:csv,txt', 'max:5120'],
+        ]);
+
+        try {
+            $previewData = $bulkImportService->previewFile($request->file('csv'));
+            return response()->json($previewData);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to parse CSV file: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Commit bulk import from a directly-uploaded CSV file.
+     */
+    public function commitBulkImportFile(Request $request, BulkImportService $bulkImportService)
+    {
+        $request->validate([
+            'csv' => ['required', 'file', 'mimes:csv,txt', 'max:5120'],
+        ]);
+
+        $actorId = $request->user()->id;
+
+        try {
+            $result = $bulkImportService->commitFile($actorId, $request->file('csv'));
+            return response()->json($result);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to commit bulk import: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

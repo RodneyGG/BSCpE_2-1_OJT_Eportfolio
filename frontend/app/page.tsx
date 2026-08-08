@@ -21,8 +21,33 @@ export default function Home() {
   const [totalStudents, setTotalStudents] = useState(0);
   const [loadingCompanies, setLoadingCompanies] = useState(true);
   const [syncing, setSyncing] = useState(false);
+  const [sheetUrl, setSheetUrl] = useState('');
+  const [savingUrl, setSavingUrl] = useState(false);
 
   const toggle = (id: number) => setOpenId(prev => prev === id ? null : id);
+
+useEffect(() => {
+    if (role !== 'admin') return;
+    fetchApi('/admin/companies/roster-sheet-url')
+      .then((data: { url: string | null }) => setSheetUrl(data.url ?? ''))
+      .catch(() => {});
+  }, [role]);
+
+  const handleSaveSheetUrl = async () => {
+    if (!sheetUrl.trim()) return;
+    setSavingUrl(true);
+    try {
+      await fetchApi('/admin/companies/roster-sheet-url', {
+        method: 'PATCH',
+        body: JSON.stringify({ url: sheetUrl.trim() }),
+      });
+      pushToast('Roster sheet URL saved.', 'success');
+    } catch (err: any) {
+      pushToast(err.message || 'Failed to save sheet URL', 'error');
+    } finally {
+      setSavingUrl(false);
+    }
+  };
 
 const handleSyncCompanies = async () => {
     setSyncing(true);
@@ -267,6 +292,59 @@ const handleSyncCompanies = async () => {
               )}
             </div>
           </div>
+
+          {role === 'admin' && (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem",
+                background: "#f8fafc",
+                border: "1px solid #e2e8f0",
+                borderRadius: "0.75rem",
+                padding: "0.6rem 0.85rem",
+                marginBottom: "1rem",
+                flexWrap: "wrap",
+              }}
+            >
+              <span style={{ fontSize: "0.7rem", fontWeight: 700, color: "#64748b", whiteSpace: "nowrap" }}>
+                Roster Sheet URL:
+              </span>
+              <input
+                type="url"
+                placeholder="https://docs.google.com/spreadsheets/d/.../export?format=csv&gid=..."
+                value={sheetUrl}
+                onChange={(e) => setSheetUrl(e.target.value)}
+                style={{
+                  flex: 1,
+                  minWidth: "220px",
+                  padding: "0.4rem 0.65rem",
+                  borderRadius: "0.5rem",
+                  border: "1px solid #cbd5e1",
+                  fontSize: "0.78rem",
+                }}
+              />
+              <button
+                onClick={handleSaveSheetUrl}
+                disabled={savingUrl || !sheetUrl.trim()}
+                style={{
+                  display: "flex", alignItems: "center", gap: "0.4rem",
+                  background: savingUrl ? "#e2e8f0" : "#eff6ff",
+                  color: savingUrl ? "#94a3b8" : "#1d4ed8",
+                  border: "1px solid",
+                  borderColor: savingUrl ? "#e2e8f0" : "#bfdbfe",
+                  borderRadius: "9999px",
+                  padding: "0.3rem 0.85rem",
+                  fontSize: "0.7rem", fontWeight: 700,
+                  letterSpacing: "0.04em", textTransform: "uppercase",
+                  cursor: savingUrl || !sheetUrl.trim() ? "not-allowed" : "pointer",
+                  transition: "background 0.2s",
+                }}
+              >
+                {savingUrl ? "Saving..." : "Save URL"}
+              </button>
+            </div>
+          )}
 
           {/* Accordion list */}
           <div style={{ display: "flex", flexDirection: "column", gap: "0.65rem" }}>

@@ -2,7 +2,7 @@
 
 import React from "react";
 
-type Status = "approved" | "pending" | "rejected" | "not_submitted" | "complete" | "uploading";
+type Status = "approved" | "pending" | "rejected" | "not_submitted" | "complete" | "uploading" | "ongoing";
 
 export default function StatusBadge({ status }: { status: Status }) {
   const map = {
@@ -12,6 +12,7 @@ export default function StatusBadge({ status }: { status: Status }) {
     rejected: { bg: "#fee2e2", color: "#b91c1c", label: "Rejected" },
     complete: { bg: "#dbeafe", color: "#1e40af", label: "Complete" },
     uploading: { bg: "#eff6ff", color: "#3b82f6", label: "Uploading..." },
+    ongoing: { bg: "#e0f2fe", color: "#0369a1", label: "Ongoing" },
   };
 
   const s = map[status];
