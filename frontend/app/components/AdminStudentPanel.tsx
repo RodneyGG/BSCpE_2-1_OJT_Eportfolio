@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { fetchApi } from "../../lib/api";
 import DocumentReviewList, { ReviewableDocument } from "./DocumentReviewList";
+import DocumentViewerModal from "./DocumentViewerModal";
+import { REQUIRED_DOCUMENTS, PHASE_ORDER, PHASE_LABELS, normalize, DocumentPhase } from "../data/documentTypes";
 
 interface StudentCompany {
   id: number;
@@ -75,6 +77,7 @@ export default function AdminStudentPanel({
 }) {
   const [detail, setDetail] = useState<AdminStudentFullDetail | null>(null);
   const [detailError, setDetailError] = useState(false);
+  const [viewingDoc, setViewingDoc] = useState<{title: string, link: string} | null>(null);
 
   // Optimistic local override for the summary "Hours Rendered" block.
   // `student.hours_rendered` comes from the parent roster list (stale once
@@ -87,6 +90,7 @@ export default function AdminStudentPanel({
   const [editingDeployment, setEditingDeployment] = useState(false);
   const [deploymentForm, setDeploymentForm] = useState({ role: "", supervisor_name: "", supervisor_contact: "", start_date: "", end_date: "" });
   const [savingDeployment, setSavingDeployment] = useState(false);
+  const [openSection, setOpenSection] = useState<string | null>(null);
 
   useEffect(() => {
     fetchApi(`/admin/users/${student.id}`)
@@ -104,6 +108,14 @@ export default function AdminStudentPanel({
       })
       .catch(() => setDetailError(true));
   }, [student.id]);
+
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !viewingDoc) onClose();
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [onClose, viewingDoc]);
 
   const rendered = parseFloat(renderedHoursOverride ?? student.hours_rendered ?? "0");
   const required = typeof student.required_hours === "number" ? student.required_hours : 0;
@@ -166,30 +178,50 @@ export default function AdminStudentPanel({
     }
   };
 
+  const getPhaseForDoc = (docType: string): DocumentPhase => {
+    const norm = normalize(docType);
+    const reqDef = REQUIRED_DOCUMENTS.find(r => 
+      normalize(r.id) === norm || 
+      normalize(r.title) === norm || 
+      (r.aliases || []).some(a => normalize(a) === norm)
+    );
+    return reqDef ? reqDef.phase : "other";
+  };
+
   return (
     <div
       style={{
         position: "fixed", top: 0, left: 0, width: "100%", height: "100%",
-        background: "rgba(15, 23, 42, 0.5)", zIndex: 100, display: "flex", justifyContent: "flex-end",
+        background: "rgba(15, 23, 42, 0.5)", zIndex: 100, display: "flex", justifyContent: "center", alignItems: "center",
+        padding: "1rem", boxSizing: "border-box"
       }}
       onClick={onClose}
     >
       <div
+        className="hide-scroll"
         style={{
-          background: "white", width: "100%", maxWidth: "480px", height: "100%",
-          overflowY: "auto", boxShadow: "-10px 0 30px rgba(0,0,0,0.15)",
-          display: "flex", flexDirection: "column", animation: "slideIn 0.2s ease-out",
+          background: "white", width: "100%", maxWidth: "640px", maxHeight: "95vh",
+          overflowY: "auto", boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)",
+          borderRadius: "1rem",
+          display: "flex", flexDirection: "column", animation: "modalFadeScale 0.25s ease-out",
         }}
         onClick={(e) => e.stopPropagation()}
       >
         <style>{`
-          @keyframes slideIn {
-            from { transform: translateX(100%); }
-            to   { transform: translateX(0); }
+          .hide-scroll::-webkit-scrollbar { display: none; }
+          .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+          @keyframes modalFadeScale {
+            from { opacity: 0; transform: scale(0.95) translateY(10px); }
+            to   { opacity: 1; transform: scale(1) translateY(0); }
           }
+          .accordion-header { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 0.8rem 1rem; background: white; border: none; border-bottom: 1px solid #e2e8f0; cursor: pointer; transition: background 0.3s ease; font-family: inherit; font-size: inherit; }
+          .accordion-header:hover { background: #f8fafc; }
+          .accordion-header.open { background: linear-gradient(90deg, #eff6ff 0%, #f0f9ff 100%); }
+          .accordion-chevron { width: 18px; height: 18px; color: #64748b; transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1); flex-shrink: 0; }
+          .accordion-chevron.open { transform: rotate(180deg); color: #1d4ed8; }
         `}</style>
 
-        <div style={{ padding: "1.75rem 2rem", borderBottom: "1px solid #e2e8f0", background: "#f8fafc", display: "flex", gap: "1rem", alignItems: "center" }}>
+        <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #e2e8f0", background: "#f8fafc", display: "flex", gap: "1rem", alignItems: "center" }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={`https://ui-avatars.com/api/?name=${encodeURIComponent(student.name)}&size=100&background=random&color=fff&bold=true`}
@@ -210,11 +242,11 @@ export default function AdminStudentPanel({
           </button>
         </div>
 
-        <div style={{ padding: "2rem", flex: 1 }}>
-          <h3 style={{ fontSize: "0.75rem", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "0.75rem" }}>
+        <div style={{ padding: "1.5rem", flex: 1, paddingBottom: "2rem" }}>
+          <h3 style={{ fontSize: "0.75rem", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "0.5rem" }}>
             General Info
           </h3>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem", marginBottom: "1.75rem", fontSize: "0.85rem" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem", marginBottom: "1.25rem", fontSize: "0.85rem" }}>
             <div>
               <span style={{ color: "#94a3b8" }}>Phone</span>
               <div style={{ color: "#0f172a", fontWeight: 600 }}>{detail?.phone || (detailError ? "—" : "…")}</div>
@@ -308,10 +340,10 @@ export default function AdminStudentPanel({
             </div>
           )}
 
-          <h3 style={{ fontSize: "0.75rem", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "0.75rem" }}>
+          <h3 style={{ fontSize: "0.75rem", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "0.5rem" }}>
             Hours Rendered
           </h3>
-          <div style={{ background: "#f8fafc", borderRadius: "1rem", padding: "1rem", marginBottom: "1.75rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#f8fafc", borderRadius: "1rem", padding: "1rem", marginBottom: "1.75rem" }}>
             <div style={{ fontSize: "0.9rem", fontWeight: 700, color: "#0f172a" }}>
               {formatHours(renderedHoursOverride ?? student.hours_rendered)}{" "}
               <span style={{ color: "#64748b", fontWeight: 500 }}>/ {formatHours(student.required_hours)} hrs</span>
@@ -326,7 +358,7 @@ export default function AdminStudentPanel({
             </span>
           </div>
 
-          <h3 style={{ fontSize: "0.75rem", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "0.75rem" }}>
+          <h3 style={{ fontSize: "0.75rem", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "0.5rem" }}>
             Pending Documents
           </h3>
           {detailError ? (
@@ -347,8 +379,113 @@ export default function AdminStudentPanel({
               emptyMessage="Nothing pending for this student right now."
             />
           )}
+
+          <h3 style={{ fontSize: "0.75rem", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "0.5rem", marginTop: "1.25rem" }}>
+            Submitted Documents
+          </h3>
+          {detailError ? (
+            <div style={{ border: "1px dashed #cbd5e1", borderRadius: "1rem", padding: "1.25rem", textAlign: "center", color: "#94a3b8", fontSize: "0.85rem" }}>
+              Couldn&apos;t load documents.
+            </div>
+          ) : !detail ? (
+            <div style={{ border: "1px dashed #cbd5e1", borderRadius: "1rem", padding: "1.25rem", textAlign: "center", color: "#94a3b8", fontSize: "0.85rem" }}>
+              Loading...
+            </div>
+          ) : detail.documents.length === 0 ? (
+            <div style={{ border: "1px dashed #cbd5e1", borderRadius: "1rem", padding: "1.25rem", textAlign: "center", color: "#94a3b8", fontSize: "0.85rem" }}>
+              No documents submitted yet.
+            </div>
+          ) : (
+            <div style={{ borderRadius: "1rem", border: "1px solid #e2e8f0", overflow: "hidden", background: "white", flexShrink: 0 }}>
+              {PHASE_ORDER.map((phase, phaseIdx) => {
+                const phaseDocs = detail.documents.filter(d => getPhaseForDoc(d.document_type) === phase);
+                if (phaseDocs.length === 0) return null;
+                const isOpen = openSection === phase;
+                return (
+                  <div key={phase}>
+                    <button className={`accordion-header${isOpen ? " open" : ""}`} onClick={() => setOpenSection(prev => prev === phase ? null : phase)}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.85rem", flex: 1 }}>
+                        <div style={{
+                          width: 30, height: 30, borderRadius: "50%", flexShrink: 0,
+                          backgroundColor: isOpen ? "#1d4ed8" : "#f1f5f9",
+                          color: isOpen ? "white" : "#64748b",
+                          fontSize: "0.7rem", fontWeight: 800,
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          transition: "all 0.3s cubic-bezier(0.34,1.56,0.64,1)",
+                          boxShadow: isOpen ? "0 4px 12px rgba(29,78,216,0.35)" : "none",
+                        }}>
+                          {String(phaseIdx + 1).padStart(2, "0")}
+                        </div>
+                        <span style={{ fontWeight: 700, fontSize: "0.85rem", color: "#0f172a", textTransform: "capitalize", letterSpacing: "-0.01em" }}>
+                          {phase === "other" ? "Other Documents" : `${phase} OJT`}
+                        </span>
+                      </div>
+                      
+                      <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+                        <div style={{ fontSize: "0.7rem", fontWeight: 600, color: "#64748b", background: "#f8fafc", padding: "0.2rem 0.6rem", borderRadius: "999px", border: "1px solid #e2e8f0" }}>
+                          {phaseDocs.length} {phaseDocs.length === 1 ? "Doc" : "Docs"}
+                        </div>
+                        <svg className={`accordion-chevron${isOpen ? " open" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M6 9l6 6 6-6"/>
+                        </svg>
+                      </div>
+                    </button>
+                    <div style={{
+                      display: "grid", gridTemplateRows: isOpen ? "1fr" : "0fr",
+                      transition: "grid-template-rows 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                      background: "#f8fafc",
+                    }}>
+                      <div style={{ overflow: "hidden" }}>
+                        <div style={{ padding: "0.75rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                          {phaseDocs.map((doc) => (
+                            <div key={doc.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.75rem 1rem", border: "1px solid #e2e8f0", borderRadius: "0.75rem", background: "white" }}>
+                              <div>
+                                <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "#0f172a" }}>{doc.document_type}</div>
+                                <div style={{ fontSize: "0.75rem", color: "#64748b", marginTop: "0.2rem" }}>
+                                  Submitted on {doc.created_at.slice(0, 10)}
+                                </div>
+                              </div>
+                              <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+                                <span style={{
+                                  fontSize: "0.7rem", fontWeight: 700, padding: "0.2rem 0.6rem", borderRadius: "999px", textTransform: "uppercase",
+                                  background: doc.status === "approved" ? "#dcfce7" : doc.status === "rejected" ? "#fee2e2" : "#fef3c7",
+                                  color: doc.status === "approved" ? "#166534" : doc.status === "rejected" ? "#991b1b" : "#92400e"
+                                }}>
+                                  {doc.status}
+                                </span>
+                                <button
+                                  onClick={() => setViewingDoc({ title: doc.document_type, link: doc.file_link })}
+                                  style={{
+                                    background: "none", border: "1px solid #cbd5e1", borderRadius: "0.4rem",
+                                    padding: "0.3rem 0.75rem", fontSize: "0.75rem", fontWeight: 600, color: "#3b82f6",
+                                    cursor: "pointer", transition: "all 0.2s"
+                                  }}
+                                  onMouseEnter={(e) => (e.currentTarget.style.background = "#eff6ff")}
+                                  onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
+                                >
+                                  Preview File
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
+      
+      {viewingDoc && (
+        <DocumentViewerModal
+          title={viewingDoc.title}
+          fileLink={viewingDoc.link}
+          onClose={() => setViewingDoc(null)}
+        />
+      )}
     </div>
   );
 }

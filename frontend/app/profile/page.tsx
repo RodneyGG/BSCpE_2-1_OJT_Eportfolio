@@ -75,7 +75,7 @@ function FieldInput({ label, value, onChange, type = "text" }: { label: string; 
 }
 
 /* ═══════════════════════════ Status Badge ══════════════════════ */
-function StatusBadge({ status }: { status: "not_submitted" | "submitted" | "pending" | "approved" | "rejected" | "uploading" }) {
+function StatusBadge({ status }: { status: "not_submitted" | "submitted" | "pending" | "approved" | "rejected" | "uploading" | "ongoing" }) {
   const map = {
     not_submitted: { bg: "#f1f5f9", color: "#64748b", label: "Not Submitted" },
     submitted: { bg: "#dbeafe", color: "#1e40af", label: "Submitted" },
@@ -83,6 +83,7 @@ function StatusBadge({ status }: { status: "not_submitted" | "submitted" | "pend
     approved: { bg: "#dcfce7", color: "#166534", label: "Approved" },
     rejected: { bg: "#fee2e2", color: "#b91c1c", label: "Rejected" },
     uploading: { bg: "#eff6ff", color: "#3b82f6", label: "Uploading..." },
+    ongoing: { bg: "#e0f2fe", color: "#0369a1", label: "Ongoing" },
   };
   const s = map[status] || map.not_submitted;
   return (
@@ -93,7 +94,7 @@ function StatusBadge({ status }: { status: "not_submitted" | "submitted" | "pend
 }
 
 /* ═══════════════════════════ Document Card ══════════════════════ */
-function DocumentCardItem({ doc, onUpload, onRemove, onView }: { doc: { id: string, name: string, status: "not_submitted" | "submitted" | "uploading", date: string, fileLink?: string, reviewStatus?: "pending" | "approved" | "rejected", rejectionReason?: string | null, week?: number }, onUpload: (id: string, file: File, week?: number) => void, onRemove: (id: string) => void, onView: (title: string, fileLink: string) => void }) {
+function DocumentCardItem({ doc, onUpload, onRemove, onView }: { doc: { id: string, name: string, status: "not_submitted" | "submitted" | "uploading", date: string, fileLink?: string, reviewStatus?: "pending" | "approved" | "rejected", rejectionReason?: string | null, week?: number, required?: boolean }, onUpload: (id: string, file: File, week?: number) => void, onRemove: (id: string) => void, onView: (title: string, fileLink: string) => void }) {
   const [dragActive, setDragActive] = useState(false);
 
   const handleDrag = (e: React.DragEvent) => {
@@ -126,7 +127,13 @@ function DocumentCardItem({ doc, onUpload, onRemove, onView }: { doc: { id: stri
       {/* Header Area */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.25rem", gap: "1rem" }}>
         <h3 style={{ fontSize: "1.15rem", fontWeight: 700, color: "#0f172a", margin: 0, lineHeight: 1.3 }}>{doc.name}</h3>
-        <StatusBadge status={badgeStatus} />
+        {doc.required === false && doc.status === "not_submitted" ? (
+          <span style={{ background: "#f8fafc", color: "#94a3b8", padding: "0.4rem 1rem", borderRadius: "9999px", fontSize: "clamp(0.65rem, 2.5vw, 0.85rem)", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.05em", whiteSpace: "nowrap" }}>
+            Optional
+          </span>
+        ) : (
+          <StatusBadge status={badgeStatus} />
+        )}
       </div>
 
       {/* Upload/Action Area */}
@@ -179,6 +186,9 @@ export default function ProfilePage() {
   const [editingGeneral, setEditingGeneral] = useState(false);
   const [generalForm, setGeneralForm] = useState({ name: "", email: "", phone: "", program: "" });
   const [savingGeneral, setSavingGeneral] = useState(false);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [removeAvatar, setRemoveAvatar] = useState(false);
 
   const [editingOjt, setEditingOjt] = useState(false);
   const [deployment, setDeployment] = useState<any>(null);
@@ -205,6 +215,7 @@ export default function ProfilePage() {
           phone: data.phone || "",
           program: data.program || "",
         });
+        setAvatarPreview(data.profile_picture || null);
       })
       .catch((err: any) => { if (err.status !== 401) console.error("Failed to load profile:", err); })
       .finally(() => setProfileLoading(false));
@@ -213,6 +224,10 @@ export default function ProfilePage() {
       .catch((err: any) => { if (err.status !== 401) console.error("Failed to load companies:", err); });
     fetchApi('/deployments/mine')
       .then((data) => {
+        if (!data) {
+          console.warn("fetchApi returned null/empty data for /deployments/mine");
+          return;
+        }
         setDeployment(data.deployment);
         if (data.deployment) {
           const initialOjtForm = {
@@ -228,7 +243,11 @@ export default function ProfilePage() {
           setOjtFormOriginal(initialOjtForm);
         }
       })
-      .catch((err: any) => { if (err.status !== 401) console.error("Failed to load deployment:", err); })
+      .catch((err: any) => { 
+        if (err?.status !== 401) {
+          console.error("Failed to load deployment:", err?.message || "Unknown error", `(Status: ${err?.status})`, "Raw:", err);
+        }
+      })
       .finally(() => setDeploymentLoading(false));
 
     fetchApi('/documents/mine')
@@ -251,7 +270,11 @@ export default function ProfilePage() {
         
         const baseDocs = REQUIRED_DOCUMENTS.map(req => {
           const found = existingDocs.find((ed: any) => ed.name === req.title && ed.week == null);
-          return found || { id: req.id, name: req.title, phase: req.phase, status: "not_submitted", date: "" };
+          if (found) {
+            found.required = req.required;
+            return found;
+          }
+          return { id: req.id, name: req.title, phase: req.phase, status: "not_submitted", date: "", required: req.required };
         });
 
         const weeklyDocs = existingDocs.filter((ed: any) => ed.week != null);
@@ -358,9 +381,32 @@ export default function ProfilePage() {
   const handleSaveGeneral = async () => {
     setSavingGeneral(true);
     try {
+      if (removeAvatar) {
+        await fetchApi('/profile/picture', { method: 'DELETE' });
+        setProfileData((prev: any) => prev ? { ...prev, profile_picture: null } : prev);
+      } else if (avatarFile) {
+        const formData = new FormData();
+        formData.append('photo', avatarFile);
+        const token = localStorage.getItem('token');
+        const res = await fetch('http://localhost:8000/api/profile/picture', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` },
+          body: formData,
+        });
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.message || "Failed to upload profile picture.");
+        }
+        const data = await res.json();
+        setProfileData((prev: any) => prev ? { ...prev, profile_picture: data.profile_picture } : prev);
+      }
+
       const res = await fetchApi('/profile', { method: 'PATCH', body: JSON.stringify(generalForm) });
       setProfileData((prev: any) => prev ? { ...prev, ...res.user } : prev);
-      if (user) login({ ...user, name: res.user.name, email: res.user.email });
+      if (user) login({ ...user, name: res.user.name, email: res.user.email, profile_picture: res.user.profile_picture });
+      
+      setAvatarFile(null);
+      setRemoveAvatar(false);
       setEditingGeneral(false);
     } catch (err: any) { alert(err.message || "Failed to update profile."); } finally { setSavingGeneral(false); }
   };
@@ -420,7 +466,7 @@ export default function ProfilePage() {
   return (
     <ProtectedRoute>
     <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)", fontFamily: "var(--font-geist-sans, system-ui, sans-serif)", display: "flex", flexDirection: "column" }}>      <style>{`
-        .main-container { width: 95%; max-width: 1600px; margin: 0 auto; padding: 3rem 0; flex: 1; }
+        .main-container { width: 100%; max-width: 1280px; margin: 0 auto; padding: 2rem 2rem 3rem; flex: 1; box-sizing: border-box; }
         .ui-card { background: white; border-radius: 1.25rem; padding: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.04); border: 1px solid rgba(255,255,255,0.8); display: flex; flex-direction: column; height: auto; min-height: fit-content; }
         .responsive-grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 350px), 1fr)); gap: 24px; margin-bottom: 24px; align-items: stretch; }
         .profile-avatar { width: 56px; height: 56px; font-size: 1.5rem; border-radius: 50%; background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%); color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; flex-shrink: 0; }
@@ -435,11 +481,14 @@ export default function ProfilePage() {
         .profile-bar-left { flex: 65; display: flex; gap: 16px; align-items: center; min-width: 0; }
         .profile-bar-divider { width: 1px; background: #e2e8f0; margin: 0 clamp(24px, 4vw, 40px); align-self: stretch; flex-shrink: 0; }
         .profile-bar-hours { flex: 35; display: flex; flex-direction: column; justify-content: center; min-width: 0; }
-        .accordion-header { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 1rem 16px; background: white; border: none; border-bottom: 1px solid #e2e8f0; border-left: 4px solid transparent; cursor: pointer; transition: all 0.2s ease; font-family: inherit; font-size: inherit; }
-        .accordion-header:hover { background: #f8fafc; border-left-color: #cbd5e1; }
-        .accordion-header.open { background: #f0f9ff; border-left-color: #3b82f6; }
-        .accordion-chevron { width: 16px; height: 16px; color: #64748b; transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); flex-shrink: 0; }
-        .accordion-chevron.open { transform: rotate(90deg); color: #3b82f6; }
+        .accordion-header { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.25rem; background: white; border: none; border-bottom: 1px solid #e2e8f0; cursor: pointer; transition: background 0.3s ease; font-family: inherit; font-size: inherit; }
+        .accordion-header:hover { background: #f8fafc; }
+        .accordion-header.open { background: linear-gradient(90deg, #eff6ff 0%, #f0f9ff 100%); }
+        .accordion-chevron { width: 18px; height: 18px; color: #64748b; transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1); flex-shrink: 0; }
+        .accordion-chevron.open { transform: rotate(180deg); color: #1d4ed8; }
+        .upload-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+        @media (max-width: 1024px) { .upload-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 768px) { .upload-grid { grid-template-columns: 1fr; } }
         .pdf-upload-box { transition: all 0.2s ease-in-out; }
         .pdf-upload-box:hover { background: #f1f5f9 !important; border-color: #94a3b8 !important; }
         .rejected-preview-btn { background: white; border: 1px solid #cbd5e1; color: #475569; border-radius: 0.5rem; padding: 0.6rem 1.2rem; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: all 0.15s; }
@@ -448,14 +497,12 @@ export default function ProfilePage() {
         .rejected-delete-btn:hover { background: #fecaca; color: #991b1b; }
         
         @media (max-width: 1024px) {
-          .main-container { padding: 2rem 0; width: 92%; }
           .ui-card { padding: 20px; }
           .responsive-grid-2 { gap: 20px; margin-bottom: 20px; }
           .card-edit-btn, .card-save-btn, .card-cancel-btn { padding: 0.5rem 1rem; font-size: 0.85rem; }
         }
         
         @media (max-width: 768px) {
-          .main-container { padding: 1.5rem 1rem; width: 100%; }
           .ui-card { padding: 16px; }
           .responsive-grid-2 { gap: 16px; margin-bottom: 16px; }
           .profile-avatar { width: 44px; height: 44px; font-size: 1.2rem; }
@@ -464,6 +511,10 @@ export default function ProfilePage() {
           .card-edit-btn, .card-save-btn, .card-cancel-btn { min-width: fit-content; }
           .profile-bar-content { flex-direction: column; }
           .profile-bar-divider { width: 100%; height: 1px; margin: 16px 0; }
+        }
+
+        @media (max-width: 640px) {
+          .main-container { padding: 1rem; }
         }
       `}</style>
       <AppNavbar />
@@ -477,8 +528,33 @@ export default function ProfilePage() {
               <>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "12px" }}>
                   <div style={{ display: "flex", gap: "16px", alignItems: "center" }}>
-                    <div className="profile-avatar">
-                      {displayName.split(" ").map((w: string) => w[0]).slice(0, 2).join("")}
+                    <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                      <label style={{ cursor: "pointer", position: "relative" }}>
+                        <input type="file" accept="image/jpeg,image/png,image/webp" style={{ display: "none" }} onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          if (file.size > 5 * 1024 * 1024) {
+                            alert("File size exceeds 5MB limit.");
+                            return;
+                          }
+                          setAvatarFile(file);
+                          setAvatarPreview(URL.createObjectURL(file));
+                          setRemoveAvatar(false);
+                        }} />
+                        <div className="profile-avatar" style={{ overflow: "hidden", position: "relative" }}>
+                          {avatarPreview ? (
+                            <img src={avatarPreview} alt="Profile" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                          ) : (
+                            displayName.split(" ").map((w: string) => w[0]).slice(0, 2).join("")
+                          )}
+                          <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", opacity: 0, transition: "opacity 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.opacity = "1"} onMouseLeave={(e) => e.currentTarget.style.opacity = "0"}>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                          </div>
+                        </div>
+                      </label>
+                      {avatarPreview && (
+                        <button onClick={() => { setAvatarPreview(null); setAvatarFile(null); setRemoveAvatar(true); }} style={{ background: "none", border: "none", color: "#ef4444", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer" }}>Remove Photo</button>
+                      )}
                     </div>
                     <h2 style={{ fontSize: "20px", fontWeight: 700, color: displayName === "—" ? "#cbd5e1" : "#0f172a", margin: 0 }}>{displayName}</h2>
                   </div>
@@ -497,8 +573,12 @@ export default function ProfilePage() {
             ) : (
               <div className="profile-bar-content">
                 <div className="profile-bar-left">
-                  <div className="profile-avatar">
-                    {displayName.split(" ").map((w: string) => w[0]).slice(0, 2).join("")}
+                  <div className="profile-avatar" style={{ overflow: "hidden" }}>
+                    {profileData?.profile_picture ? (
+                      <img src={profileData.profile_picture} alt="Profile" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    ) : (
+                      displayName.split(" ").map((w: string) => w[0]).slice(0, 2).join("")
+                    )}
                   </div>
                   <div style={{ flex: 1, minWidth: 0, display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "16px", flexWrap: "wrap" }}>
                     <div>
@@ -525,7 +605,7 @@ export default function ProfilePage() {
                       <span style={{ fontSize: "clamp(0.8rem, 1.5vw, 0.9rem)", color: "#64748b", fontWeight: 700 }}>/ 300 hrs</span>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: "10px", flexShrink: 0, flexWrap: "wrap", justifyContent: "flex-end" }}>
-                      <StatusBadge status={hoursRendered >= 300 ? "approved" : hoursRendered > 0 ? "pending" : "not_submitted"} />
+                      <StatusBadge status={hoursRendered >= 300 ? "approved" : "ongoing"} />
                     </div>
                   </div>
                   <div style={{ width: "100%", height: 10, background: "#f1f5f9", borderRadius: 9999, overflow: "hidden", marginBottom: "10px" }}>
@@ -654,16 +734,38 @@ export default function ProfilePage() {
             {documentsLoading ? (
               <div style={{ textAlign: "center", color: "#94a3b8", padding: "4rem", fontSize: "1.25rem", fontWeight: 600 }}>Loading documents...</div>
             ) : (
-              ["before", "during", "after", "other"].map(phase => (
-                <div key={phase}>
-                  <button className={`accordion-header${openSection === phase ? " open" : ""}`} onClick={() => setOpenSection(prev => prev === phase ? null : phase)}>
-                    <span style={{ fontWeight: 800, fontSize: "clamp(0.9rem, 2.5vw, 1.1rem)", color: "#0f172a", textTransform: "capitalize" }}>
-                      {phase === "other" ? "Other Documents" : `${phase} OJT`}
-                    </span>
-                    <svg className={`accordion-chevron${openSection === phase ? " open" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M9 18l6-6-6-6" />
-                    </svg>
-                  </button>
+              ["before", "during", "after", "other"].map((phase, phaseIdx) => {
+                const isOpen = openSection === phase;
+                const count = documents.filter(d => d.phase === phase).length;
+                return (
+                  <div key={phase}>
+                    <button className={`accordion-header${isOpen ? " open" : ""}`} onClick={() => setOpenSection(prev => prev === phase ? null : phase)}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.85rem", flex: 1 }}>
+                        <div style={{
+                          width: 34, height: 34, borderRadius: "50%", flexShrink: 0,
+                          backgroundColor: isOpen ? "#1d4ed8" : "#f1f5f9",
+                          color: isOpen ? "white" : "#64748b",
+                          fontSize: "0.72rem", fontWeight: 800,
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          transition: "all 0.3s cubic-bezier(0.34,1.56,0.64,1)",
+                          boxShadow: isOpen ? "0 4px 12px rgba(29,78,216,0.35)" : "none",
+                          transform: isOpen ? "scale(1.1)" : "scale(1)",
+                        }}>
+                          {String(phaseIdx + 1).padStart(2, "0")}
+                        </div>
+                        <span style={{ fontWeight: 700, fontSize: "0.9rem", color: "#0f172a", textTransform: "capitalize", letterSpacing: "-0.01em" }}>
+                          {phase === "other" ? "Other Documents" : `${phase} OJT`}
+                        </span>
+                      </div>
+                      
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.65rem", flexShrink: 0 }}>
+                        <span style={{ color: isOpen ? "#1d4ed8" : "#94a3b8", transition: "color 0.2s" }}>
+                          <svg className={`accordion-chevron${isOpen ? " open" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="6 9 12 15 18 9" />
+                          </svg>
+                        </span>
+                      </div>
+                    </button>
 
                   {openSection === phase && (
                     <div style={{ padding: "16px", background: "#f8fafc", borderBottom: "1px solid #e2e8f0" }}>
@@ -695,7 +797,7 @@ export default function ProfilePage() {
                           </div>
 
                           {/* Week Uploads Grid */}
-                          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(380px, 1fr))", gap: "24px" }}>
+                          <div className="upload-grid">
                             {REQUIRED_DOCUMENTS.filter(r => r.phase === "during").map(req => {
                               let existingDoc = documents.find(d => d.week === activeWeek && d.name === req.title);
                               if (!existingDoc) {
@@ -708,7 +810,7 @@ export default function ProfilePage() {
                           </div>
                         </div>
                       ) : (
-                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 350px), 1fr))", gap: "24px" }}>
+                        <div className="upload-grid">
                           {documents.filter(d => d.phase === phase).map(doc => (
                             <DocumentCardItem key={doc.id} doc={doc} onUpload={handleUpload} onRemove={handleRemoveDocument} onView={handleViewPdf} />
                           ))}
@@ -717,7 +819,8 @@ export default function ProfilePage() {
                     </div>
                   )}
                 </div>
-              ))
+              );
+            })
             )}
           </div>
         </RevealBox>

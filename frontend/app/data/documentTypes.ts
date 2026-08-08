@@ -17,7 +17,10 @@ export interface RequiredDocument {
   shortTitle: string;
   phase: DocumentPhase;
   aliases?: string[];
+  required?: boolean;
 }
+
+export const TOTAL_REQUIRED_DOCS = 17; // Updated from 18 by excluding optional docs
 
 /* ═══════════════════════════════════════════════════════════════════ */
 /*  Canonical required-document catalog — 18 items                    */
@@ -28,26 +31,26 @@ export const REQUIRED_DOCUMENTS: RequiredDocument[] = [
   {
     id: "resume",
     title: "Resume",
-    shortTitle: "Resume",
+    shortTitle: "RESUME",
     phase: "before",
   },
   {
     id: "internship-agreement",
     title: "Internship Agreement",
-    shortTitle: "Intern Agree.",
+    shortTitle: "INTERN. AGR.",
     phase: "before",
   },
   {
     id: "endorsement-letter",
     title: "Letter of Endorsement",
-    shortTitle: "Endorsement",
+    shortTitle: "ENDORSE.",
     phase: "before",
     aliases: ["Endorsement Letter"],
   },
   {
     id: "letter-of-intent",
     title: "Letter of Intent",
-    shortTitle: "Letter of Intent",
+    shortTitle: "L.O.I.",
     phase: "before",
   },
   {
@@ -60,19 +63,20 @@ export const REQUIRED_DOCUMENTS: RequiredDocument[] = [
   {
     id: "overtime-agreement",
     title: "Overtime Agreement",
-    shortTitle: "OT Agreement",
+    shortTitle: "OT AGR.",
     phase: "before",
+    required: false,
   },
   {
     id: "pup-consent-form",
     title: "PUP Consent Form",
-    shortTitle: "PUP Consent",
+    shortTitle: "PUP CONSENT",
     phase: "before",
   },
   {
     id: "student-waiver",
     title: "Student Waiver",
-    shortTitle: "Waiver",
+    shortTitle: "WAIVER",
     phase: "before",
     aliases: ["waiver", "Parental Consent / Waiver", "Parental Consent Waiver"],
   },
@@ -88,14 +92,14 @@ export const REQUIRED_DOCUMENTS: RequiredDocument[] = [
   {
     id: "weekly-photo-documentation",
     title: "Weekly Photo Documentation Report",
-    shortTitle: "Photo Doc.",
+    shortTitle: "PHOTO DOC.",
     phase: "during",
     aliases: ["Photo Documentation", "photo-documentation"],
   },
   {
     id: "weekly-report",
     title: "Weekly Report",
-    shortTitle: "Weekly Rpt.",
+    shortTitle: "WEEKLY RPT.",
     phase: "during",
   },
 
@@ -103,32 +107,32 @@ export const REQUIRED_DOCUMENTS: RequiredDocument[] = [
   {
     id: "evaluation-hte",
     title: "Evaluation Instrument for HTE",
-    shortTitle: "Eval. HTE",
+    shortTitle: "EVAL. HTE",
     phase: "after",
   },
   {
     id: "evaluation-student-intern",
     title: "Evaluation Instrument for Student Intern",
-    shortTitle: "Eval. Student",
+    shortTitle: "EVAL. STU.",
     phase: "after",
   },
   {
     id: "evaluation-training-supervisor",
     title: "Evaluation Instrument for Training Supervisor",
-    shortTitle: "Eval. Supervisor",
+    shortTitle: "EVAL. SUP.",
     phase: "after",
   },
   {
     id: "ojt-adviser-evaluation",
     title: "OJT Adviser Performance Evaluation",
-    shortTitle: "Adviser Eval.",
+    shortTitle: "ADVISER",
     phase: "after",
     aliases: ["Performance Evaluation", "evaluation-form"],
   },
   {
     id: "trainee-performance-evaluation",
     title: "Trainee Performance Evaluation",
-    shortTitle: "Trainee Eval.",
+    shortTitle: "TRAINEE",
     phase: "after",
   },
 
@@ -136,13 +140,13 @@ export const REQUIRED_DOCUMENTS: RequiredDocument[] = [
   {
     id: "completion-cert",
     title: "Certificate of Completion",
-    shortTitle: "Cert. Compl.",
+    shortTitle: "CERT. COMPL.",
     phase: "other",
   },
   {
     id: "narrative-report",
     title: "Narrative Report",
-    shortTitle: "Narrative",
+    shortTitle: "NARRATIVE",
     phase: "other",
   },
 ];

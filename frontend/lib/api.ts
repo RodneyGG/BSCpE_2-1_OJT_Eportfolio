@@ -39,7 +39,10 @@ export async function fetchApi(endpoint: string, options: RequestInit = {}) {
     headers.set('Content-Type', 'application/json');
   }
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+  // Ensure safe URL concatenation
+  const base = API_BASE_URL.replace(/\/$/, '');
+  const path = endpoint.replace(/^\//, '');
+  const response = await fetch(`${base}/${path}`, {
     ...options,
     headers,
   });

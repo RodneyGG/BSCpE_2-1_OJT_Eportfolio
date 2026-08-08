@@ -513,8 +513,14 @@ export default function AppNavbar() {
                 width: 26, height: 26, borderRadius: "50%",
                 background: "linear-gradient(135deg, #f59e0b 0%, #ef4444 100%)",
                 display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: "0.6rem", fontWeight: 800, color: "white", flexShrink: 0,
-              }}>{initials}</div>
+                fontSize: "0.6rem", fontWeight: 800, color: "white", flexShrink: 0, overflow: "hidden"
+              }}>
+                {user?.profile_picture ? (
+                  <img src={user.profile_picture} alt="Profile" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                ) : (
+                  initials
+                )}
+              </div>
               <span className="user-name-text" style={{ fontSize: "0.75rem", fontWeight: 700, color: "white",
                 letterSpacing: "0.05em", textTransform: "uppercase", whiteSpace: "nowrap" }}>
                 {user?.name}

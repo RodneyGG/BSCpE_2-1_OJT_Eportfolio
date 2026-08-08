@@ -4,7 +4,7 @@
 A Next.js frontend application for a BSCpE OJT e-portfolio. The application features student profiles, company dashboards, and document submission tracking.
 
 ## 2. Current State (Replace entirely on update)
-**Status**: The student profile page (`frontend/app/profile/page.tsx`) has been refined and modernized.
+**Status**: The student profile page (`frontend/app/profile/page.tsx`) has been refined and modernized, and the Admin Checklist page (`frontend/app/admin/checklist/page.tsx`) has robust print support.
 - The Required Documents section was successfully converted from a horizontal tab bar into a single-open accordion. The During OJT accordion body retains the complex week navigation, schedule card, and uploads grid functionality perfectly.
 - The top layout of the profile page was redesigned. The Student Information card and Hours Rendered card were merged into a single horizontal bar for a cleaner layout. OJT Deployment is now a standalone full-width card underneath the merged profile bar.
 - An exact hardcoded UI scale-down was executed to strictly enforce smaller constraints and remove clamps: section headers are fixed at `16px`, main metrics (0.00) at `28px`, the student name at `20px`, and global card paddings are explicitly `16px` (except OJT Deployment, which remains completely untouched).
@@ -12,10 +12,87 @@ A Next.js frontend application for a BSCpE OJT e-portfolio. The application feat
 - Submission History retains its original flat-table layout, making all historical data visible at a glance. (An accordion design was temporarily tested but reverted).
 - Fixed a bug where a native browser scrollbar appeared inside the Rejected box because fixed heights (`110px`) caused content overflow. Height restrictions were swapped for padding bounds to allow the content to breathe. The empty "Drag PDF" upload box was also tightened vertically.
 - Executed a global mobile responsiveness audit: The global `AppNavbar` collapses text elements at `< 768px` to prevent horizontal overflow, the upload card grid properly drops to 1 column using `min(100%, 350px)`, and the profile/hours bar properly stacks vertically.
+- The Required Documents accordion was redesigned to match the visual language of the Companies list (subtle hover states, gradient active backgrounds, 180-degree chevron rotation). The document count badges were recently removed to declutter the UI.
+- The Overtime Agreement document is now officially **optional**. It is excluded from the global `17` required documents count, has an "Optional" label rendered on its upload card if unsubmitted, and displays a muted "OPTIONAL" placeholder instead of a missing dot on the checklist table.
+- A new **"Ongoing"** status (blue badge) was introduced on the Student Profile's overall Hours Rendered tracker. It renders for all active deployments under 300 hours, transitioning to "Approved" at 300+.
+- The upload card grid was restricted to a strict 3-column maximum (`repeat(3, 1fr)`) to prevent overly wide rows on large monitors.
 - Crucially, the internal layout, data bindings, and specific styling of the OJT Deployment card were rigorously preserved through all layout changes to fulfill the scope-lock requirements.
-- All modifications are currently on the `feature/profile-accordion-and-merge` branch. No changes to the actual shared components' core structure (e.g. `RevealBox`, `StatusBadge`) were performed, preserving the design system.
+- The `profile/page.tsx` `.main-container` outer bounds were fully synchronized with the Companies page layout constraints (`1280px` max-width, `2rem 2rem 3rem` padding) for seamless cross-page navigation.
+- The Admin Checklist page now has robust `@media print` styles enforcing a landscape orientation, and a meticulously scaled table (`transform: scale(0.78); width: 128%`) allowing the 18-column table to fit gracefully on one page without cutting off or force-wrapping text headers (`white-space: nowrap`).
+- Added detailed error logging to the deployment fetch catch block to capture status codes and server messages for debugging "No OJT Deployment on Record" failures. Diagnosed an issue where Laravel Octane (FrankenPHP) needed a container restart (`docker compose restart backend`) to load new routes into memory.
+- All modifications are currently on the `feature/profile-accordion-and-merge` branch. No changes to the actual shared components' core structure (e.g. `RevealBox`) were performed, preserving the design system.
 
 ## 3. Session Logs
+### 2026-08-08 - Checklist Print Readability Improvements
+- **Agent:** Antigravity
+- **Summary of Changes:**
+  - Updated all document `shortTitle`s in `frontend/app/data/documentTypes.ts` to use clearer, non-truncated abbreviations (e.g., "EVAL. HTE", "L.O.I.", "WAIVER", "PHOTO DOC.").
+  - Removed CSS rules `text-overflow: ellipsis` and `overflow: hidden` from the table header in both screen and print CSS to ensure every column header is completely visible without truncation.
+  - Added an "Abbreviations Legend" section below the checklist table (specifically scoped for print styling context but visible normally) that maps each short abbreviation back to its full `title`.
+  - Added distinct, strong vertical borders (`2px solid #94a3b8`) between document phases (Before/During/After/Other) to make tracing rows easier across the landscape page.
+  - Increased the vertical padding on table cells from `4px` to `6px` in `@media print` to provide more breathing room while still comfortably fitting on one landscape sheet.
+- **Branch:** `feature/profile-accordion-and-merge`
+
+### 2026-08-08 - Document Viewer in Student Panel & Checklist Refactor
+- **Agent:** Antigravity
+- **Summary of Changes:**
+  - **AdminStudentPanel Refactor:** Converted the student detail panel from a right-aligned slide-out into a centered floating modal window. Features a max-width of 560px, 85vh max-height with internal scrolling, and a fade/scale entrance animation (`modalFadeScale`). Added keyboard support (Escape key to close) and preserved click-outside-to-close behavior, while ensuring inner modals (like the document preview) don't trigger outer closure. Fixed grammatical pluralization for the document accordion badge ("1 Doc" vs "2 Docs").
+  - **Submitted Documents Viewer:** Added a "Submitted Documents" section to the `AdminStudentPanel` modal (used by prof/admin users) showing all uploaded documents.
+  - Reorganized the "Submitted Documents" section into a Before/During/After/Other OJT accordion structure, matching the styling and logic used on the student profile page.
+  - Integrated the `DocumentViewerModal` used in `DocumentReviewList` to allow inline previewing of these submitted documents (modal pop-up instead of new tab).
+  - Verified and confirmed that the underlying API endpoint (`GET /api/admin/users/{user}`) natively loads all related documents and is strictly role-protected by Laravel middleware `->middleware('role:admin,prof')`, ensuring proper server-side access control.
+  - **Checklist Row Removal:** Removed the leftmost `#` column (row number) from the OJT Submission Checklist (`frontend/app/admin/checklist/page.tsx`).
+  - Adjusted the print layout CSS (`width: 16%` for `cl-th-name`) to compensate for the removed column.
+  - **Checklist Readability (Screen):**
+    - Removed `maxWidth` clipping on table headers and utilized existing abbreviations (`doc.shortTitle`) to prevent awkward truncation.
+    - Added horizontal sticky-scrolling for the first three columns ("Student", "Company", "Progress"), ensuring identity remains visible while scrolling horizontally across the dense document columns.
+    - Redesigned status dots to be larger and highly visible (`border-radius: 50%`, `28px` diameter) mimicking standard admin dashboard status pips, and increased base font size across the table.
+    - Converted the "Abbreviations Legend" at the bottom of the screen to a card-based collapsible accordion (collapsed by default), reducing visual clutter.
+  - **Checklist Print Layout Fix:**
+    - Adjusted print CSS to shrink the new status dots down to 13px specifically for `@media print` (`.cl-dot`).
+    - Tightened `th` and `td` padding to `4px 1px` and bumped font sizes down slightly (`6pt` for `th`) to ensure the full list of abbreviations perfectly fit horizontally without overlapping or getting clipped.
+    - Replaced text-based status characters (`✓`, `✗`, `⏳`) with robust explicit SVG icons (`StatusIconSVG`) inside the `STATUS_CFG` to prevent them from rendering as generic fallback "info" icons in print output. Verified the page CSS only uses standard `@page { size: landscape; }` without forced manual rotation, so print logic dictates natural layout.
+  - **Student Detail Modal Tweaks:** 
+    - Increased `maxHeight` to `90vh` and stripped out the visible scrollbar using native CSS (`::-webkit-scrollbar { display: none; }` and `scrollbar-width: none;`) to make the UI look like a seamless unbroken panel even if slight scrolling is needed.
+- **Branch:** `feature/profile-accordion-and-merge`
+
+### 2026-08-08 - Profile Avatar Upload Feature
+- **Agent:** Antigravity
+- **Summary of Changes:**
+  - Audited the entire codebase again to verify the "X DOCS" badges are truly gone. The `{count} DOCS` badges were scrubbed in a previous commit, and there is no duplicate component rendering them. If they appear, a hard refresh or server restart might be needed.
+  - Implemented profile picture uploads:
+    - Added a `profile_picture` column to the `users` table via a new backend migration and updated the `User` model's `$fillable` array.
+    - Added `POST /api/profile/picture` and `DELETE /api/profile/picture` endpoints in `AuthController` to handle multipart/form-data image uploads with 5MB validation.
+    - Created an interactive clickable avatar area in the "Edit Profile" state of `profile/page.tsx` that replaces the initials with a file picker overlay.
+    - Updated `AppNavbar.tsx` and the `RoleContext` to globally distribute the `profile_picture` URL so the user's avatar reflects across the top navigation bar and dashboard.
+    - Implemented a "Remove Photo" button for users to revert to their initials.
+- **Branch:** `feature/profile-accordion-and-merge`
+
+### 2026-08-08 - Optional Documents, Ongoing Status, & Print Scale Fix
+- **Agent:** Antigravity
+- **Summary of Changes:**
+  - Audited the codebase to confirm "X DOCS" category badges were fully scrubbed.
+  - Made the "Overtime Agreement" optional: updated `documentTypes.ts` with a `required: false` flag and updated the global `TOTAL_REQUIRED_DOCS` to 17. Modified Checklist logic to ignore optional documents when checking completeness and calculating the fraction (`submitted/17`).
+  - Implemented an "Ongoing" (blue) overall status badge in `StatusBadge.tsx` and applied it to the overall Hours Rendered status in `profile/page.tsx` for students with `< 300` hours.
+  - Improved the Admin Checklist print layout by enforcing `transform: scale(0.78)`, `width: 128%`, and `white-space: nowrap` within `@media print` to guarantee the 18 columns fit one landscape page perfectly without letter-stacking. Appended an italicized "(Optional)" modifier to the Overtime Agreement print header.
+- **Branch:** `feature/profile-accordion-and-merge`
+### 2026-08-08 - UI Fixes & Backend Route Debugging
+- **Agent:** Antigravity
+- **Summary of Changes:**
+  - Removed the `[X] DOCS` pill badge from the Required Documents accordion headers in `profile/page.tsx`.
+  - Added robust `@media print` CSS to `checklist/page.tsx` to force landscape printing, allow the 18-column table to fit and wrap gracefully, and hide non-essential UI chrome.
+  - Synchronized the `profile/page.tsx` outer container margins and max-width directly with the Companies page (`page.tsx`) to eliminate jumpiness when navigating between pages.
+  - Diagnosed alternating `500` and `404` errors on `/api/deployments/mine` as an artifact of Laravel Octane loading stale routes in memory; advised user to run `docker compose restart backend` and `php artisan migrate`.
+- **Branch:** `feature/profile-accordion-and-merge`
+
+### 2026-08-08 - Accordion UI & Grid Restrictions
+- **Agent:** Antigravity
+- **Summary of Changes:** 
+  - Improved error logging in `page.tsx` for the `/deployments/mine` endpoint to print full status, message, and error payloads instead of an empty `{}` object.
+  - Replaced the `auto-fill` CSS grid on the Required Documents upload section with a strict `.upload-grid` class that maxes out at 3 columns and steps down to 2 and 1 on smaller breakpoints.
+  - Restyled the `.accordion-header` and `.accordion-chevron` to exactly mimic the visual styling of `HeroCompanyRow` (padding, 180deg chevrons, number circles, gradient active state, and doc count pill).
+- **Branch:** `feature/profile-accordion-and-merge`
+
 ### 2026-08-07 - Mobile Responsiveness Audit
 - **Agent:** Antigravity
 - **Summary of Changes:** 
