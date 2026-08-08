@@ -11,6 +11,7 @@ interface User {
   role: Role;
   company_id?: number | null;
   company?: { id: number; name: string; address?: string } | null;
+  profile_picture?: string | null;
   must_change_password?: boolean;
 }
 

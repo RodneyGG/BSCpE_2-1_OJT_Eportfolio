@@ -23,6 +23,18 @@ A Next.js frontend application for a BSCpE OJT e-portfolio. The application feat
 - All modifications are currently on the `feature/profile-accordion-and-merge` branch. No changes to the actual shared components' core structure (e.g. `RevealBox`) were performed, preserving the design system.
 
 ## 3. Session Logs
+### 2026-08-08 - Profile Avatar Upload Feature
+- **Agent:** Antigravity
+- **Summary of Changes:**
+  - Audited the entire codebase again to verify the "X DOCS" badges are truly gone. The `{count} DOCS` badges were scrubbed in a previous commit, and there is no duplicate component rendering them. If they appear, a hard refresh or server restart might be needed.
+  - Implemented profile picture uploads:
+    - Added a `profile_picture` column to the `users` table via a new backend migration and updated the `User` model's `$fillable` array.
+    - Added `POST /api/profile/picture` and `DELETE /api/profile/picture` endpoints in `AuthController` to handle multipart/form-data image uploads with 5MB validation.
+    - Created an interactive clickable avatar area in the "Edit Profile" state of `profile/page.tsx` that replaces the initials with a file picker overlay.
+    - Updated `AppNavbar.tsx` and the `RoleContext` to globally distribute the `profile_picture` URL so the user's avatar reflects across the top navigation bar and dashboard.
+    - Implemented a "Remove Photo" button for users to revert to their initials.
+- **Branch:** `feature/profile-accordion-and-merge`
+
 ### 2026-08-08 - Optional Documents, Ongoing Status, & Print Scale Fix
 - **Agent:** Antigravity
 - **Summary of Changes:**
