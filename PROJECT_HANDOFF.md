@@ -43,6 +43,11 @@ A Next.js frontend application for a BSCpE OJT e-portfolio. The application feat
   - Verified and confirmed that the underlying API endpoint (`GET /api/admin/users/{user}`) natively loads all related documents and is strictly role-protected by Laravel middleware `->middleware('role:admin,prof')`, ensuring proper server-side access control.
   - **Checklist Row Removal:** Removed the leftmost `#` column (row number) from the OJT Submission Checklist (`frontend/app/admin/checklist/page.tsx`).
   - Adjusted the print layout CSS (`width: 16%` for `cl-th-name`) to compensate for the removed column.
+  - **Checklist Readability (Screen):**
+    - Removed `maxWidth` clipping on table headers and utilized existing abbreviations (`doc.shortTitle`) to prevent awkward truncation.
+    - Added horizontal sticky-scrolling for the first three columns ("Student", "Company", "Progress"), ensuring identity remains visible while scrolling horizontally across the dense document columns.
+    - Redesigned status dots to be larger and highly visible (`border-radius: 50%`, `28px` diameter) mimicking standard admin dashboard status pips, and increased base font size across the table.
+    - Converted the "Abbreviations Legend" at the bottom of the screen to a card-based collapsible accordion (collapsed by default), reducing visual clutter.
 - **Branch:** `feature/profile-accordion-and-merge`
 
 ### 2026-08-08 - Profile Avatar Upload Feature

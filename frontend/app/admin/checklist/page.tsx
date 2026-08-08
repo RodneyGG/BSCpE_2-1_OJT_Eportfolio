@@ -164,6 +164,7 @@ export default function ChecklistPage() {
   const [students, setStudents] = useState<ChecklistStudent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [legendOpen, setLegendOpen] = useState(false);
 
   /* Filters */
   const [searchQuery, setSearchQuery] = useState("");
@@ -295,32 +296,44 @@ export default function ChecklistPage() {
         .cl-table-wrap {
           overflow-x: auto; border-radius: 1rem; border: 1px solid #e2e8f0;
           background: white; box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+          max-width: 100%;
         }
         .cl-table {
-          width: 100%; border-collapse: collapse; font-size: 0.82rem;
+          width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.85rem;
         }
         .cl-table th {
           background: #f8fafc; font-weight: 700; color: #475569;
-          text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.7rem;
-          padding: 0.6rem 0.45rem; border-bottom: 2px solid #e2e8f0;
+          text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.72rem;
+          padding: 0.75rem 0.5rem; border-bottom: 2px solid #e2e8f0;
           white-space: nowrap; text-align: center; position: relative;
         }
-        .cl-table th.cl-th-name { text-align: left; padding-left: 1rem; min-width: 180px; position: sticky; left: 0; z-index: 2; background: #f8fafc; }
-        .cl-table th.cl-th-company { text-align: left; min-width: 120px; }
-        .cl-table th.cl-th-progress { min-width: 100px; }
         .cl-table td {
-          padding: 0.5rem 0.45rem; border-bottom: 1px solid #f1f5f9;
+          padding: 0.6rem 0.5rem; border-bottom: 1px solid #f1f5f9;
           text-align: center; vertical-align: middle;
         }
-        .cl-table td.cl-td-name { text-align: left; padding-left: 1rem; position: sticky; left: 0; z-index: 1; background: white; }
-        .cl-table tbody tr { transition: background 0.15s; }
+        .cl-table tbody tr { background: white; transition: background 0.15s; }
         .cl-table tbody tr:hover { background: #f0f9ff; }
-        .cl-table tbody tr:hover td.cl-td-name { background: #f0f9ff; }
+
+        /* Sticky Columns */
+        .cl-table th.cl-sticky, .cl-table td.cl-sticky { position: sticky; z-index: 2; }
+        .cl-table th.cl-sticky { z-index: 10; background: #f8fafc; }
+        .cl-table td.cl-sticky { background: inherit; }
+
+        .cl-table th.cl-th-name, .cl-table td.cl-td-name { left: 0; width: 220px; min-width: 220px; text-align: left; padding-left: 1rem; border-right: 1px solid #f1f5f9; }
+        .cl-table th.cl-th-company, .cl-table td.cl-td-company { left: 220px; width: 140px; min-width: 140px; text-align: left; border-right: 1px solid #f1f5f9; }
+        .cl-table th.cl-th-progress, .cl-table td.cl-td-progress { 
+          left: 360px; width: 110px; min-width: 110px; 
+          border-right: 2px solid #94a3b8; 
+          box-shadow: 4px 0 8px -2px rgba(0,0,0,0.05);
+        }
+        /* Override border for headers */
+        .cl-table th.cl-th-name, .cl-table th.cl-th-company { border-right: 1px solid #e2e8f0; }
+        .cl-table th.cl-th-progress { border-right: 2px solid #94a3b8; box-shadow: 4px 0 8px -2px rgba(0,0,0,0.05); }
 
         /* Phase group header */
         .cl-phase-header {
-          font-size: 0.6rem; font-weight: 800; text-transform: uppercase;
-          letter-spacing: 0.1em; padding: 0.25rem 0.35rem;
+          font-size: 0.65rem; font-weight: 800; text-transform: uppercase;
+          letter-spacing: 0.1em; padding: 0.4rem 0.35rem;
           border-bottom: 2px solid; white-space: nowrap;
           border-right: 2px solid #94a3b8 !important;
         }
@@ -328,16 +341,16 @@ export default function ChecklistPage() {
         /* Status dot */
         .cl-dot {
           display: inline-flex; align-items: center; justify-content: center;
-          width: 24px; height: 24px; border-radius: 6px;
-          font-size: 0.7rem; font-weight: 800; cursor: default;
+          width: 28px; height: 28px; border-radius: 50%;
+          font-size: 0.85rem; font-weight: 800; cursor: default;
           transition: transform 0.15s;
         }
-        .cl-dot:hover { transform: scale(1.2); }
+        .cl-dot:hover { transform: scale(1.15); }
 
         /* Progress bar */
         .cl-progress-bar {
           height: 6px; border-radius: 99px; background: #e2e8f0; overflow: hidden;
-          margin-top: 0.25rem;
+          margin-top: 0.35rem;
         }
         .cl-progress-fill {
           height: 100%; border-radius: 99px; transition: width 0.4s ease;
@@ -345,6 +358,7 @@ export default function ChecklistPage() {
 
         /* Print header */
         .cl-print-header { display: none; }
+        .cl-print-legend { display: none; }
 
         /* ── Responsive ── */
         @media (max-width: 768px) {
@@ -373,11 +387,13 @@ export default function ChecklistPage() {
           .cl-table { font-size: 8pt !important; width: 100%; table-layout: fixed; border-collapse: collapse; }
           .cl-table th { padding: 6px 2px !important; font-size: 7pt !important; white-space: nowrap !important; line-height: 1.1; }
           .cl-table td { padding: 6px 2px !important; }
-          .cl-table th.cl-th-name { width: 16%; min-width: auto; position: static !important; }
-          .cl-table th.cl-th-company { width: 10%; min-width: auto; }
-          .cl-table th.cl-th-progress { width: 7%; min-width: auto; border-right: 2px solid #94a3b8 !important; }
-          .cl-table td.cl-td-name { position: static !important; }
-          .cl-dot { width: 14px; height: 14px; font-size: 6pt; border-radius: 3px; border: 1px solid #cbd5e1; }
+          .cl-table th.cl-th-name { width: 16%; min-width: auto; position: static !important; box-shadow: none !important; border-right: 1px solid #e2e8f0 !important; }
+          .cl-table td.cl-td-name { position: static !important; box-shadow: none !important; border-right: 1px solid #e2e8f0 !important; }
+          .cl-table th.cl-th-company { width: 10%; min-width: auto; position: static !important; box-shadow: none !important; border-right: 1px solid #e2e8f0 !important; }
+          .cl-table td.cl-td-company { position: static !important; box-shadow: none !important; border-right: 1px solid #e2e8f0 !important; }
+          .cl-table th.cl-th-progress { width: 7%; min-width: auto; position: static !important; border-right: 2px solid #94a3b8 !important; box-shadow: none !important; }
+          .cl-table td.cl-td-progress { position: static !important; border-right: 2px solid #94a3b8 !important; box-shadow: none !important; }
+          .cl-dot { width: 16px; height: 16px; font-size: 7pt; border-radius: 50%; border: 1px solid #cbd5e1; }
           .cl-progress-bar { height: 4px; }
           .cl-stat-row { gap: 0.5rem !important; }
         }
@@ -559,9 +575,9 @@ export default function ChecklistPage() {
                 <thead>
                   {/* Phase group row */}
                   <tr>
-                    <th className="cl-th-name" rowSpan={2} style={{ borderRight: "1px solid #e2e8f0" }}>Student</th>
-                    <th className="cl-th-company" rowSpan={2} style={{ borderRight: "1px solid #e2e8f0" }}>Company</th>
-                    <th className="cl-th-progress" rowSpan={2} style={{ borderRight: "2px solid #94a3b8" }}>Progress</th>
+                    <th className="cl-th-name cl-sticky" rowSpan={2}>Student</th>
+                    <th className="cl-th-company cl-sticky" rowSpan={2}>Company</th>
+                    <th className="cl-th-progress cl-sticky" rowSpan={2}>Progress</th>
                     {PHASE_ORDER.map((phase) => {
                       const docs = getDocumentsByPhase(phase);
                       if (docs.length === 0) return null;
@@ -587,9 +603,8 @@ export default function ChecklistPage() {
                           title={doc.title + (doc.required === false ? " (Optional)" : "")}
                           style={{
                             borderRight: i === arr.length - 1 ? "2px solid #94a3b8" : "1px solid #e2e8f0",
-                            maxWidth: 60,
-                            fontSize: "0.6rem",
-                            padding: "0.4rem 0.2rem",
+                            fontSize: "0.72rem",
+                            padding: "0.5rem 0.4rem",
                             fontStyle: doc.required === false ? "italic" : "normal",
                             color: doc.required === false ? "#94a3b8" : "inherit"
                           }}
@@ -607,15 +622,15 @@ export default function ChecklistPage() {
                     const isComplete = submitted >= TOTAL_REQUIRED_DOCS;
                     return (
                       <tr key={student.id}>
-                        <td className="cl-td-name" style={{ borderRight: "1px solid #f1f5f9" }}>
-                          <div style={{ fontWeight: 700, color: "#0f172a", fontSize: "0.85rem", lineHeight: 1.3 }}>{student.name}</div>
-                          <div style={{ fontSize: "0.7rem", color: "#94a3b8", marginTop: "0.1rem" }}>{student.email}</div>
+                        <td className="cl-td-name cl-sticky">
+                          <div style={{ fontWeight: 700, color: "#0f172a", fontSize: "0.9rem", lineHeight: 1.3 }}>{student.name}</div>
+                          <div style={{ fontSize: "0.75rem", color: "#64748b", marginTop: "0.1rem" }}>{student.email}</div>
                         </td>
-                        <td style={{ textAlign: "left", borderRight: "1px solid #f1f5f9", fontSize: "0.8rem", color: "#475569", fontWeight: 500 }}>
+                        <td className="cl-td-company cl-sticky" style={{ fontSize: "0.82rem", color: "#475569", fontWeight: 500 }}>
                           {student.company?.name ?? <span style={{ color: "#cbd5e1", fontStyle: "italic" }}>Not assigned</span>}
                         </td>
-                        <td style={{ borderRight: "2px solid #94a3b8", minWidth: 90 }}>
-                          <div style={{ fontSize: "0.78rem", fontWeight: 700, color: isComplete ? "#16a34a" : "#0f172a" }}>
+                        <td className="cl-td-progress cl-sticky">
+                          <div style={{ fontSize: "0.8rem", fontWeight: 700, color: isComplete ? "#16a34a" : "#0f172a" }}>
                             {submitted}/{TOTAL_REQUIRED_DOCS}
                           </div>
                           <div className="cl-progress-bar">
@@ -682,6 +697,38 @@ export default function ChecklistPage() {
 
         {/* ── Abbreviations Key ── */}
         <RevealBox delay={0.48}>
+          <div className="cl-card cl-no-print" style={{ marginTop: "2.5rem", overflow: "hidden" }}>
+            <button 
+              onClick={() => setLegendOpen(!legendOpen)}
+              style={{ width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center", background: "none", border: "none", padding: 0, cursor: "pointer" }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                <div style={{ width: 32, height: 32, borderRadius: "0.75rem", background: "#f1f5f9", color: "#64748b", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <IconCheckCircle />
+                </div>
+                <h4 style={{ margin: 0, color: "#0f172a", fontSize: "0.9rem", textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 800 }}>
+                  Abbreviations Legend
+                </h4>
+              </div>
+              <div style={{ color: "#64748b", transform: legendOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.3s" }}>
+                <IconChevron />
+              </div>
+            </button>
+            <div style={{ 
+              display: "grid", gridTemplateRows: legendOpen ? "1fr" : "0fr",
+              transition: "grid-template-rows 0.3s ease-out" 
+            }}>
+              <div style={{ overflow: "hidden" }}>
+                <div style={{ paddingTop: "1.25rem", marginTop: "1.25rem", borderTop: "1px solid #e2e8f0", display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "0.75rem", fontSize: "0.8rem", color: "#64748b" }}>
+                  {REQUIRED_DOCUMENTS.map(d => (
+                    <div key={d.id}><strong style={{ color: "#475569" }}>{d.shortTitle}</strong> = {d.title}</div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Print-only legend */}
           <div className="cl-print-legend" style={{ marginTop: "2rem", paddingTop: "1.5rem", borderTop: "1px solid #e2e8f0", fontSize: "0.7rem", color: "#64748b" }}>
             <h4 style={{ margin: "0 0 0.5rem 0", color: "#0f172a", fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.05em" }}>Abbreviations Legend</h4>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "0.5rem" }}>
