@@ -213,6 +213,10 @@ export default function ProfilePage() {
       .catch((err: any) => { if (err.status !== 401) console.error("Failed to load companies:", err); });
     fetchApi('/deployments/mine')
       .then((data) => {
+        if (!data) {
+          console.warn("fetchApi returned null/empty data for /deployments/mine");
+          return;
+        }
         setDeployment(data.deployment);
         if (data.deployment) {
           const initialOjtForm = {
@@ -228,7 +232,11 @@ export default function ProfilePage() {
           setOjtFormOriginal(initialOjtForm);
         }
       })
-      .catch((err: any) => { if (err.status !== 401) console.error("Failed to load deployment:", { status: err.status, message: err.message, errors: err.errors, raw: err }); })
+      .catch((err: any) => { 
+        if (err?.status !== 401) {
+          console.error("Failed to load deployment:", String(err), err?.message, err?.status);
+        }
+      })
       .finally(() => setDeploymentLoading(false));
 
     fetchApi('/documents/mine')
