@@ -428,7 +428,7 @@ export default function ProfilePage() {
   return (
     <ProtectedRoute>
     <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)", fontFamily: "var(--font-geist-sans, system-ui, sans-serif)", display: "flex", flexDirection: "column" }}>      <style>{`
-        .main-container { width: 95%; max-width: 1600px; margin: 0 auto; padding: 3rem 0; flex: 1; }
+        .main-container { width: 100%; max-width: 1280px; margin: 0 auto; padding: 2rem 2rem 3rem; flex: 1; box-sizing: border-box; }
         .ui-card { background: white; border-radius: 1.25rem; padding: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.04); border: 1px solid rgba(255,255,255,0.8); display: flex; flex-direction: column; height: auto; min-height: fit-content; }
         .responsive-grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 350px), 1fr)); gap: 24px; margin-bottom: 24px; align-items: stretch; }
         .profile-avatar { width: 56px; height: 56px; font-size: 1.5rem; border-radius: 50%; background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%); color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; flex-shrink: 0; }
@@ -459,14 +459,12 @@ export default function ProfilePage() {
         .rejected-delete-btn:hover { background: #fecaca; color: #991b1b; }
         
         @media (max-width: 1024px) {
-          .main-container { padding: 2rem 0; width: 92%; }
           .ui-card { padding: 20px; }
           .responsive-grid-2 { gap: 20px; margin-bottom: 20px; }
           .card-edit-btn, .card-save-btn, .card-cancel-btn { padding: 0.5rem 1rem; font-size: 0.85rem; }
         }
         
         @media (max-width: 768px) {
-          .main-container { padding: 1.5rem 1rem; width: 100%; }
           .ui-card { padding: 16px; }
           .responsive-grid-2 { gap: 16px; margin-bottom: 16px; }
           .profile-avatar { width: 44px; height: 44px; font-size: 1.2rem; }
@@ -475,6 +473,10 @@ export default function ProfilePage() {
           .card-edit-btn, .card-save-btn, .card-cancel-btn { min-width: fit-content; }
           .profile-bar-content { flex-direction: column; }
           .profile-bar-divider { width: 100%; height: 1px; margin: 16px 0; }
+        }
+
+        @media (max-width: 640px) {
+          .main-container { padding: 1rem; }
         }
       `}</style>
       <AppNavbar />
