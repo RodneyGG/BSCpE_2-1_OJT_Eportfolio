@@ -4,7 +4,7 @@
 A Next.js frontend application for a BSCpE OJT e-portfolio. The application features student profiles, company dashboards, and document submission tracking.
 
 ## 2. Current State (Replace entirely on update)
-**Status**: The student profile page (`frontend/app/profile/page.tsx`) has been refined and modernized.
+**Status**: The student profile page (`frontend/app/profile/page.tsx`) has been refined and modernized, and the Admin Checklist page (`frontend/app/admin/checklist/page.tsx`) has robust print support.
 - The Required Documents section was successfully converted from a horizontal tab bar into a single-open accordion. The During OJT accordion body retains the complex week navigation, schedule card, and uploads grid functionality perfectly.
 - The top layout of the profile page was redesigned. The Student Information card and Hours Rendered card were merged into a single horizontal bar for a cleaner layout. OJT Deployment is now a standalone full-width card underneath the merged profile bar.
 - An exact hardcoded UI scale-down was executed to strictly enforce smaller constraints and remove clamps: section headers are fixed at `16px`, main metrics (0.00) at `28px`, the student name at `20px`, and global card paddings are explicitly `16px` (except OJT Deployment, which remains completely untouched).
@@ -12,13 +12,24 @@ A Next.js frontend application for a BSCpE OJT e-portfolio. The application feat
 - Submission History retains its original flat-table layout, making all historical data visible at a glance. (An accordion design was temporarily tested but reverted).
 - Fixed a bug where a native browser scrollbar appeared inside the Rejected box because fixed heights (`110px`) caused content overflow. Height restrictions were swapped for padding bounds to allow the content to breathe. The empty "Drag PDF" upload box was also tightened vertically.
 - Executed a global mobile responsiveness audit: The global `AppNavbar` collapses text elements at `< 768px` to prevent horizontal overflow, the upload card grid properly drops to 1 column using `min(100%, 350px)`, and the profile/hours bar properly stacks vertically.
-- The Required Documents accordion was redesigned to match the visual language of the Companies list (subtle hover states, gradient active backgrounds, 180-degree chevron rotation, and doc count badges).
+- The Required Documents accordion was redesigned to match the visual language of the Companies list (subtle hover states, gradient active backgrounds, 180-degree chevron rotation). The document count badges were recently removed to declutter the UI.
 - The upload card grid was restricted to a strict 3-column maximum (`repeat(3, 1fr)`) to prevent overly wide rows on large monitors.
 - Crucially, the internal layout, data bindings, and specific styling of the OJT Deployment card were rigorously preserved through all layout changes to fulfill the scope-lock requirements.
-- Added detailed error logging to the deployment fetch catch block to capture status codes and server messages for debugging "No OJT Deployment on Record" failures.
+- The `profile/page.tsx` `.main-container` outer bounds were fully synchronized with the Companies page layout constraints (`1280px` max-width, `2rem 2rem 3rem` padding) for seamless cross-page navigation.
+- The Admin Checklist page now has robust `@media print` styles enforcing a landscape orientation, `overflow: visible` to prevent table cutoff, forced table wrapping (`word-wrap: break-word`), and properly hidden UI chrome (navbars, search bars, filters).
+- Added detailed error logging to the deployment fetch catch block to capture status codes and server messages for debugging "No OJT Deployment on Record" failures. Diagnosed an issue where Laravel Octane (FrankenPHP) needed a container restart (`docker compose restart backend`) to load new routes into memory.
 - All modifications are currently on the `feature/profile-accordion-and-merge` branch. No changes to the actual shared components' core structure (e.g. `RevealBox`, `StatusBadge`) were performed, preserving the design system.
 
 ## 3. Session Logs
+### 2026-08-08 - UI Fixes & Backend Route Debugging
+- **Agent:** Antigravity
+- **Summary of Changes:**
+  - Removed the `[X] DOCS` pill badge from the Required Documents accordion headers in `profile/page.tsx`.
+  - Added robust `@media print` CSS to `checklist/page.tsx` to force landscape printing, allow the 18-column table to fit and wrap gracefully, and hide non-essential UI chrome.
+  - Synchronized the `profile/page.tsx` outer container margins and max-width directly with the Companies page (`page.tsx`) to eliminate jumpiness when navigating between pages.
+  - Diagnosed alternating `500` and `404` errors on `/api/deployments/mine` as an artifact of Laravel Octane loading stale routes in memory; advised user to run `docker compose restart backend` and `php artisan migrate`.
+- **Branch:** `feature/profile-accordion-and-merge`
+
 ### 2026-08-08 - Accordion UI & Grid Restrictions
 - **Agent:** Antigravity
 - **Summary of Changes:** 
