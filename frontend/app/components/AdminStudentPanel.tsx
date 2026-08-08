@@ -90,7 +90,7 @@ export default function AdminStudentPanel({
   const [editingDeployment, setEditingDeployment] = useState(false);
   const [deploymentForm, setDeploymentForm] = useState({ role: "", supervisor_name: "", supervisor_contact: "", start_date: "", end_date: "" });
   const [savingDeployment, setSavingDeployment] = useState(false);
-  const [openSection, setOpenSection] = useState<string | null>("before");
+  const [openSection, setOpenSection] = useState<string | null>(null);
 
   useEffect(() => {
     fetchApi(`/admin/users/${student.id}`)
@@ -200,7 +200,7 @@ export default function AdminStudentPanel({
       <div
         className="hide-scroll"
         style={{
-          background: "white", width: "100%", maxWidth: "560px", maxHeight: "90vh",
+          background: "white", width: "100%", maxWidth: "640px", maxHeight: "95vh",
           overflowY: "auto", boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)",
           borderRadius: "1rem",
           display: "flex", flexDirection: "column", animation: "modalFadeScale 0.25s ease-out",
@@ -214,14 +214,14 @@ export default function AdminStudentPanel({
             from { opacity: 0; transform: scale(0.95) translateY(10px); }
             to   { opacity: 1; transform: scale(1) translateY(0); }
           }
-          .accordion-header { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.25rem; background: white; border: none; border-bottom: 1px solid #e2e8f0; cursor: pointer; transition: background 0.3s ease; font-family: inherit; font-size: inherit; }
+          .accordion-header { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 0.8rem 1rem; background: white; border: none; border-bottom: 1px solid #e2e8f0; cursor: pointer; transition: background 0.3s ease; font-family: inherit; font-size: inherit; }
           .accordion-header:hover { background: #f8fafc; }
           .accordion-header.open { background: linear-gradient(90deg, #eff6ff 0%, #f0f9ff 100%); }
           .accordion-chevron { width: 18px; height: 18px; color: #64748b; transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1); flex-shrink: 0; }
           .accordion-chevron.open { transform: rotate(180deg); color: #1d4ed8; }
         `}</style>
 
-        <div style={{ padding: "1.75rem 2rem", borderBottom: "1px solid #e2e8f0", background: "#f8fafc", display: "flex", gap: "1rem", alignItems: "center" }}>
+        <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #e2e8f0", background: "#f8fafc", display: "flex", gap: "1rem", alignItems: "center" }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={`https://ui-avatars.com/api/?name=${encodeURIComponent(student.name)}&size=100&background=random&color=fff&bold=true`}
@@ -242,11 +242,11 @@ export default function AdminStudentPanel({
           </button>
         </div>
 
-        <div style={{ padding: "2rem", flex: 1 }}>
-          <h3 style={{ fontSize: "0.75rem", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "0.75rem" }}>
+        <div style={{ padding: "1.5rem", flex: 1, paddingBottom: "2rem" }}>
+          <h3 style={{ fontSize: "0.75rem", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "0.5rem" }}>
             General Info
           </h3>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem", marginBottom: "1.75rem", fontSize: "0.85rem" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem", marginBottom: "1.25rem", fontSize: "0.85rem" }}>
             <div>
               <span style={{ color: "#94a3b8" }}>Phone</span>
               <div style={{ color: "#0f172a", fontWeight: 600 }}>{detail?.phone || (detailError ? "—" : "…")}</div>
@@ -340,10 +340,10 @@ export default function AdminStudentPanel({
             </div>
           )}
 
-          <h3 style={{ fontSize: "0.75rem", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "0.75rem" }}>
+          <h3 style={{ fontSize: "0.75rem", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "0.5rem" }}>
             Hours Rendered
           </h3>
-          <div style={{ background: "#f8fafc", borderRadius: "1rem", padding: "1rem", marginBottom: "1.75rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#f8fafc", borderRadius: "1rem", padding: "1rem", marginBottom: "1.75rem" }}>
             <div style={{ fontSize: "0.9rem", fontWeight: 700, color: "#0f172a" }}>
               {formatHours(renderedHoursOverride ?? student.hours_rendered)}{" "}
               <span style={{ color: "#64748b", fontWeight: 500 }}>/ {formatHours(student.required_hours)} hrs</span>
@@ -358,7 +358,7 @@ export default function AdminStudentPanel({
             </span>
           </div>
 
-          <h3 style={{ fontSize: "0.75rem", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "0.75rem" }}>
+          <h3 style={{ fontSize: "0.75rem", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "0.5rem" }}>
             Pending Documents
           </h3>
           {detailError ? (
@@ -380,7 +380,7 @@ export default function AdminStudentPanel({
             />
           )}
 
-          <h3 style={{ fontSize: "0.75rem", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "0.75rem", marginTop: "1.75rem" }}>
+          <h3 style={{ fontSize: "0.75rem", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "0.5rem", marginTop: "1.25rem" }}>
             Submitted Documents
           </h3>
           {detailError ? (
@@ -436,9 +436,9 @@ export default function AdminStudentPanel({
                       background: "#f8fafc",
                     }}>
                       <div style={{ overflow: "hidden" }}>
-                        <div style={{ padding: "1rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                        <div style={{ padding: "0.75rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                           {phaseDocs.map((doc) => (
-                            <div key={doc.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "1rem", border: "1px solid #e2e8f0", borderRadius: "0.75rem", background: "white" }}>
+                            <div key={doc.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.75rem 1rem", border: "1px solid #e2e8f0", borderRadius: "0.75rem", background: "white" }}>
                               <div>
                                 <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "#0f172a" }}>{doc.document_type}</div>
                                 <div style={{ fontSize: "0.75rem", color: "#64748b", marginTop: "0.2rem" }}>
