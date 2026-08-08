@@ -234,7 +234,7 @@ export default function ProfilePage() {
       })
       .catch((err: any) => { 
         if (err?.status !== 401) {
-          console.error("Failed to load deployment:", String(err), err?.message, err?.status);
+          console.error("Failed to load deployment:", err?.message || "Unknown error", `(Status: ${err?.status})`, "Raw:", err);
         }
       })
       .finally(() => setDeploymentLoading(false));
