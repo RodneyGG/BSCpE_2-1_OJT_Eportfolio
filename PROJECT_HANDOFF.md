@@ -23,6 +23,16 @@ A Next.js frontend application for a BSCpE OJT e-portfolio. The application feat
 - All modifications are currently on the `feature/profile-accordion-and-merge` branch. No changes to the actual shared components' core structure (e.g. `RevealBox`) were performed, preserving the design system.
 
 ## 3. Session Logs
+### 2026-08-08 - Checklist Print Readability Improvements
+- **Agent:** Antigravity
+- **Summary of Changes:**
+  - Updated all document `shortTitle`s in `frontend/app/data/documentTypes.ts` to use clearer, non-truncated abbreviations (e.g., "EVAL. HTE", "L.O.I.", "WAIVER", "PHOTO DOC.").
+  - Removed CSS rules `text-overflow: ellipsis` and `overflow: hidden` from the table header in both screen and print CSS to ensure every column header is completely visible without truncation.
+  - Added an "Abbreviations Legend" section below the checklist table (specifically scoped for print styling context but visible normally) that maps each short abbreviation back to its full `title`.
+  - Added distinct, strong vertical borders (`2px solid #94a3b8`) between document phases (Before/During/After/Other) to make tracing rows easier across the landscape page.
+  - Increased the vertical padding on table cells from `4px` to `6px` in `@media print` to provide more breathing room while still comfortably fitting on one landscape sheet.
+- **Branch:** `feature/profile-accordion-and-merge`
+
 ### 2026-08-08 - Document Viewer in Student Panel & Checklist Refactor
 - **Agent:** Antigravity
 - **Summary of Changes:**

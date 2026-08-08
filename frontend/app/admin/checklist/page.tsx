@@ -322,6 +322,7 @@ export default function ChecklistPage() {
           font-size: 0.6rem; font-weight: 800; text-transform: uppercase;
           letter-spacing: 0.1em; padding: 0.25rem 0.35rem;
           border-bottom: 2px solid; white-space: nowrap;
+          border-right: 2px solid #94a3b8 !important;
         }
 
         /* Status dot */
@@ -370,11 +371,11 @@ export default function ChecklistPage() {
             width: 128% !important; /* 1 / 0.78 to counteract the scale visually keeping right edge */
           }
           .cl-table { font-size: 8pt !important; width: 100%; table-layout: fixed; border-collapse: collapse; }
-          .cl-table th { padding: 4px 2px !important; font-size: 7pt !important; white-space: nowrap !important; line-height: 1.1; overflow: hidden; }
-          .cl-table td { padding: 4px 2px !important; }
+          .cl-table th { padding: 6px 2px !important; font-size: 7pt !important; white-space: nowrap !important; line-height: 1.1; }
+          .cl-table td { padding: 6px 2px !important; }
           .cl-table th.cl-th-name { width: 16%; min-width: auto; position: static !important; }
           .cl-table th.cl-th-company { width: 10%; min-width: auto; }
-          .cl-table th.cl-th-progress { width: 7%; min-width: auto; }
+          .cl-table th.cl-th-progress { width: 7%; min-width: auto; border-right: 2px solid #94a3b8 !important; }
           .cl-table td.cl-td-name { position: static !important; }
           .cl-dot { width: 14px; height: 14px; font-size: 6pt; border-radius: 3px; border: 1px solid #cbd5e1; }
           .cl-progress-bar { height: 4px; }
@@ -560,7 +561,7 @@ export default function ChecklistPage() {
                   <tr>
                     <th className="cl-th-name" rowSpan={2} style={{ borderRight: "1px solid #e2e8f0" }}>Student</th>
                     <th className="cl-th-company" rowSpan={2} style={{ borderRight: "1px solid #e2e8f0" }}>Company</th>
-                    <th className="cl-th-progress" rowSpan={2} style={{ borderRight: "1px solid #e2e8f0" }}>Progress</th>
+                    <th className="cl-th-progress" rowSpan={2} style={{ borderRight: "2px solid #94a3b8" }}>Progress</th>
                     {PHASE_ORDER.map((phase) => {
                       const docs = getDocumentsByPhase(phase);
                       if (docs.length === 0) return null;
@@ -570,7 +571,7 @@ export default function ChecklistPage() {
                           key={phase}
                           colSpan={docs.length}
                           className="cl-phase-header"
-                          style={{ background: pc.bg, color: pc.color, borderBottomColor: pc.border, borderRight: "1px solid #e2e8f0" }}
+                          style={{ background: pc.bg, color: pc.color, borderBottomColor: pc.border }}
                         >
                           {PHASE_LABELS[phase]} ({docs.length})
                         </th>
@@ -585,10 +586,8 @@ export default function ChecklistPage() {
                           key={doc.id}
                           title={doc.title + (doc.required === false ? " (Optional)" : "")}
                           style={{
-                            borderRight: i === arr.length - 1 ? "1px solid #e2e8f0" : undefined,
+                            borderRight: i === arr.length - 1 ? "2px solid #94a3b8" : "1px solid #e2e8f0",
                             maxWidth: 60,
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
                             fontSize: "0.6rem",
                             padding: "0.4rem 0.2rem",
                             fontStyle: doc.required === false ? "italic" : "normal",
@@ -615,7 +614,7 @@ export default function ChecklistPage() {
                         <td style={{ textAlign: "left", borderRight: "1px solid #f1f5f9", fontSize: "0.8rem", color: "#475569", fontWeight: 500 }}>
                           {student.company?.name ?? <span style={{ color: "#cbd5e1", fontStyle: "italic" }}>Not assigned</span>}
                         </td>
-                        <td style={{ borderRight: "1px solid #f1f5f9", minWidth: 90 }}>
+                        <td style={{ borderRight: "2px solid #94a3b8", minWidth: 90 }}>
                           <div style={{ fontSize: "0.78rem", fontWeight: 700, color: isComplete ? "#16a34a" : "#0f172a" }}>
                             {submitted}/{TOTAL_REQUIRED_DOCS}
                           </div>
@@ -643,7 +642,7 @@ export default function ChecklistPage() {
                               <td
                                 key={doc.id}
                                 title={`${doc.title}: ${cfg.label}`}
-                                style={{ borderRight: i === arr.length - 1 ? "1px solid #f1f5f9" : undefined }}
+                                style={{ borderRight: i === arr.length - 1 ? "2px solid #94a3b8" : "1px solid #f1f5f9" }}
                               >
                                 {doc.required === false && status === "none" ? (
                                   <div style={{ color: "#94a3b8", fontSize: "0.65rem", fontWeight: 700, fontStyle: "italic" }}>OPTIONAL</div>
@@ -680,6 +679,18 @@ export default function ChecklistPage() {
             </div>
           </RevealBox>
         )}
+
+        {/* ── Abbreviations Key ── */}
+        <RevealBox delay={0.48}>
+          <div className="cl-print-legend" style={{ marginTop: "2rem", paddingTop: "1.5rem", borderTop: "1px solid #e2e8f0", fontSize: "0.7rem", color: "#64748b" }}>
+            <h4 style={{ margin: "0 0 0.5rem 0", color: "#0f172a", fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.05em" }}>Abbreviations Legend</h4>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "0.5rem" }}>
+              {REQUIRED_DOCUMENTS.map(d => (
+                <div key={d.id}><strong style={{ color: "#475569" }}>{d.shortTitle}</strong> = {d.title}</div>
+              ))}
+            </div>
+          </div>
+        </RevealBox>
 
       </main>
     </div>
