@@ -228,7 +228,7 @@ export default function ProfilePage() {
           setOjtFormOriginal(initialOjtForm);
         }
       })
-      .catch((err: any) => { if (err.status !== 401) console.error("Failed to load deployment:", err); })
+      .catch((err: any) => { if (err.status !== 401) console.error("Failed to load deployment:", { status: err.status, message: err.message, errors: err.errors, raw: err }); })
       .finally(() => setDeploymentLoading(false));
 
     fetchApi('/documents/mine')
@@ -435,11 +435,14 @@ export default function ProfilePage() {
         .profile-bar-left { flex: 65; display: flex; gap: 16px; align-items: center; min-width: 0; }
         .profile-bar-divider { width: 1px; background: #e2e8f0; margin: 0 clamp(24px, 4vw, 40px); align-self: stretch; flex-shrink: 0; }
         .profile-bar-hours { flex: 35; display: flex; flex-direction: column; justify-content: center; min-width: 0; }
-        .accordion-header { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 1rem 16px; background: white; border: none; border-bottom: 1px solid #e2e8f0; border-left: 4px solid transparent; cursor: pointer; transition: all 0.2s ease; font-family: inherit; font-size: inherit; }
-        .accordion-header:hover { background: #f8fafc; border-left-color: #cbd5e1; }
-        .accordion-header.open { background: #f0f9ff; border-left-color: #3b82f6; }
-        .accordion-chevron { width: 16px; height: 16px; color: #64748b; transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); flex-shrink: 0; }
-        .accordion-chevron.open { transform: rotate(90deg); color: #3b82f6; }
+        .accordion-header { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.25rem; background: white; border: none; border-bottom: 1px solid #e2e8f0; cursor: pointer; transition: background 0.3s ease; font-family: inherit; font-size: inherit; }
+        .accordion-header:hover { background: #f8fafc; }
+        .accordion-header.open { background: linear-gradient(90deg, #eff6ff 0%, #f0f9ff 100%); }
+        .accordion-chevron { width: 18px; height: 18px; color: #64748b; transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1); flex-shrink: 0; }
+        .accordion-chevron.open { transform: rotate(180deg); color: #1d4ed8; }
+        .upload-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+        @media (max-width: 1024px) { .upload-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 768px) { .upload-grid { grid-template-columns: 1fr; } }
         .pdf-upload-box { transition: all 0.2s ease-in-out; }
         .pdf-upload-box:hover { background: #f1f5f9 !important; border-color: #94a3b8 !important; }
         .rejected-preview-btn { background: white; border: 1px solid #cbd5e1; color: #475569; border-radius: 0.5rem; padding: 0.6rem 1.2rem; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: all 0.15s; }
@@ -654,16 +657,49 @@ export default function ProfilePage() {
             {documentsLoading ? (
               <div style={{ textAlign: "center", color: "#94a3b8", padding: "4rem", fontSize: "1.25rem", fontWeight: 600 }}>Loading documents...</div>
             ) : (
-              ["before", "during", "after", "other"].map(phase => (
-                <div key={phase}>
-                  <button className={`accordion-header${openSection === phase ? " open" : ""}`} onClick={() => setOpenSection(prev => prev === phase ? null : phase)}>
-                    <span style={{ fontWeight: 800, fontSize: "clamp(0.9rem, 2.5vw, 1.1rem)", color: "#0f172a", textTransform: "capitalize" }}>
-                      {phase === "other" ? "Other Documents" : `${phase} OJT`}
-                    </span>
-                    <svg className={`accordion-chevron${openSection === phase ? " open" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M9 18l6-6-6-6" />
-                    </svg>
-                  </button>
+              ["before", "during", "after", "other"].map((phase, phaseIdx) => {
+                const isOpen = openSection === phase;
+                const count = documents.filter(d => d.phase === phase).length;
+                return (
+                  <div key={phase}>
+                    <button className={`accordion-header${isOpen ? " open" : ""}`} onClick={() => setOpenSection(prev => prev === phase ? null : phase)}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.85rem", flex: 1 }}>
+                        <div style={{
+                          width: 34, height: 34, borderRadius: "50%", flexShrink: 0,
+                          backgroundColor: isOpen ? "#1d4ed8" : "#f1f5f9",
+                          color: isOpen ? "white" : "#64748b",
+                          fontSize: "0.72rem", fontWeight: 800,
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          transition: "all 0.3s cubic-bezier(0.34,1.56,0.64,1)",
+                          boxShadow: isOpen ? "0 4px 12px rgba(29,78,216,0.35)" : "none",
+                          transform: isOpen ? "scale(1.1)" : "scale(1)",
+                        }}>
+                          {String(phaseIdx + 1).padStart(2, "0")}
+                        </div>
+                        <span style={{ fontWeight: 700, fontSize: "0.9rem", color: "#0f172a", textTransform: "capitalize", letterSpacing: "-0.01em" }}>
+                          {phase === "other" ? "Other Documents" : `${phase} OJT`}
+                        </span>
+                      </div>
+                      
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.65rem", flexShrink: 0 }}>
+                        <span style={{ 
+                          fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.06em",
+                          textTransform: "uppercase", padding: "0.22rem 0.6rem",
+                          borderRadius: "9999px", 
+                          background: isOpen ? "#dbeafe" : "#f1f5f9", 
+                          color: isOpen ? "#1e40af" : "#64748b",
+                          border: `1px solid ${isOpen ? "#bfdbfe" : "#e2e8f0"}`,
+                          transition: "all 0.3s ease" 
+                        }}>
+                          {count} DOCS
+                        </span>
+                        <span style={{ color: isOpen ? "#1d4ed8" : "#94a3b8", transition: "color 0.2s" }}>
+                          <svg className={`accordion-chevron${isOpen ? " open" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="6 9 12 15 18 9" />
+                          </svg>
+                        </span>
+                      </div>
+                    </button>
 
                   {openSection === phase && (
                     <div style={{ padding: "16px", background: "#f8fafc", borderBottom: "1px solid #e2e8f0" }}>
@@ -695,7 +731,7 @@ export default function ProfilePage() {
                           </div>
 
                           {/* Week Uploads Grid */}
-                          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(380px, 1fr))", gap: "24px" }}>
+                          <div className="upload-grid">
                             {REQUIRED_DOCUMENTS.filter(r => r.phase === "during").map(req => {
                               let existingDoc = documents.find(d => d.week === activeWeek && d.name === req.title);
                               if (!existingDoc) {
@@ -708,7 +744,7 @@ export default function ProfilePage() {
                           </div>
                         </div>
                       ) : (
-                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 350px), 1fr))", gap: "24px" }}>
+                        <div className="upload-grid">
                           {documents.filter(d => d.phase === phase).map(doc => (
                             <DocumentCardItem key={doc.id} doc={doc} onUpload={handleUpload} onRemove={handleRemoveDocument} onView={handleViewPdf} />
                           ))}
@@ -717,8 +753,8 @@ export default function ProfilePage() {
                     </div>
                   )}
                 </div>
-              ))
-            )}
+              );
+            })}
           </div>
         </RevealBox>
 
