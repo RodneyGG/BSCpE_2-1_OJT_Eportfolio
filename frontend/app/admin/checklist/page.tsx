@@ -352,17 +352,21 @@ export default function ChecklistPage() {
 
         /* ── PRINT ── */
         @media print {
-          body { background: white !important; }
+          @page { size: landscape; margin: 10mm; }
+          body { background: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
           nav, .cl-no-print { display: none !important; }
           .cl-print-header { display: block !important; margin-bottom: 1rem; }
-          .cl-main { padding: 0 !important; max-width: 100% !important; }
+          .cl-main { padding: 0 !important; max-width: 100% !important; margin: 0 !important; }
           .cl-card { box-shadow: none !important; border: none !important; padding: 0 !important; }
-          .cl-table-wrap { box-shadow: none !important; border-radius: 0 !important; }
-          .cl-table { font-size: 7pt; }
-          .cl-table th { padding: 3px 2px; font-size: 6pt; }
-          .cl-table td { padding: 3px 2px; }
-          .cl-table th.cl-th-name, .cl-table td.cl-td-name { position: static; }
-          .cl-dot { width: 16px; height: 16px; font-size: 6pt; border-radius: 3px; }
+          .cl-table-wrap { overflow: visible !important; box-shadow: none !important; border-radius: 0 !important; border: none !important; }
+          .cl-table { font-size: 7pt !important; width: 100%; table-layout: fixed; border-collapse: collapse; }
+          .cl-table th { padding: 4px 2px !important; font-size: 6pt !important; white-space: normal !important; word-wrap: break-word; line-height: 1.1; }
+          .cl-table td { padding: 4px 2px !important; }
+          .cl-table th.cl-th-name { width: 14%; min-width: auto; position: static !important; }
+          .cl-table th.cl-th-company { width: 12%; min-width: auto; }
+          .cl-table th.cl-th-progress { width: 8%; min-width: auto; }
+          .cl-table td.cl-td-name { position: static !important; }
+          .cl-dot { width: 14px; height: 14px; font-size: 6pt; border-radius: 3px; border: 1px solid #cbd5e1; }
           .cl-progress-bar { height: 4px; }
           .cl-stat-row { gap: 0.5rem !important; }
         }
@@ -509,7 +513,7 @@ export default function ChecklistPage() {
 
         {/* ── Legend ── */}
         <RevealBox delay={0.4}>
-          <div className="cl-no-print" style={{ display: "flex", gap: "1.25rem", flexWrap: "wrap", marginBottom: "1rem", fontSize: "0.75rem", color: "#64748b" }}>
+          <div style={{ display: "flex", gap: "1.25rem", flexWrap: "wrap", marginBottom: "1rem", fontSize: "0.75rem", color: "#64748b" }}>
             {(["approved", "pending", "rejected", "none"] as DocStatus[]).map((s) => (
               <div key={s} style={{ display: "flex", alignItems: "center", gap: "0.35rem" }}>
                 <div className="cl-dot" style={{ width: 18, height: 18, fontSize: "0.6rem", background: STATUS_CFG[s].bg, color: STATUS_CFG[s].color }}>

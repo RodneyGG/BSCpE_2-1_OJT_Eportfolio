@@ -692,17 +692,6 @@ export default function ProfilePage() {
                       </div>
                       
                       <div style={{ display: "flex", alignItems: "center", gap: "0.65rem", flexShrink: 0 }}>
-                        <span style={{ 
-                          fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.06em",
-                          textTransform: "uppercase", padding: "0.22rem 0.6rem",
-                          borderRadius: "9999px", 
-                          background: isOpen ? "#dbeafe" : "#f1f5f9", 
-                          color: isOpen ? "#1e40af" : "#64748b",
-                          border: `1px solid ${isOpen ? "#bfdbfe" : "#e2e8f0"}`,
-                          transition: "all 0.3s ease" 
-                        }}>
-                          {count} DOCS
-                        </span>
                         <span style={{ color: isOpen ? "#1d4ed8" : "#94a3b8", transition: "color 0.2s" }}>
                           <svg className={`accordion-chevron${isOpen ? " open" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
                             <polyline points="6 9 12 15 18 9" />
