@@ -14,12 +14,12 @@ use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
 
 // Public routes
-Route::post('/login', [AuthController::class, 'login']);
+Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:10,1');
 Route::get('/companies', [CompanyController::class, 'index']);
 Route::get('/block', [BlockController::class, 'show']);
-Route::post('/setup-account', [AccountSetupController::class, 'complete']);
-Route::post('/forgot-password', [PasswordResetController::class, 'request']);
-Route::post('/reset-password', [PasswordResetController::class, 'complete']);
+Route::post('/setup-account', [AccountSetupController::class, 'complete'])->middleware('throttle:10,1');
+Route::post('/forgot-password', [PasswordResetController::class, 'request'])->middleware('throttle:5,1');
+Route::post('/reset-password', [PasswordResetController::class, 'complete'])->middleware('throttle:10,1');
 
 // Google OAuth Public Callback
 Route::get('/google/callback', [GoogleOAuthController::class, 'callback']);

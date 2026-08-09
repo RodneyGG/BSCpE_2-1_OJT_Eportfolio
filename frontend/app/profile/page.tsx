@@ -397,14 +397,11 @@ export default function ProfilePage() {
     try {
       const formData = new FormData();
       formData.append('photo', file);
-      const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:8000/api/profile/picture', {
+      const res = await fetchApi('/profile/picture', {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` },
         body: formData,
       });
-      if (!res.ok) throw new Error("Failed to upload profile picture.");
-      const data = await res.json();
+      const data = res;
       setProfileData((prev: any) => prev ? { ...prev, profile_picture: data.profile_picture } : prev);
       setAvatarPreview(data.profile_picture);
       if (user) login({ ...user, profile_picture: data.profile_picture });
