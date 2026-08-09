@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\ActivityLog;
+use App\Models\AppSetting;
 use App\Models\Company;
 use App\Models\Deployment;
 use App\Models\User;
@@ -374,7 +375,9 @@ class RosterSyncService
 
     private function fetchRows(): array
     {
-        $response = Http::timeout(30)->get(self::SHEET_CSV_URL);
+        $sheetUrl = AppSetting::get('roster_sheet_url', self::SHEET_CSV_URL);
+
+        $response = Http::timeout(30)->get($sheetUrl);
         $response->throw();
 
         // Use a real CSV stream reader (fgetcsv) rather than splitting on

@@ -70,7 +70,7 @@ class UserController extends Controller
             ->where('is_active', true)
             ->with([
                 'company:id,name',
-                'documents:id,user_id,document_type,status',
+                'documents:id,user_id,document_type,status,week,file_link,original_filename,rejection_reason,weekly_activities,extraction_status',
             ])
             ->select('id', 'name', 'email', 'company_id')
             ->orderBy('name')
@@ -380,6 +380,46 @@ class UserController extends Controller
 
         try {
             $result = $bulkImportService->commit($actorId, $sheetUrl);
+            return response()->json($result);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to commit bulk import: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Preview bulk import from a directly-uploaded CSV file.
+     */
+    public function previewBulkImportFile(Request $request, BulkImportService $bulkImportService)
+    {
+        $request->validate([
+            'csv' => ['required', 'file', 'mimes:csv,txt', 'max:5120'],
+        ]);
+
+        try {
+            $previewData = $bulkImportService->previewFile($request->file('csv'));
+            return response()->json($previewData);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to parse CSV file: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Commit bulk import from a directly-uploaded CSV file.
+     */
+    public function commitBulkImportFile(Request $request, BulkImportService $bulkImportService)
+    {
+        $request->validate([
+            'csv' => ['required', 'file', 'mimes:csv,txt', 'max:5120'],
+        ]);
+
+        $actorId = $request->user()->id;
+
+        try {
+            $result = $bulkImportService->commitFile($actorId, $request->file('csv'));
             return response()->json($result);
         } catch (\Exception $e) {
             return response()->json([

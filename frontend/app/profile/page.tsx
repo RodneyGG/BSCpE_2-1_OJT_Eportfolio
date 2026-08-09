@@ -5,7 +5,7 @@ import { useRole, Role } from "../context/RoleContext";
 import { fetchApi } from "../../lib/api";
 import AppNavbar from "../components/AppNavbar";
 import ProtectedRoute from "../components/ProtectedRoute";
-import { REQUIRED_DOCUMENTS } from "../data/documentTypes";
+import { REQUIRED_DOCUMENTS, DocumentPhase } from "../data/documentTypes";
 import DocumentViewerModal from "../components/DocumentViewerModal";
 import ConfirmDialog from "../components/ConfirmDialog";
 
@@ -94,9 +94,7 @@ function StatusBadge({ status }: { status: "not_submitted" | "submitted" | "pend
 }
 
 /* ═══════════════════════════ Document Card ══════════════════════ */
-function DocumentCardItem({ doc, onUpload, onRemove, onView }: { doc: { id: string, name: string, status: "not_submitted" | "submitted" | "uploading", date: string, fileLink?: string, reviewStatus?: "pending" | "approved" | "rejected", rejectionReason?: string | null, week?: number, required?: boolean }, onUpload: (id: string, file: File, week?: number) => void, onRemove: (id: string) => void, onView: (title: string, fileLink: string) => void }) {
-  const [dragActive, setDragActive] = useState(false);
-
+function DocumentCardItem({ doc, onUpload, onRemove, onView }: { doc: { id: string, name: string, displayName?: string, status: "not_submitted" | "submitted" | "uploading", date: string, fileLink?: string, originalFilename?: string, reviewStatus?: "pending" | "approved" | "rejected", rejectionReason?: string | null, week?: number, required?: boolean }, onUpload: (id: string, file: File, week?: number) => void, onRemove: (id: string) => void, onView: (title: string, fileLink: string) => void }) {  const [dragActive, setDragActive] = useState(false);
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault(); e.stopPropagation();
     if (e.type === "dragenter" || e.type === "dragover") setDragActive(true);
@@ -118,7 +116,6 @@ function DocumentCardItem({ doc, onUpload, onRemove, onView }: { doc: { id: stri
       onUpload(doc.id, e.target.files[0], doc.week);
     }
   };
-
   const badgeStatus = doc.status === "submitted" ? (doc.reviewStatus || "pending") : doc.status;
 
   return (
@@ -126,7 +123,7 @@ function DocumentCardItem({ doc, onUpload, onRemove, onView }: { doc: { id: stri
       
       {/* Header Area */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.25rem", gap: "1rem" }}>
-        <h3 style={{ fontSize: "1.15rem", fontWeight: 700, color: "#0f172a", margin: 0, lineHeight: 1.3 }}>{doc.name}</h3>
+        <h3 style={{ fontSize: "1.15rem", fontWeight: 700, color: "#0f172a", margin: 0, lineHeight: 1.3 }}>{doc.displayName || doc.name}</h3>
         {doc.required === false && doc.status === "not_submitted" ? (
           <span style={{ background: "#f8fafc", color: "#94a3b8", padding: "0.4rem 1rem", borderRadius: "9999px", fontSize: "clamp(0.65rem, 2.5vw, 0.85rem)", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.05em", whiteSpace: "nowrap" }}>
             Optional
@@ -150,6 +147,13 @@ function DocumentCardItem({ doc, onUpload, onRemove, onView }: { doc: { id: stri
                 Uploaded on <strong>{doc.date}</strong>
               </div>
             )}
+            <div style={{ fontSize: "0.85rem", marginTop: "0.35rem", marginBottom: "0.5rem" }}>
+              {doc.originalFilename ? (
+                <span style={{ color: "#64748b" }}>File: <strong style={{ color: "#334155" }}>{doc.originalFilename}</strong></span>
+              ) : (
+                <span style={{ color: "#94a3b8", fontStyle: "italic" }}>Filename not recorded</span>
+              )}
+            </div>
             <div style={{ display: "flex", gap: "0.75rem", marginTop: "auto" }}>
               {doc.fileLink && (
                 <button onClick={() => onView(doc.name, doc.fileLink!)} className="rejected-preview-btn" style={{ flex: 1 }}>Preview File</button>
@@ -174,7 +178,32 @@ function DocumentCardItem({ doc, onUpload, onRemove, onView }: { doc: { id: stri
     </div>
   );
 }
+function getPhaseSummary(phase: DocumentPhase, documents: any[]) {
+  const requiredDefs = REQUIRED_DOCUMENTS.filter(r => r.phase === phase && r.required !== false);
+  const optionalDefs = REQUIRED_DOCUMENTS.filter(r => r.phase === phase && r.required === false);
 
+  const requiredTotal = requiredDefs.length;
+  const requiredDocs = requiredDefs.map(def =>
+    documents.find(d => d.name === def.title && d.week == null)
+  );
+  const uploadedRequired = requiredDocs.filter(d => d && d.status === "submitted");
+  const uploadedCount = Math.min(uploadedRequired.length, requiredTotal);
+
+  const optionalUploaded = optionalDefs.filter(def =>
+    documents.some(d => d.name === def.title && d.week == null && d.status === "submitted")
+  ).length;
+
+  let status: "not_submitted" | "pending" | "approved" | "rejected" = "not_submitted";
+  if (uploadedRequired.some(d => d.reviewStatus === "rejected")) {
+    status = "rejected";
+  } else if (uploadedRequired.some(d => d.reviewStatus === "pending") || (uploadedCount > 0 && uploadedCount < requiredTotal)) {
+    status = "pending";
+  } else if (uploadedCount === requiredTotal && requiredTotal > 0 && uploadedRequired.every(d => d.reviewStatus === "approved")) {
+    status = "approved";
+  }
+
+  return { uploadedCount, requiredTotal, optionalUploaded, status };
+}
 export default function ProfilePage() {
   const { user, login } = useRole();
   
@@ -188,7 +217,6 @@ export default function ProfilePage() {
   const [savingGeneral, setSavingGeneral] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
-
   const [editingOjt, setEditingOjt] = useState(false);
   const [deployment, setDeployment] = useState<any>(null);
   const [deploymentLoading, setDeploymentLoading] = useState(true);
@@ -264,6 +292,7 @@ export default function ProfilePage() {
             status: "submitted",
             date: new Date(d.created_at).toLocaleDateString(),
             fileLink: d.file_link,
+            originalFilename: d.original_filename,
             reviewStatus: d.status,
             rejectionReason: d.rejection_reason,
             week: d.week
@@ -283,15 +312,22 @@ export default function ProfilePage() {
         const maxWeek = weeklyDocs.length > 0 ? Math.max(...weeklyDocs.map((d: any) => d.week)) : 1;
         setWeeksArray(Array.from({length: maxWeek}, (_, i) => i + 1));
 
-        setDocuments([...baseDocs.filter(d => d.phase !== "during"), ...weeklyDocs]);
+        // Daily Attendance Report is now a one-time submission (no week), so
+        // unlike other "during" docs it must come from baseDocs, not weeklyDocs.
+        setDocuments([
+          ...baseDocs.filter(d => d.phase !== "during" || d.id === "daily-attendance-report"),
+          ...weeklyDocs
+        ]);
       })
       .catch((err: any) => { if (err.status !== 401) console.error("Failed to load documents:", err); })
       .finally(() => setDocumentsLoading(false));
   }, []);
 
   const handleUpload = async (id: string, file: File, week?: number) => {
-    const docToUpload = documents.find(d => d.id === id) || { name: id.split('-week')[0] };
-    const reqDef = REQUIRED_DOCUMENTS.find(r => r.title === docToUpload.name);
+    const docToUpload = documents.find(d => d.id === id);
+    const reqDef = docToUpload
+      ? REQUIRED_DOCUMENTS.find(r => r.title === docToUpload.name)
+      : REQUIRED_DOCUMENTS.find(r => id === r.id || id.startsWith(`${r.id}-week-`));
     let documentType = reqDef ? reqDef.id : docToUpload.name;
     let claimedHours: string | undefined = undefined;
 
@@ -325,7 +361,7 @@ export default function ProfilePage() {
       const res = await fetchApi('/documents/upload', { method: 'POST', body: formData });
 
       setDocuments(docs => docs.map(d =>
-        d.id === id ? { ...d, status: "submitted", date: "Just now", fileLink: res.document?.file_link, reviewStatus: "pending", rejectionReason: null, week } : d
+        d.id === id ? { ...d, status: "submitted", date: "Just now", fileLink: res.document?.file_link, originalFilename: res.document?.original_filename, reviewStatus: "pending", rejectionReason: null, week } : d
       ));
     } catch (err: any) {
       alert(err.message || 'Failed to upload document.');
@@ -362,6 +398,7 @@ export default function ProfilePage() {
             status: "not_submitted",
             date: "",
             fileLink: undefined,
+            originalFilename: undefined,
             reviewStatus: undefined,
             rejectionReason: undefined,
             week: d.week
@@ -600,7 +637,7 @@ export default function ProfilePage() {
               <div className="profile-bar-content">
                 <div className="profile-bar-left">
                   <div className="profile-avatar" style={{ overflow: "hidden" }}>
-                    {profileData?.profile_picture ? (
+                      {profileData?.profile_picture ? (
                       <img src={profileData.profile_picture} alt="Profile" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }} />
                     ) : (
                       displayName.split(" ").map((w: string) => w[0]).slice(0, 2).join("")
@@ -784,7 +821,41 @@ export default function ProfilePage() {
                         </span>
                       </div>
                       
-                      <div style={{ display: "flex", alignItems: "center", gap: "0.65rem", flexShrink: 0 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.9rem", flexShrink: 0 }}>
+                        {(() => {
+                          const summary = getPhaseSummary(phase as DocumentPhase, documents);
+                          if (summary.requiredTotal === 0) return null;
+                          const dotColor = {
+                            rejected: "#ef4444",
+                            pending: "#eab308",
+                            approved: "#22c55e",
+                            not_submitted: "#cbd5e1",
+                          }[summary.status];
+                          const labelColor = {
+                            rejected: "#b91c1c",
+                            pending: "#a16207",
+                            approved: "#15803d",
+                            not_submitted: "#94a3b8",
+                          }[summary.status];
+                          const label = {
+                            rejected: "Rejected",
+                            pending: "Under Review",
+                            approved: "Approved",
+                            not_submitted: "Not Submitted",
+                          }[summary.status];
+                          return (
+                            <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                              <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "#94a3b8" }}>
+                                {summary.uploadedCount}/{summary.requiredTotal}
+                                {summary.optionalUploaded > 0 && ` +${summary.optionalUploaded}`}
+                              </span>
+                              <span style={{ width: 6, height: 6, borderRadius: "50%", background: dotColor, flexShrink: 0 }} />
+                              <span style={{ fontSize: "0.72rem", fontWeight: 700, color: labelColor, textTransform: "uppercase", letterSpacing: "0.03em" }}>
+                                {label}
+                              </span>
+                            </div>
+                          );
+                        })()}
                         <span style={{ color: isOpen ? "#1d4ed8" : "#94a3b8", transition: "color 0.2s" }}>
                           <svg className={`accordion-chevron${isOpen ? " open" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
                             <polyline points="6 9 12 15 18 9" />
@@ -798,6 +869,20 @@ export default function ProfilePage() {
                       {phase === "during" ? (
                         <div>
                           {/* Week Navigation */}
+                          {/* One-Time Submission: Daily Attendance Report */}
+                          <div style={{ marginBottom: "2rem" }}>
+                            <div style={{ fontSize: "0.8rem", fontWeight: 800, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "0.75rem" }}>
+                              One-Time Submission
+                            </div>
+                            <div style={{ maxWidth: 420 }}>
+                              <DocumentCardItem
+                                doc={documents.find(d => d.id === "daily-attendance-report") || { id: "daily-attendance-report", name: "Daily Attendance Report", phase: "during", status: "not_submitted", date: "" }}
+                                onUpload={handleUpload}
+                                onRemove={handleRemoveDocument}
+                                onView={handleViewPdf}
+                              />
+                            </div>
+                          </div>
                           <div style={{ display: "flex", gap: "0.75rem", overflowX: "auto", paddingBottom: "1.5rem", borderBottom: "2px solid #e2e8f0", marginBottom: "2rem" }}>
                             {weeksArray.map(w => (
                               <button key={w} onClick={() => setActiveWeek(w)} style={{ padding: "0.75rem 1.75rem", borderRadius: "9999px", border: "none", background: activeWeek === w ? "#0f172a" : "white", color: activeWeek === w ? "white" : "#475569", borderStyle: "solid", borderWidth: 1, borderColor: activeWeek === w ? "#0f172a" : "#cbd5e1", fontSize: "1rem", fontWeight: 800, cursor: "pointer", transition: "all 0.2s", whiteSpace: "nowrap", boxShadow: activeWeek === w ? "0 4px 10px rgba(15,23,42,0.2)" : "none" }}>
@@ -824,13 +909,14 @@ export default function ProfilePage() {
 
                           {/* Week Uploads Grid */}
                           <div className="upload-grid">
-                            {REQUIRED_DOCUMENTS.filter(r => r.phase === "during").map(req => {
+                            {REQUIRED_DOCUMENTS.filter(r => r.phase === "during" && r.id !== "daily-attendance-report").map(req => {
                               let existingDoc = documents.find(d => d.week === activeWeek && d.name === req.title);
                               if (!existingDoc) {
                                 existingDoc = { id: `${req.id}-week-${activeWeek}`, name: req.title, phase: "during", status: "not_submitted", date: "", week: activeWeek };
                               }
+                              const displayName = req.id === "weekly-photo-documentation" ? `Week ${activeWeek} Photo Documentation Report` : req.title;
                               return (
-                                <DocumentCardItem key={`${req.id}-w${activeWeek}`} doc={existingDoc} onUpload={handleUpload} onRemove={handleRemoveDocument} onView={handleViewPdf} />
+                                <DocumentCardItem key={`${req.id}-w${activeWeek}`} doc={{ ...existingDoc, displayName }} onUpload={handleUpload} onRemove={handleRemoveDocument} onView={handleViewPdf} />
                               );
                             })}
                           </div>

@@ -10,10 +10,11 @@ use App\Models\Notification;
 class DocumentService
 {
     protected GoogleDriveService $driveService;
-
-    public function __construct(GoogleDriveService $driveService)
+    protected WeeklyReportExtractor $reportExtractor;
+    public function __construct(GoogleDriveService $driveService, WeeklyReportExtractor $reportExtractor)
     {
         $this->driveService = $driveService;
+        $this->reportExtractor = $reportExtractor;
     }
 
     /**
@@ -49,6 +50,7 @@ class DocumentService
             $userFolder = $this->driveService->createFolder($folderName);
         }
 
+        $originalFilename = $file->getClientOriginalName();
         $extension = $file->getClientOriginalExtension();
         $baseName = $documentType;
         if ($week) {
@@ -57,8 +59,23 @@ class DocumentService
         $timestamp = now()->format('YmdHis');
         $customFileName = "{$baseName}-{$timestamp}.{$extension}";
 
-        $uploadedFile = $this->driveService->upload($file, $userFolder->id, $customFileName);
+        $weeklyActivities = null;
+        $extractionStatus = null;
+        $weekMismatch = false;
+        $parsedWeekNumber = null;
+        if ($documentType === 'weekly-report') {
+            $extraction = $this->reportExtractor->extract($file->getRealPath());
+            $extractionStatus = $extraction['status'];
+            if ($extraction['status'] === 'success') {
+                $weeklyActivities = $extraction['days'];
+                $parsedWeekNumber = $extraction['week_number'];
+                if ($week !== null && $parsedWeekNumber !== null && $parsedWeekNumber !== $week) {
+                    $weekMismatch = true;
+                }
+            }
+        }
 
+        $uploadedFile = $this->driveService->upload($file, $userFolder->id, $customFileName);
         $document = Document::create([
             'user_id' => $user->id,
             'document_type' => $documentType,
@@ -67,24 +84,28 @@ class DocumentService
             'submitted_date' => $submittedDate,
             'file_id' => $uploadedFile->id,
             'file_link' => $uploadedFile->webViewLink,
+            'original_filename' => $originalFilename,
+            'weekly_activities' => $weeklyActivities,
+            'extraction_status' => $extractionStatus,
             'status' => 'pending',
         ]);
-
         // Notify profs/admins (assuming anyone who can review is notified, or just all profs)
         $reviewers = User::whereIn('role', ['admin', 'prof'])->get();
+        $notificationTitle = $weekMismatch ? 'Weekly Report Week Mismatch' : 'New Document Submission';
+        $notificationMessage = $weekMismatch
+            ? "{$user->name} submitted a weekly report whose content says Week {$parsedWeekNumber}, but it was uploaded to the Week {$week} slot. Please review."
+            : "{$user->name} has submitted a {$documentType} document for review.";
         foreach ($reviewers as $reviewer) {
             Notification::create([
                 'user_id' => $reviewer->id,
-                'title' => 'New Document Submission',
-                'message' => "{$user->name} has submitted a {$documentType} document for review.",
+                'title' => $notificationTitle,
+                'message' => $notificationMessage,
             ]);
         }
-
         return [
             'document' => $document,
         ];
     }
-
     /**
      * Get all pending documents for review, with submitter info.
      */

@@ -4,16 +4,31 @@
 A Next.js frontend application for a BSCpE OJT e-portfolio. The application features student profiles, company dashboards, and document submission tracking.
 
 ## 2. Current State (Replace entirely on update)
-**Status**: The application has undergone a full security and production-readiness audit, profile UI polish, mobile layout fixes, and bug fixes on the notification and auth systems.
-- The student profile page (`frontend/app/profile/page.tsx`) features a polished avatar upload UI (instant upload with loading states, centered object-fit cropping, explicit remove button) and cleanly merged profile/hours metrics.
+<<<<<<< HEAD
+**Status**: The student profile page (`frontend/app/profile/page.tsx`) has been refined and modernized, the Admin Checklist page (`frontend/app/admin/checklist/page.tsx`) has robust print support, and the application has undergone a full security and production-readiness audit alongside mobile layout fixes and notification/auth bug fixes.
+- The Required Documents section was successfully converted from a horizontal tab bar into a single-open accordion. The During OJT accordion body retains the complex week navigation, schedule card, and uploads grid functionality perfectly.
+- The top layout of the profile page was redesigned. The Student Information card and Hours Rendered card were merged into a single horizontal bar for a cleaner layout. OJT Deployment is now a standalone full-width card underneath the merged profile bar.
+- An exact hardcoded UI scale-down was executed to strictly enforce smaller constraints and remove clamps: section headers are fixed at `16px`, main metrics (0.00) at `28px`, the student name at `20px`, and global card paddings are explicitly `16px` (except OJT Deployment, which remains completely untouched).
+- The Profile Bar was rebalanced to a 65/35 ratio, giving the student information area more visual dominance over the hours metric. The "Edit Profile" button was logically relocated to the top-right of this student info block, separating it from the hours-submission status badge.
+- Submission History retains its original flat-table layout, making all historical data visible at a glance. (An accordion design was temporarily tested but reverted).
+- Fixed a bug where a native browser scrollbar appeared inside the Rejected box because fixed heights (`110px`) caused content overflow. Height restrictions were swapped for padding bounds to allow the content to breathe. The empty "Drag PDF" upload box was also tightened vertically.
+- Executed a global mobile responsiveness audit: The global `AppNavbar` collapses text elements at `< 768px` to prevent horizontal overflow, the upload card grid properly drops to 1 column using `min(100%, 350px)`, and the profile/hours bar properly stacks vertically.
+- The Required Documents accordion was redesigned to match the visual language of the Companies list (subtle hover states, gradient active backgrounds, 180-degree chevron rotation). The document count badges were recently removed to declutter the UI.
+- The Overtime Agreement document is now officially **optional**. It is excluded from the global `17` required documents count, has an "Optional" label rendered on its upload card if unsubmitted, and displays a muted "OPTIONAL" placeholder instead of a missing dot on the checklist table.
+- A new **"Ongoing"** status (blue badge) was introduced on the Student Profile's overall Hours Rendered tracker. It renders for all active deployments under 300 hours, transitioning to "Approved" at 300+.
+- The upload card grid was restricted to a strict 3-column maximum (`repeat(3, 1fr)`) to prevent overly wide rows on large monitors.
+- Crucially, the internal layout, data bindings, and specific styling of the OJT Deployment card were rigorously preserved through all layout changes to fulfill the scope-lock requirements.
+- The `profile/page.tsx` `.main-container` outer bounds were fully synchronized with the Companies page layout constraints (`1280px` max-width, `2rem 2rem 3rem` padding) for seamless cross-page navigation.
+- The Admin Checklist page now has robust `@media print` styles enforcing a landscape orientation, and a meticulously scaled table (`transform: scale(0.78); width: 128%`) allowing the 18-column table to fit gracefully on one page without cutting off or force-wrapping text headers (`white-space: nowrap`). **Note: this page has since been superseded by a DataTable13-style redesign — see current `feature/checklist-redesign-and-print-export` branch for the up-to-date implementation.**
+- Added detailed error logging to the deployment fetch catch block to capture status codes and server messages for debugging "No OJT Deployment on Record" failures. Diagnosed an issue where Laravel Octane (FrankenPHP) needed a container restart (`docker compose restart backend`) to load new routes into memory.
+- The student profile page features a polished avatar upload UI (instant upload with loading states, centered object-fit cropping, explicit remove button) and cleanly merged profile/hours metrics.
 - The global `AppNavbar.tsx` features a robust auto-delete notification system (read notifications fade and delete after 5s), properly wrapped error catches to avoid client-side leakage, cleanly spaced drop-downs, and a polished, right-aligned mobile menu that scales down perfectly to 375px screens.
 - All sensitive API routes (`/login`, `/setup-account`, `/forgot-password`, `/reset-password`) are protected by Laravel `throttle` rate-limiting middleware to prevent brute-forcing.
 - Nginx configuration (`nginx/default.conf`) is fortified with strict security headers including a baseline `Content-Security-Policy`.
 - `fetchApi` securely handles `FormData` bridging seamlessly between environments.
-- The Admin Checklist page (`frontend/app/admin/checklist/page.tsx`) has robust print support scaling out perfectly for a landscape view.
 - Document and Notification controllers enforce strict IDOR (Insecure Direct Object Reference) checks ensuring users can only delete their own resources (or admins).
 - The frontend Next.js application cleanly builds as a static export without any high-severity npm vulnerabilities.
-- All modifications are currently on the `feature/profile-pic-and-readme` branch.
+- Work from both `feature/profile-accordion-and-merge` and `feature/profile-pic-and-readme` (Rodney's side) and `feature/checklist-redesign-and-print-export` (Altheo's side) is now reconciled on `main`.
 
 ## 3. Session Logs
 ### 2026-08-09 - Mobile Layout & Avatar Sync Fixes
@@ -61,6 +76,7 @@ A Next.js frontend application for a BSCpE OJT e-portfolio. The application feat
   - **AppNavbar Bug Fix:** Updated the `loadNotifications` catch block to extract and log explicit error properties instead of silently swallowing the thrown API object. Added a `notifError` state to display an orange exclamation badge on the bell icon if the notifications fetch fails, preventing silent failures.
 - **Branch:** `feature/profile-accordion-and-merge`
 
+>>>>>>> upstream/main
 ### 2026-08-08 - Checklist Print Readability Improvements
 - **Agent:** Antigravity
 - **Summary of Changes:**

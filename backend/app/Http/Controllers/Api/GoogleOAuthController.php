@@ -102,4 +102,16 @@ class GoogleOAuthController extends Controller
         </html>
         HTML)->header('Content-Type', 'text/html');
     }
+
+    /**
+     * Disconnect Google Drive (admin only) — clears the global token.
+     */
+    public function disconnect(Request $request): JsonResponse
+    {
+        if (!$request->user()->isAdmin()) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+        GoogleOAuthToken::truncate();
+        return response()->json(['message' => 'Google Drive disconnected']);
+    }
 }

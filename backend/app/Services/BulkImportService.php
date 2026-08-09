@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\User;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -14,15 +15,44 @@ class BulkImportService
      */
     public function preview(?string $sheetUrl = null): array
     {
-        return $this->parseAndValidate($sheetUrl);
+        $rows = $this->fetchRowsFromUrl($sheetUrl);
+        return $this->validateRows($rows);
     }
 
     /**
-     * Commit endpoint logic: accepts dynamic sheet URL or provided students array.
+     * Preview endpoint logic for a directly-uploaded CSV file.
+     */
+    public function previewFile(UploadedFile $file): array
+    {
+        $rows = $this->fetchRowsFromFile($file);
+        return $this->validateRows($rows);
+    }
+
+    /**
+     * Commit endpoint logic: accepts dynamic sheet URL.
      */
     public function commit(int $actorId, ?string $sheetUrl = null): array
     {
-        $analysis = $this->parseAndValidate($sheetUrl);
+        $rows = $this->fetchRowsFromUrl($sheetUrl);
+        $analysis = $this->validateRows($rows);
+        return $this->commitAnalysis($actorId, $analysis);
+    }
+
+    /**
+     * Commit endpoint logic for a directly-uploaded CSV file.
+     */
+    public function commitFile(int $actorId, UploadedFile $file): array
+    {
+        $rows = $this->fetchRowsFromFile($file);
+        $analysis = $this->validateRows($rows);
+        return $this->commitAnalysis($actorId, $analysis);
+    }
+
+    /**
+     * Shared account-creation logic for both URL-based and file-based commits.
+     */
+    private function commitAnalysis(int $actorId, array $analysis): array
+    {
         $userService = new UserService();
 
         $created = [];
@@ -65,11 +95,10 @@ class BulkImportService
     }
 
     /**
-     * Single source of truth for row parsing and validation.
+     * Single source of truth for row validation, regardless of CSV source.
      */
-    private function parseAndValidate(?string $sheetUrl = null): array
+    private function validateRows(array $rows): array
     {
-        $rows = $this->fetchRows($sheetUrl);
         $existingEmails = User::pluck('email')->map(fn($e) => mb_strtolower($e))->toArray();
 
         $valid = [];
@@ -79,7 +108,6 @@ class BulkImportService
         foreach ($rows as $index => $row) {
             $rowNum = $index + 2; // Line 1 is header row
 
-            // Flexible header matching (supports EMAIL, EMAIL ADDRESS, NAME, FULL NAME)
             $emailKey = $this->findHeaderKey($row, ['EMAIL', 'EMAIL ADDRESS']);
             $nameKey = $this->findHeaderKey($row, ['NAME', 'FULL NAME', 'FULL NAME (SURNAME, FIRST NAME M.I.)']);
 
@@ -87,7 +115,7 @@ class BulkImportService
             $name = trim($row[$nameKey] ?? '');
 
             if ($name === '' && $email === '') {
-                continue; // Ignore trailing empty rows
+                continue;
             }
 
             if ($name === '') {
@@ -125,7 +153,7 @@ class BulkImportService
                     'row_num' => $rowNum,
                     'name' => $name,
                     'email' => $email,
-                    'reason' => 'Duplicate email found within this Google Sheet',
+                    'reason' => 'Duplicate email found within this import',
                 ];
                 continue;
             }
@@ -153,13 +181,12 @@ class BulkImportService
      * Converts any Google Sheet share link into a direct CSV export link
      * and fetches the stream.
      */
-    private function fetchRows(?string $sheetUrl = null): array
+    private function fetchRowsFromUrl(?string $sheetUrl = null): array
     {
         if (empty($sheetUrl)) {
             throw new \InvalidArgumentException('Google Sheet URL must be provided.');
         }
 
-        // Convert view/edit URL to CSV export format
         if (str_contains($sheetUrl, '/edit')) {
             $csvUrl = preg_replace('/\/edit.*$/', '/export?format=csv', $sheetUrl);
         } elseif (!str_contains($sheetUrl, '/export?format=csv')) {
@@ -171,8 +198,30 @@ class BulkImportService
         $response = Http::timeout(30)->get($csvUrl);
         $response->throw();
 
+        return $this->parseCsvContent($response->body());
+    }
+
+    /**
+     * Reads and parses an uploaded CSV file directly (no network fetch).
+     */
+    private function fetchRowsFromFile(UploadedFile $file): array
+    {
+        $content = file_get_contents($file->getRealPath());
+
+        if ($content === false || trim($content) === '') {
+            throw new \InvalidArgumentException('The uploaded CSV file is empty or unreadable.');
+        }
+
+        return $this->parseCsvContent($content);
+    }
+
+    /**
+     * Shared CSV-string-to-rows parser used by both the URL and file paths.
+     */
+    private function parseCsvContent(string $content): array
+    {
         $stream = fopen('php://temp', 'r+');
-        fwrite($stream, $response->body());
+        fwrite($stream, $content);
         rewind($stream);
 
         $header = null;
@@ -204,9 +253,6 @@ class BulkImportService
         return $rows;
     }
 
-    /**
-     * Helper to search row array keys for matching header options
-     */
     private function findHeaderKey(array $row, array $possibleHeaders): string
     {
         foreach ($possibleHeaders as $possible) {

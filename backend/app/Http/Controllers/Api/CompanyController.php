@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\AppSetting;
 use App\Models\Company;
 use App\Models\User;
 use App\Services\RosterSyncService;
+use App\Support\RosterSheetUrl;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -136,6 +138,36 @@ class CompanyController extends Controller
             'deployments_proposed' => $summary['deployments_proposed'],
             'deployments_updated' => $summary['deployments_updated'],
             'deployments_mismatched' => $summary['deployments_mismatched'],
+        ]);
+    }
+
+    /**
+     * Get the current roster-sync Google Sheet URL (Admin only).
+     */
+    public function getRosterSheetUrl(): JsonResponse
+    {
+        return response()->json([
+            'url' => AppSetting::get('roster_sheet_url'),
+        ]);
+    }
+
+    /**
+     * Update the roster-sync Google Sheet URL (Admin only).
+     */
+    public function updateRosterSheetUrl(Request $request): JsonResponse
+    {
+        $request->validate([
+            'url' => ['required', 'string', 'url', 'max:2048'],
+        ]);
+        try {
+            $normalized = RosterSheetUrl::normalize($request->input('url'));
+        } catch (\InvalidArgumentException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
+        AppSetting::set('roster_sheet_url', $normalized);
+        return response()->json([
+            'message' => 'Roster sheet URL updated.',
+            'url' => $normalized,
         ]);
     }
 

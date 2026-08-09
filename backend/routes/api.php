@@ -38,13 +38,15 @@ Route::middleware('auth:sanctum')->group(function () {
     // Google Auth
     Route::get('/google/auth', [GoogleOAuthController::class, 'redirect']);
     Route::get('/google/status', [GoogleOAuthController::class, 'status']);
+    Route::delete('/google/disconnect', [GoogleOAuthController::class, 'disconnect']);
 
     // Companies
     Route::get('/companies/{company}', [CompanyController::class, 'show']);
     Route::patch('/companies/{company}/address', [CompanyController::class, 'updateAddress']);
     Route::delete('/admin/companies/{company}', [CompanyController::class, 'destroy'])->middleware('role:admin');
     Route::post('/admin/companies/sync', [CompanyController::class, 'sync'])->middleware('role:admin');
-
+    Route::get('/admin/companies/roster-sheet-url', [CompanyController::class, 'getRosterSheetUrl'])->middleware('role:admin');
+    Route::patch('/admin/companies/roster-sheet-url', [CompanyController::class, 'updateRosterSheetUrl'])->middleware('role:admin');
     // Notifications
     Route::get('/notifications', [NotificationController::class, 'index']);
     Route::patch('/notifications/read-all', [NotificationController::class, 'markAllAsRead']);
@@ -74,7 +76,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/admin/users', [UserController::class, 'store'])->middleware('role:admin');
     Route::get('/admin/students/bulk-import/preview', [UserController::class, 'previewBulkImport'])->middleware('role:admin');
     Route::post('/admin/students/bulk-import/commit', [UserController::class, 'commitBulkImport'])->middleware('role:admin');
-    Route::patch('/admin/users/{user}/reset-password', [UserController::class, 'resetPassword'])->middleware('role:admin');
+    Route::post('/admin/students/bulk-import/preview-file', [UserController::class, 'previewBulkImportFile'])->middleware('role:admin');
+    Route::post('/admin/students/bulk-import/commit-file', [UserController::class, 'commitBulkImportFile'])->middleware('role:admin');    Route::patch('/admin/users/{user}/reset-password', [UserController::class, 'resetPassword'])->middleware('role:admin');
     Route::patch('/admin/users/{user}/toggle-review', [UserController::class, 'toggleReview'])->middleware('role:admin');
     Route::patch('/admin/users/{user}/deactivate', [UserController::class, 'deactivate'])->middleware('role:admin');
     Route::patch('/admin/users/{user}/reactivate', [UserController::class, 'reactivate'])->middleware('role:admin');
