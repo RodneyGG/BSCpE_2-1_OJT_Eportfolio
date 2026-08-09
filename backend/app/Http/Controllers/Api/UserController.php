@@ -39,7 +39,7 @@ class UserController extends Controller
 
         if (in_array($requester->role, ['admin', 'prof'])) {
             $users = $query
-                ->select('id', 'name', 'email', 'role', 'company_id', 'hours_rendered', 'required_hours', 'must_change_password', 'can_review', 'is_active', 'created_at')
+                ->select('id', 'name', 'email', 'role', 'company_id', 'profile_picture', 'hours_rendered', 'required_hours', 'must_change_password', 'can_review', 'is_active', 'created_at')
                 ->with('company:id,name')
                 ->withCount([
                     'documents as approved_documents_count' => fn ($q) => $q->where('status', 'approved')->where('document_type', '!=', 'dtr'),
@@ -50,7 +50,7 @@ class UserController extends Controller
                 ->get();
         } else {
             $users = $query
-                ->select('id', 'name', 'company_id', 'hours_rendered', 'required_hours')
+                ->select('id', 'name', 'company_id', 'profile_picture', 'hours_rendered', 'required_hours')
                 ->with('company:id,name')
                 ->orderBy('name')
                 ->get();
@@ -70,7 +70,7 @@ class UserController extends Controller
             ->where('is_active', true)
             ->with([
                 'company:id,name',
-                'documents:id,user_id,document_type,status',
+                'documents:id,user_id,document_type,status,week,file_link,original_filename,rejection_reason,weekly_activities,extraction_status',
             ])
             ->select('id', 'name', 'email', 'company_id')
             ->orderBy('name')

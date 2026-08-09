@@ -53,18 +53,24 @@ class GoogleDriveService
     public function upload(UploadedFile $file, string $folder = '', ?string $customFileName = null): DriveFile
     {
         $folderId = $folder ?: $this->folderId;
-
         $driveFile = new DriveFile([
             'name' => $customFileName ?: $file->getClientOriginalName(),
             'parents' => [$folderId],
         ]);
-
-        return $this->driveService->files->create($driveFile, [
+        $created = $this->driveService->files->create($driveFile, [
             'data' => file_get_contents($file->getRealPath()),
             'mimeType' => $file->getMimeType(),
             'uploadType' => 'multipart',
             'fields' => 'id, name, mimeType, webViewLink, webContentLink',
         ]);
+        // Grant link-based view access so the embedded preview iframe works
+        // for anyone who has the document URL, without requiring each
+        // viewer to be individually shared on the file.
+        $this->driveService->permissions->create($created->id, new \Google\Service\Drive\Permission([
+            'type' => 'anyone',
+            'role' => 'reader',
+        ]));
+        return $created;
     }
 
     /**

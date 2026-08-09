@@ -3,8 +3,10 @@
 A full-stack OJT (On-the-Job Training) E-Portfolio web application for BSCpE 2-1 students. Built with Next.js 16 + React 19 + TypeScript.
 
 ## Features
-- **Student Profile Dashboard**: Track logged hours (up to 300), view active status, upload custom avatars, and edit profile details dynamically.
-- **Weekly Journal & DTR System**: Log Daily Time Records (DTR) and submit weekly journals.
+- **Student Profile Dashboard**: Track logged hours (up to 300), view active status, upload custom profile avatars, and edit profile details dynamically in a modernized, unified interface.
+- **Smart Notification System**: Real-time notification bell with auto-delete functionality and smooth CSS transitions. Read notifications are automatically scrubbed from the UI and backend after 5 seconds to keep the inbox clean.
+- **In-App Document Viewer**: Administrators and professors can securely preview submitted PDF requirements directly within the browser without having to download files first.
+- **Weekly Journal & DTR System**: Log Daily Time Records (DTR) and submit weekly journals via a sleek, single-open accordion menu.
 - **Google Drive Integration**: Securely upload and store submitted documents (DTRs, Journals) directly to Google Drive.
 - **Admin & Coordinator View**: A dedicated `/admin` dashboard to monitor student progress, review logged hours, and approve or reject document submissions.
 - **Mock Authentication System**: Dedicated login portal with specific roles (Student vs. Admin).

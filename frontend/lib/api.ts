@@ -39,12 +39,21 @@ export async function fetchApi(endpoint: string, options: RequestInit = {}) {
     headers.set('Content-Type', 'application/json');
   }
 
+  // Extract CSRF token from cookie if making a mutating request
+  if (typeof window !== 'undefined' && options.method && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(options.method.toUpperCase())) {
+    const match = document.cookie.match(new RegExp('(^| )csrf_token=([^;]+)'));
+    if (match) {
+      headers.set('X-CSRF-TOKEN', match[2]);
+    }
+  }
+
   // Ensure safe URL concatenation
   const base = API_BASE_URL.replace(/\/$/, '');
   const path = endpoint.replace(/^\//, '');
   const response = await fetch(`${base}/${path}`, {
     ...options,
     headers,
+    credentials: 'same-origin',
   });
 
   const data = await response.json().catch(() => null);

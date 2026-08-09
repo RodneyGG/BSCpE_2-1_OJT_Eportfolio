@@ -136,9 +136,12 @@ const handleSyncCompanies = async () => {
           .footer-grid { grid-template-columns: 1fr !important; }
         }
         @media (max-width: 640px) {
-          .page-inner { padding: 1rem !important; }
+          .page-inner { padding: 1.25rem 1rem 5rem 1rem !important; }
           .hero-stats { gap: 0.5rem !important; }
           .stat-tile { min-width: 75px !important; padding: 0.75rem 0.85rem !important; }
+          .company-row-header { padding: 0.85rem 1rem !important; gap: 0.5rem !important; }
+          .company-row-left { gap: 0.6rem !important; }
+          .company-row-right { gap: 0.4rem !important; }
         }
       `}</style>
 
