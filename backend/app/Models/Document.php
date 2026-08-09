@@ -18,6 +18,9 @@ class Document extends Model
         'claimed_hours',
         'file_id',
         'file_link',
+        'original_filename',
+        'weekly_activities',
+        'extraction_status',
         'status',
         'reviewed_by',
         'reviewed_at',
@@ -29,6 +32,7 @@ class Document extends Model
         return [
             'reviewed_at' => 'datetime',
             'claimed_hours' => 'decimal:2',
+            'weekly_activities' => 'array',
         ];
     }
 

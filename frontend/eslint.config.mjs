@@ -1,6 +1,7 @@
 import tseslint from "typescript-eslint";
 import nextPlugin from "@next/eslint-plugin-next";
 import reactPlugin from "eslint-plugin-react";
+import reactHooksPlugin from "eslint-plugin-react-hooks";
 
 export default tseslint.config(
   {
@@ -12,10 +13,13 @@ export default tseslint.config(
     plugins: {
       "@next/next": nextPlugin,
       "react": reactPlugin,
+      "react-hooks": reactHooksPlugin,
     },
     rules: {
       ...nextPlugin.configs.recommended.rules,
       ...nextPlugin.configs["core-web-vitals"].rules,
+      "react-hooks/rules-of-hooks": "error",
+      "react-hooks/exhaustive-deps": "warn",
       "react/react-in-jsx-scope": "off",
       "@typescript-eslint/no-unused-vars": "warn",
       "@typescript-eslint/no-explicit-any": "warn",

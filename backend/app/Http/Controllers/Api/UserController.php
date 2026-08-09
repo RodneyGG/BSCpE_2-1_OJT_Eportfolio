@@ -70,7 +70,7 @@ class UserController extends Controller
             ->where('is_active', true)
             ->with([
                 'company:id,name',
-                'documents:id,user_id,document_type,status,week',
+                'documents:id,user_id,document_type,status,week,file_link,original_filename,rejection_reason,weekly_activities,extraction_status',
             ])
             ->select('id', 'name', 'email', 'company_id')
             ->orderBy('name')

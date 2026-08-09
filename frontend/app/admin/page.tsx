@@ -93,6 +93,16 @@ export default function AdminDashboard() {
       alert("Failed to initiate Google OAuth: " + error.message);
     }
   };
+  const handleDisconnectDrive = async () => {
+    if (!confirm("Disconnect Google Drive? File previews and new uploads will stop working until someone reconnects.")) return;
+    try {
+      await fetchApi('/google/disconnect', { method: 'DELETE' });
+      setDriveConnected(false);
+    } catch (err: unknown) {
+      const error = err as Error;
+      alert("Failed to disconnect Google Drive: " + error.message);
+    }
+  };
 
   return (
     <ProtectedRoute allowedRoles={['admin']}>
@@ -173,6 +183,15 @@ export default function AdminDashboard() {
                       <polyline points="20 6 9 17 4 12" />
                     </svg>
                     Google Drive Connected
+                    <button
+                      onClick={handleDisconnectDrive}
+                      style={{
+                        background: "none", border: "none", color: "#166534", textDecoration: "underline",
+                        fontSize: "0.75rem", fontWeight: 600, cursor: "pointer", padding: 0, opacity: 0.75,
+                      }}
+                    >
+                      Disconnect
+                    </button>
                   </div>
                 ) : (
                   <button 

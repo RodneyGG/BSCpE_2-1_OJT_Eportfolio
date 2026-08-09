@@ -15,6 +15,7 @@ RUN apk add --no-cache \
     libzip-dev \
     unzip \
     pcre-dev \
+    poppler-utils \
     $PHPIZE_DEPS
 
 # Install PHP extensions

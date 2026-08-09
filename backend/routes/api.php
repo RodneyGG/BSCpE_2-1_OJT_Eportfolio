@@ -38,6 +38,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Google Auth
     Route::get('/google/auth', [GoogleOAuthController::class, 'redirect']);
     Route::get('/google/status', [GoogleOAuthController::class, 'status']);
+    Route::delete('/google/disconnect', [GoogleOAuthController::class, 'disconnect']);
 
     // Companies
     Route::get('/companies/{company}', [CompanyController::class, 'show']);
