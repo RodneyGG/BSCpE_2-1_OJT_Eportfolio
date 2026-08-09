@@ -4,7 +4,7 @@
 A Next.js frontend application for a BSCpE OJT e-portfolio. The application features student profiles, company dashboards, and document submission tracking.
 
 ## 2. Current State (Replace entirely on update)
-**Status**: The student profile page (`frontend/app/profile/page.tsx`) has been refined and modernized, and the Admin Checklist page (`frontend/app/admin/checklist/page.tsx`) has robust print support.
+**Status**: The student profile page (`frontend/app/profile/page.tsx`) has been refined and modernized, and the Admin Checklist page (`frontend/app/admin/checklist/page.tsx`) has robust print support. Bug fixes have been applied to global components like AppNavbar.
 - The Required Documents section was successfully converted from a horizontal tab bar into a single-open accordion. The During OJT accordion body retains the complex week navigation, schedule card, and uploads grid functionality perfectly.
 - The top layout of the profile page was redesigned. The Student Information card and Hours Rendered card were merged into a single horizontal bar for a cleaner layout. OJT Deployment is now a standalone full-width card underneath the merged profile bar.
 - An exact hardcoded UI scale-down was executed to strictly enforce smaller constraints and remove clamps: section headers are fixed at `16px`, main metrics (0.00) at `28px`, the student name at `20px`, and global card paddings are explicitly `16px` (except OJT Deployment, which remains completely untouched).
@@ -23,6 +23,23 @@ A Next.js frontend application for a BSCpE OJT e-portfolio. The application feat
 - All modifications are currently on the `feature/profile-accordion-and-merge` branch. No changes to the actual shared components' core structure (e.g. `RevealBox`) were performed, preserving the design system.
 
 ## 3. Session Logs
+### 2026-08-09 - Notification Auto-Delete
+- **Agent:** Antigravity
+- **Summary of Changes:**
+  - **Database Migration:** Added a `read_at` timestamp to the `notifications` table to track when a notification was opened.
+  - **API Adjustments:**
+    - Modified `markAsRead` and `markAllAsRead` to immediately record `read_at = now()`.
+    - Implemented a durable auto-cleanup process in the `index` method, automatically deleting any read notifications older than 5 seconds when fetched.
+    - Added a `DELETE /api/notifications/{notification}` endpoint.
+  - **UI/Frontend:** Updated `AppNavbar.tsx` so that marking a notification as read triggers a 5-second `setTimeout`. Upon timeout, an `is_deleting` flag is set to smoothly fade and collapse the notification over 500ms before removing it from the state and firing the `DELETE` API call.
+- **Branch:** `feature/profile-accordion-and-merge`
+
+### 2026-08-09 - AppNavbar Bug Fix
+- **Agent:** Antigravity
+- **Summary of Changes:**
+  - **AppNavbar Bug Fix:** Updated the `loadNotifications` catch block to extract and log explicit error properties instead of silently swallowing the thrown API object. Added a `notifError` state to display an orange exclamation badge on the bell icon if the notifications fetch fails, preventing silent failures.
+- **Branch:** `feature/profile-accordion-and-merge`
+
 ### 2026-08-08 - Checklist Print Readability Improvements
 - **Agent:** Antigravity
 - **Summary of Changes:**

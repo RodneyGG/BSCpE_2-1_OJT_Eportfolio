@@ -158,6 +158,7 @@ export default function AppNavbar() {
   const notifRef = useRef<HTMLDivElement>(null);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [notifError, setNotifError] = useState(false);
 
   const toggleMenu = () => {
     setMenuOpen((v) => !v);
@@ -171,13 +172,20 @@ export default function AppNavbar() {
   const loadNotifications = async () => {
     if (!isLoggedIn) return;
     try {
+      setNotifError(false);
       const res = await fetchApi("/notifications");
       if (res) {
         setNotifications(res.notifications || []);
         setUnreadCount(res.unread_count || 0);
       }
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      setNotifError(true);
+      console.error("loadNotifications failed:", {
+        message: err?.message || "Unknown error",
+        status: err?.status,
+        errors: err?.errors,
+        original: err
+      });
     }
   };
 
@@ -192,8 +200,15 @@ export default function AppNavbar() {
   const markAllRead = async () => {
     try {
       await fetchApi("/notifications/read-all", { method: "PATCH" });
-      setNotifications(notifications.map(n => ({ ...n, is_read: true })));
+      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
       setUnreadCount(0);
+
+      setTimeout(() => {
+        setNotifications(prev => prev.map(n => n.is_read ? { ...n, is_deleting: true } : n));
+        setTimeout(() => {
+          setNotifications(prev => prev.filter(n => !n.is_deleting));
+        }, 500);
+      }, 5000);
     } catch (err) {
       console.error(err);
     }
@@ -202,8 +217,25 @@ export default function AppNavbar() {
   const markRead = async (id: number) => {
     try {
       await fetchApi(`/notifications/${id}/read`, { method: "PATCH" });
-      setNotifications(notifications.map(n => n.id === id ? { ...n, is_read: true } : n));
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
       setUnreadCount(prev => Math.max(0, prev - 1));
+
+      setTimeout(async () => {
+        setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_deleting: true } : n));
+        try {
+          await fetchApi(`/notifications/${id}`, { method: "DELETE" });
+          setTimeout(() => {
+            setNotifications(prev => prev.filter(n => n.id !== id));
+          }, 500);
+        } catch (err: any) {
+          console.error("deleteNotification failed:", {
+            message: err?.message || "Unknown error",
+            status: err?.status,
+            original: err
+          });
+          setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_deleting: false } : n));
+        }
+      }, 5000);
     } catch (err) {
       console.error(err);
     }
@@ -419,7 +451,19 @@ export default function AppNavbar() {
                 }}
               >
                 <IconBell />
-                {unreadCount > 0 && (
+                {notifError && (
+                  <span style={{
+                    position: "absolute", top: 2, right: 2,
+                    background: "#f59e0b", color: "white",
+                    fontSize: "0.6rem", fontWeight: 800,
+                    width: 16, height: 16, borderRadius: "50%",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    border: "2px solid #0f172a"
+                  }} title="Failed to load notifications">
+                    !
+                  </span>
+                )}
+                {!notifError && unreadCount > 0 && (
                   <span style={{
                     position: "absolute", top: 2, right: 2,
                     background: "#ef4444", color: "white",
@@ -474,7 +518,13 @@ export default function AppNavbar() {
                             borderLeft: `3px solid ${notif.is_read ? "transparent" : "#3b82f6"}`,
                             background: notif.is_read ? "transparent" : "#f8fafc",
                             cursor: notif.is_read ? "default" : "pointer",
-                            transition: "background 0.2s"
+                            transition: "background 0.2s, opacity 0.5s ease-out, max-height 0.5s ease-out, padding 0.5s ease-out, margin 0.5s ease-out, border 0.5s ease-out",
+                            opacity: notif.is_deleting ? 0 : 1,
+                            maxHeight: notif.is_deleting ? 0 : 200,
+                            paddingTop: notif.is_deleting ? 0 : "0.75rem",
+                            paddingBottom: notif.is_deleting ? 0 : "0.75rem",
+                            borderBottomWidth: notif.is_deleting ? 0 : 1,
+                            overflow: "hidden"
                           }}
                           onMouseEnter={(e) => {
                             if (!notif.is_read) e.currentTarget.style.background = "#eff6ff";
@@ -516,7 +566,7 @@ export default function AppNavbar() {
                 fontSize: "0.6rem", fontWeight: 800, color: "white", flexShrink: 0, overflow: "hidden"
               }}>
                 {user?.profile_picture ? (
-                  <img src={user.profile_picture} alt="Profile" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  <img src={user.profile_picture} alt="Profile" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }} />
                 ) : (
                   initials
                 )}
