@@ -294,7 +294,7 @@ export default function AppNavbar() {
       <style>{`
         .nav-container { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 2rem; min-height: 64px; gap: 1rem; }
         .nav-center-links { display: flex; align-items: center; gap: 2.5rem; justify-content: flex-end; flex: 1; }
-        .mobile-menu-btn { display: none; background: transparent; border: none; color: white; cursor: pointer; padding: 0.5rem; margin-left: 0.5rem; }
+        .mobile-menu-btn { display: none; background: transparent; border: none; color: white; cursor: pointer; padding: 0.5rem; }
         
         @media (max-width: 1024px) {
           .nav-center-links { gap: 1.5rem; }
@@ -302,20 +302,21 @@ export default function AppNavbar() {
         
         @media (max-width: 768px) {
           .nav-container { padding: 0.75rem 1rem; }
-          .mobile-menu-btn { display: flex; align-items: center; justify-content: center; }
-          .nav-user { margin-left: auto; }
+          .mobile-menu-btn { display: flex; align-items: center; justify-content: center; margin-left: 0; padding: 0; }
+          .nav-user { margin-left: 0; }
           .nav-center-links {
             display: none; 
             flex-direction: column;
             position: absolute; top: 100%; left: 0; right: 0;
             background: #0f172a; border-bottom: 1px solid rgba(255,255,255,0.1);
-            padding: 1.5rem; gap: 1.5rem;
+            padding: 1.5rem 1rem; gap: 1.5rem;
             box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-            align-items: flex-start;
+            align-items: flex-end;
           }
           .nav-center-links.open { display: flex; }
           .user-name-text, .user-role-badge, .nav-user-dropdown-icon, .brand-text { display: none !important; }
-          .nav-user-btn { padding: 0.3rem !important; gap: 0 !important; }
+          .nav-user-btn { padding: 0 !important; border: none !important; background: transparent !important; height: auto !important; }
+          .nav-user-avatar { width: 32px !important; height: 32px !important; }
         }
       `}</style>
       <nav style={{
@@ -406,6 +407,7 @@ export default function AppNavbar() {
         </div>
 
         {/* Auth-aware right side */}
+        <div className="nav-right" style={{ display: "flex", alignItems: "center", gap: "1.15rem", marginLeft: "auto" }}>
         {!isLoggedIn ? (
           <Link href="/login" className="nav-user" style={{
             display: "flex", alignItems: "center", gap: "0.5rem",
@@ -431,7 +433,7 @@ export default function AppNavbar() {
             Log In
           </Link>
         ) : (
-          <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+          <>
             {/* Notification Bell */}
             <div ref={notifRef} style={{ position: "relative", flexShrink: 0 }}>
               <button
@@ -559,7 +561,7 @@ export default function AppNavbar() {
                 padding: "0.3rem 0.7rem 0.3rem 0.35rem", cursor: "pointer", transition: "background 0.2s ease",
               }}
             >
-              <div style={{
+              <div className="nav-user-avatar" style={{
                 width: 26, height: 26, borderRadius: "50%",
                 background: "linear-gradient(135deg, #f59e0b 0%, #ef4444 100%)",
                 display: "flex", alignItems: "center", justifyContent: "center",
@@ -641,7 +643,7 @@ export default function AppNavbar() {
               </div>
             )}
           </div>
-        </div>
+          </>
         )}
         
         {/* Hamburger Menu Toggle (Mobile Only) */}
@@ -652,6 +654,7 @@ export default function AppNavbar() {
         >
           {mobileMenuOpen ? <IconX /> : <IconMenu />}
         </button>
+        </div>
       </div>
     </nav>
     </>

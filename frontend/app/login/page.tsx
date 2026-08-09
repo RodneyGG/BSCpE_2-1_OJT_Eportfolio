@@ -57,6 +57,7 @@ export default function LoginPage() {
         id: response.user.id,
         name: response.user.name,
         email: response.user.email,
+        profile_picture: response.user.profile_picture,
         role: response.user.role,
         company_id: response.user.company_id,
         company: response.user.company,

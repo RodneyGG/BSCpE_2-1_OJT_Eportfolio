@@ -4,9 +4,9 @@
 A Next.js frontend application for a BSCpE OJT e-portfolio. The application features student profiles, company dashboards, and document submission tracking.
 
 ## 2. Current State (Replace entirely on update)
-**Status**: The application has undergone a full security and production-readiness audit, profile UI polish, and bug fixes on the notification system.
+**Status**: The application has undergone a full security and production-readiness audit, profile UI polish, mobile layout fixes, and bug fixes on the notification and auth systems.
 - The student profile page (`frontend/app/profile/page.tsx`) features a polished avatar upload UI (instant upload with loading states, centered object-fit cropping, explicit remove button) and cleanly merged profile/hours metrics.
-- The global `AppNavbar.tsx` features a robust auto-delete notification system (read notifications fade and delete after 5s), properly wrapped error catches to avoid client-side leakage, and cleanly spaced drop-downs.
+- The global `AppNavbar.tsx` features a robust auto-delete notification system (read notifications fade and delete after 5s), properly wrapped error catches to avoid client-side leakage, cleanly spaced drop-downs, and a polished, right-aligned mobile menu that scales down perfectly to 375px screens.
 - All sensitive API routes (`/login`, `/setup-account`, `/forgot-password`, `/reset-password`) are protected by Laravel `throttle` rate-limiting middleware to prevent brute-forcing.
 - Nginx configuration (`nginx/default.conf`) is fortified with strict security headers including a baseline `Content-Security-Policy`.
 - `fetchApi` securely handles `FormData` bridging seamlessly between environments.
@@ -16,6 +16,15 @@ A Next.js frontend application for a BSCpE OJT e-portfolio. The application feat
 - All modifications are currently on the `feature/profile-pic-and-readme` branch.
 
 ## 3. Session Logs
+### 2026-08-09 - Mobile Layout & Avatar Sync Fixes
+- **Agent:** Antigravity
+- **Summary of Changes:**
+  - **Avatar Context Sync:** Fixed a bug where uploading a profile picture didn't update the global context. Updated `login/page.tsx` and `profile/page.tsx` to explicitly synchronize the `profile_picture` URL back into the global `RoleContext` so the navbar avatar immediately reflects changes and persists across reloads.
+  - **Companies Dashboard Mobile Layout:** Fixed the Turbopack build indicator blocking content by moving it to the `bottom-right` via `next.config.ts`. Added a `5rem` bottom padding to the main `page-inner` container on mobile screens, and tweaked the padding and gaps of `HeroCompanyRow.tsx` to handle 375px widths gracefully without overflow.
+  - **Mobile Navbar Header:** Grouped the notification bell, avatar, and hamburger menu into a right-aligned flex container (`.nav-right`) with a consistent `1.15rem` gap for perfectly balanced spacing.
+  - **Mobile Menu Links:** Swapped the "COMPANIES" and "MY PROFILE" mobile dropdown links from left-aligned to right-aligned (`align-items: flex-end`) with strict right-edge padding to match the icon row above.
+- **Branch:** `feature/profile-pic-and-readme`
+
 ### 2026-08-09 - Security & Production Readiness Audit
 - **Agent:** Antigravity
 - **Summary of Changes:**

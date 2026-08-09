@@ -215,6 +215,9 @@ export default function ProfilePage() {
           program: data.program || "",
         });
         setAvatarPreview(data.profile_picture || null);
+        if (user) {
+          login({ ...user, name: data.name, email: data.email, profile_picture: data.profile_picture });
+        }
       })
       .catch((err: any) => { if (err.status !== 401) console.error("Failed to load profile:", err); })
       .finally(() => setProfileLoading(false));
