@@ -39,7 +39,7 @@ class UserController extends Controller
 
         if (in_array($requester->role, ['admin', 'prof'])) {
             $users = $query
-                ->select('id', 'name', 'email', 'role', 'company_id', 'hours_rendered', 'required_hours', 'must_change_password', 'can_review', 'is_active', 'created_at')
+                ->select('id', 'name', 'email', 'role', 'company_id', 'profile_picture', 'hours_rendered', 'required_hours', 'must_change_password', 'can_review', 'is_active', 'created_at')
                 ->with('company:id,name')
                 ->withCount([
                     'documents as approved_documents_count' => fn ($q) => $q->where('status', 'approved')->where('document_type', '!=', 'dtr'),
@@ -50,7 +50,7 @@ class UserController extends Controller
                 ->get();
         } else {
             $users = $query
-                ->select('id', 'name', 'company_id', 'hours_rendered', 'required_hours')
+                ->select('id', 'name', 'company_id', 'profile_picture', 'hours_rendered', 'required_hours')
                 ->with('company:id,name')
                 ->orderBy('name')
                 ->get();

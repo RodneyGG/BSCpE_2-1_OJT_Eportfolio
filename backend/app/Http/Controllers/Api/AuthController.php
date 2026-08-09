@@ -29,6 +29,8 @@ class AuthController extends Controller
             $request->input('password')
         );
 
+        $csrfToken = bin2hex(random_bytes(32));
+
         return response()->json([
             'message' => 'Login successful',
             'token' => $result['token'],
@@ -36,12 +38,15 @@ class AuthController extends Controller
                 'id' => $result['user']->id,
                 'name' => $result['user']->name,
                 'email' => $result['user']->email,
+                'profile_picture' => $result['user']->profile_picture,
                 'role' => $result['user']->role,
                 'company_id' => $result['user']->company_id,
                 'company' => $result['user']->company?->name,
                 'must_change_password' => $result['user']->must_change_password,
             ],
-        ]);
+        ])
+        ->cookie('access_token', $result['token'], 60*24*7, '/', null, false, true, false, 'Strict')
+        ->cookie('csrf_token', $csrfToken, 60*24*7, '/', null, false, false, false, 'Strict');
     }
 
     /**
@@ -51,7 +56,9 @@ class AuthController extends Controller
     {
         $this->authService->logout($request->user());
 
-        return response()->json(['message' => 'Logged out successfully']);
+        return response()->json(['message' => 'Logged out successfully'])
+            ->withoutCookie('access_token')
+            ->withoutCookie('csrf_token');
     }
 
     /**

@@ -26,6 +26,7 @@ interface StudentListItem {
   id: number;
   name: string;
   company: StudentCompany | null;
+  profile_picture?: string | null;
   hours_rendered: string | null;
   required_hours: number | null;
   // Staff-only fields (absent in the student-facing stripped response)
@@ -114,9 +115,9 @@ export default function StudentsPage() {
                   )}
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={`https://ui-avatars.com/api/?name=${encodeURIComponent(student.name)}&size=100&background=random&color=fff&bold=true`}
+                    src={student.profile_picture || `https://ui-avatars.com/api/?name=${encodeURIComponent(student.name)}&size=100&background=random&color=fff&bold=true`}
                     alt={student.name}
-                    style={{ width: 72, height: 72, borderRadius: "50%", margin: "0 auto 0.75rem", display: "block" }}
+                    style={{ width: 72, height: 72, borderRadius: "50%", margin: "0 auto 0.75rem", display: "block", objectFit: "cover", objectPosition: "center" }}
                   />
                   <div style={{ fontWeight: 700, color: "#0f172a", fontSize: "0.9rem" }}>{student.name}</div>
                   <div style={{ color: "#64748b", fontSize: "0.78rem", marginTop: "0.15rem" }}>

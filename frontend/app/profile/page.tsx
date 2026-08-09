@@ -186,10 +186,8 @@ export default function ProfilePage() {
   const [editingGeneral, setEditingGeneral] = useState(false);
   const [generalForm, setGeneralForm] = useState({ name: "", email: "", phone: "", program: "" });
   const [savingGeneral, setSavingGeneral] = useState(false);
-  const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
-  const [removeAvatar, setRemoveAvatar] = useState(false);
-
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [editingOjt, setEditingOjt] = useState(false);
   const [deployment, setDeployment] = useState<any>(null);
   const [deploymentLoading, setDeploymentLoading] = useState(true);
@@ -216,6 +214,9 @@ export default function ProfilePage() {
           program: data.program || "",
         });
         setAvatarPreview(data.profile_picture || null);
+        if (user) {
+          login({ ...user, name: data.name, email: data.email, profile_picture: data.profile_picture });
+        }
       })
       .catch((err: any) => { if (err.status !== 401) console.error("Failed to load profile:", err); })
       .finally(() => setProfileLoading(false));
@@ -381,34 +382,51 @@ export default function ProfilePage() {
   const handleSaveGeneral = async () => {
     setSavingGeneral(true);
     try {
-      if (removeAvatar) {
-        await fetchApi('/profile/picture', { method: 'DELETE' });
-        setProfileData((prev: any) => prev ? { ...prev, profile_picture: null } : prev);
-      } else if (avatarFile) {
-        const formData = new FormData();
-        formData.append('photo', avatarFile);
-        const token = localStorage.getItem('token');
-        const res = await fetch('http://localhost:8000/api/profile/picture', {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${token}` },
-          body: formData,
-        });
-        if (!res.ok) {
-          const errData = await res.json().catch(() => ({}));
-          throw new Error(errData.message || "Failed to upload profile picture.");
-        }
-        const data = await res.json();
-        setProfileData((prev: any) => prev ? { ...prev, profile_picture: data.profile_picture } : prev);
-      }
-
       const res = await fetchApi('/profile', { method: 'PATCH', body: JSON.stringify(generalForm) });
       setProfileData((prev: any) => prev ? { ...prev, ...res.user } : prev);
       if (user) login({ ...user, name: res.user.name, email: res.user.email, profile_picture: res.user.profile_picture });
       
-      setAvatarFile(null);
-      setRemoveAvatar(false);
       setEditingGeneral(false);
     } catch (err: any) { alert(err.message || "Failed to update profile."); } finally { setSavingGeneral(false); }
+  };
+
+  const handleUploadPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { alert("File size exceeds 5MB limit."); return; }
+    
+    setUploadingAvatar(true);
+    try {
+      const formData = new FormData();
+      formData.append('photo', file);
+      const res = await fetchApi('/profile/picture', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = res;
+      setProfileData((prev: any) => prev ? { ...prev, profile_picture: data.profile_picture } : prev);
+      setAvatarPreview(data.profile_picture);
+      if (user) login({ ...user, profile_picture: data.profile_picture });
+    } catch (err: any) {
+      alert(err.message || "Upload failed.");
+    } finally {
+      setUploadingAvatar(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleRemovePhoto = async () => {
+    setUploadingAvatar(true);
+    try {
+      await fetchApi('/profile/picture', { method: 'DELETE' });
+      setProfileData((prev: any) => prev ? { ...prev, profile_picture: null } : prev);
+      setAvatarPreview(null);
+      if (user) login({ ...user, profile_picture: null });
+    } catch (err: any) {
+      alert(err.message || "Failed to remove photo.");
+    } finally {
+      setUploadingAvatar(false);
+    }
   };
 
   const handleSaveOjt = async () => {
@@ -469,13 +487,20 @@ export default function ProfilePage() {
         .main-container { width: 100%; max-width: 1280px; margin: 0 auto; padding: 2rem 2rem 3rem; flex: 1; box-sizing: border-box; }
         .ui-card { background: white; border-radius: 1.25rem; padding: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.04); border: 1px solid rgba(255,255,255,0.8); display: flex; flex-direction: column; height: auto; min-height: fit-content; }
         .responsive-grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 350px), 1fr)); gap: 24px; margin-bottom: 24px; align-items: stretch; }
-        .profile-avatar { width: 56px; height: 56px; font-size: 1.5rem; border-radius: 50%; background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%); color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; flex-shrink: 0; }
+        .profile-avatar { width: 88px; height: 88px; font-size: 2rem; border-radius: 50%; background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%); color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; flex-shrink: 0; box-shadow: 0 0 0 4px white, 0 0 0 6px #e2e8f0; margin: 6px; }
         .upload-icon { width: 18px; height: 18px; }
         .card-edit-btn { background: none; border: 1px solid #cbd5e1; color: #475569; border-radius: 0.5rem; padding: 0.6rem 1.2rem; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: all 0.15s; width: auto; }
         .card-edit-btn:hover { background: #f1f5f9; color: #0f172a; }
         .card-save-btn { background: #2563eb; color: white; border: none; border-radius: 0.5rem; padding: 0.6rem 1.25rem; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: background 0.15s; width: auto; }
         .card-save-btn:hover { background: #1d4ed8; }
         .card-cancel-btn { background: transparent; color: #64748b; border: 1px solid #cbd5e1; border-radius: 0.5rem; padding: 0.6rem 1.25rem; font-size: 0.9rem; font-weight: 700; cursor: pointer; width: auto; }
+        
+        .btn-upload-photo { display: inline-flex; align-items: center; justify-content: center; background: white; border: 1px solid #cbd5e1; color: #334155; padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+        .btn-upload-photo:hover:not(.disabled) { background: #f8fafc; border-color: #94a3b8; }
+        .btn-remove-photo { display: inline-flex; align-items: center; justify-content: center; background: transparent; border: none; color: #ef4444; padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+        .btn-remove-photo:hover:not(.disabled) { background: #fef2f2; }
+        .disabled { opacity: 0.6; cursor: not-allowed; }
+
         .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
         .profile-bar-content { display: flex; align-items: stretch; }
         .profile-bar-left { flex: 65; display: flex; gap: 16px; align-items: center; min-width: 0; }
@@ -505,7 +530,7 @@ export default function ProfilePage() {
         @media (max-width: 768px) {
           .ui-card { padding: 16px; }
           .responsive-grid-2 { gap: 16px; margin-bottom: 16px; }
-          .profile-avatar { width: 44px; height: 44px; font-size: 1.2rem; }
+          .profile-avatar { width: 64px; height: 64px; font-size: 1.5rem; margin: 4px; box-shadow: 0 0 0 3px white, 0 0 0 5px #e2e8f0; }
           .upload-icon { width: 16px; height: 16px; }
           .field-grid { grid-template-columns: 1fr; gap: 1rem; }
           .card-edit-btn, .card-save-btn, .card-cancel-btn { min-width: fit-content; }
@@ -526,56 +551,56 @@ export default function ProfilePage() {
           <div className="ui-card" style={{ marginBottom: "32px", padding: "16px" }}>
             {editingGeneral ? (
               <>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "12px" }}>
-                  <div style={{ display: "flex", gap: "16px", alignItems: "center" }}>
-                    <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                      <label style={{ cursor: "pointer", position: "relative" }}>
-                        <input type="file" accept="image/jpeg,image/png,image/webp" style={{ display: "none" }} onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (!file) return;
-                          if (file.size > 5 * 1024 * 1024) {
-                            alert("File size exceeds 5MB limit.");
-                            return;
-                          }
-                          setAvatarFile(file);
-                          setAvatarPreview(URL.createObjectURL(file));
-                          setRemoveAvatar(false);
-                        }} />
-                        <div className="profile-avatar" style={{ overflow: "hidden", position: "relative" }}>
-                          {avatarPreview ? (
-                            <img src={avatarPreview} alt="Profile" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                          ) : (
-                            displayName.split(" ").map((w: string) => w[0]).slice(0, 2).join("")
-                          )}
-                          <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", opacity: 0, transition: "opacity 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.opacity = "1"} onMouseLeave={(e) => e.currentTarget.style.opacity = "0"}>
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                          </div>
-                        </div>
+                <div style={{ display: "flex", gap: "24px", alignItems: "center", marginBottom: "32px", flexWrap: "wrap" }}>
+                  <label style={{ cursor: "pointer", position: "relative", flexShrink: 0 }}>
+                    <input type="file" accept="image/jpeg,image/png,image/webp" style={{ display: "none" }} onChange={handleUploadPhoto} disabled={uploadingAvatar} />
+                    <div className="profile-avatar" style={{ overflow: "hidden", position: "relative" }}>
+                      {avatarPreview ? (
+                        <img src={avatarPreview} alt="Profile" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }} />
+                      ) : (
+                        displayName.split(" ").map((w: string) => w[0]).slice(0, 2).join("")
+                      )}
+                      <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", opacity: 0, transition: "opacity 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.opacity = "1"} onMouseLeave={(e) => e.currentTarget.style.opacity = "0"}>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                      </div>
+                    </div>
+                  </label>
+                  
+                  <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                    <h2 style={{ fontSize: "24px", fontWeight: 800, color: displayName === "—" ? "#cbd5e1" : "#0f172a", margin: 0, lineHeight: 1 }}>{displayName}</h2>
+                    <div style={{ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap" }}>
+                      <label className={`btn-upload-photo ${uploadingAvatar ? 'disabled' : ''}`}>
+                        {uploadingAvatar ? "Uploading..." : "Upload Photo"}
+                        <input type="file" accept="image/jpeg,image/png,image/webp" style={{ display: "none" }} onChange={handleUploadPhoto} disabled={uploadingAvatar} />
                       </label>
                       {avatarPreview && (
-                        <button onClick={() => { setAvatarPreview(null); setAvatarFile(null); setRemoveAvatar(true); }} style={{ background: "none", border: "none", color: "#ef4444", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer" }}>Remove Photo</button>
+                        <button className={`btn-remove-photo ${uploadingAvatar ? 'disabled' : ''}`} onClick={handleRemovePhoto} disabled={uploadingAvatar}>
+                          Remove Photo
+                        </button>
                       )}
                     </div>
-                    <h2 style={{ fontSize: "20px", fontWeight: 700, color: displayName === "—" ? "#cbd5e1" : "#0f172a", margin: 0 }}>{displayName}</h2>
                   </div>
                 </div>
+
                 <div className="field-grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))" }}>
                   <FieldInput label="Full Name" value={generalForm.name} onChange={(v) => setGeneralForm({ ...generalForm, name: v })} />
                   <FieldInput label="Program & Year" value={generalForm.program} onChange={(v) => setGeneralForm({ ...generalForm, program: v })} />
                   <FieldInput label="Email Address" type="email" value={generalForm.email} onChange={(v) => setGeneralForm({ ...generalForm, email: v })} />
                   <FieldInput label="Phone Number" value={generalForm.phone} onChange={(v) => setGeneralForm({ ...generalForm, phone: v })} />
                 </div>
-                <div style={{ display: "flex", gap: "0.75rem", justifyContent: "flex-end", marginTop: "1.5rem" }}>
+                <div style={{ display: "flex", gap: "0.75rem", justifyContent: "flex-end", marginTop: "2rem" }}>
                   <button className="card-cancel-btn" onClick={() => setEditingGeneral(false)}>Cancel</button>
-                  <button className="card-save-btn" onClick={handleSaveGeneral}>Save Profile</button>
+                  <button className="card-save-btn" onClick={handleSaveGeneral}>
+                    {savingGeneral ? "Saving..." : "Save Profile"}
+                  </button>
                 </div>
               </>
             ) : (
               <div className="profile-bar-content">
                 <div className="profile-bar-left">
                   <div className="profile-avatar" style={{ overflow: "hidden" }}>
-                    {profileData?.profile_picture ? (
-                      <img src={profileData.profile_picture} alt="Profile" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      {profileData?.profile_picture ? (
+                      <img src={profileData.profile_picture} alt="Profile" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }} />
                     ) : (
                       displayName.split(" ").map((w: string) => w[0]).slice(0, 2).join("")
                     )}

@@ -158,6 +158,7 @@ export default function AppNavbar() {
   const notifRef = useRef<HTMLDivElement>(null);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [notifError, setNotifError] = useState(false);
 
   const toggleMenu = () => {
     setMenuOpen((v) => !v);
@@ -171,13 +172,20 @@ export default function AppNavbar() {
   const loadNotifications = async () => {
     if (!isLoggedIn) return;
     try {
+      setNotifError(false);
       const res = await fetchApi("/notifications");
       if (res) {
         setNotifications(res.notifications || []);
         setUnreadCount(res.unread_count || 0);
       }
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      setNotifError(true);
+      console.error("loadNotifications failed:", {
+        message: err?.message || "Unknown error",
+        status: err?.status,
+        errors: err?.errors,
+        original: err
+      });
     }
   };
 
@@ -192,8 +200,15 @@ export default function AppNavbar() {
   const markAllRead = async () => {
     try {
       await fetchApi("/notifications/read-all", { method: "PATCH" });
-      setNotifications(notifications.map(n => ({ ...n, is_read: true })));
+      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
       setUnreadCount(0);
+
+      setTimeout(() => {
+        setNotifications(prev => prev.map(n => n.is_read ? { ...n, is_deleting: true } : n));
+        setTimeout(() => {
+          setNotifications(prev => prev.filter(n => !n.is_deleting));
+        }, 500);
+      }, 5000);
     } catch (err) {
       console.error(err);
     }
@@ -202,8 +217,25 @@ export default function AppNavbar() {
   const markRead = async (id: number) => {
     try {
       await fetchApi(`/notifications/${id}/read`, { method: "PATCH" });
-      setNotifications(notifications.map(n => n.id === id ? { ...n, is_read: true } : n));
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
       setUnreadCount(prev => Math.max(0, prev - 1));
+
+      setTimeout(async () => {
+        setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_deleting: true } : n));
+        try {
+          await fetchApi(`/notifications/${id}`, { method: "DELETE" });
+          setTimeout(() => {
+            setNotifications(prev => prev.filter(n => n.id !== id));
+          }, 500);
+        } catch (err: any) {
+          console.error("deleteNotification failed:", {
+            message: err?.message || "Unknown error",
+            status: err?.status,
+            original: err
+          });
+          setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_deleting: false } : n));
+        }
+      }, 5000);
     } catch (err) {
       console.error(err);
     }
@@ -262,7 +294,7 @@ export default function AppNavbar() {
       <style>{`
         .nav-container { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 2rem; min-height: 64px; gap: 1rem; }
         .nav-center-links { display: flex; align-items: center; gap: 2.5rem; justify-content: flex-end; flex: 1; }
-        .mobile-menu-btn { display: none; background: transparent; border: none; color: white; cursor: pointer; padding: 0.5rem; margin-left: 0.5rem; }
+        .mobile-menu-btn { display: none; background: transparent; border: none; color: white; cursor: pointer; padding: 0.5rem; }
         
         @media (max-width: 1024px) {
           .nav-center-links { gap: 1.5rem; }
@@ -270,20 +302,21 @@ export default function AppNavbar() {
         
         @media (max-width: 768px) {
           .nav-container { padding: 0.75rem 1rem; }
-          .mobile-menu-btn { display: flex; align-items: center; justify-content: center; }
-          .nav-user { margin-left: auto; }
+          .mobile-menu-btn { display: flex; align-items: center; justify-content: center; margin-left: 0; padding: 0; }
+          .nav-user { margin-left: 0; }
           .nav-center-links {
             display: none; 
             flex-direction: column;
             position: absolute; top: 100%; left: 0; right: 0;
             background: #0f172a; border-bottom: 1px solid rgba(255,255,255,0.1);
-            padding: 1.5rem; gap: 1.5rem;
+            padding: 1.5rem 1rem; gap: 1.5rem;
             box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-            align-items: flex-start;
+            align-items: flex-end;
           }
           .nav-center-links.open { display: flex; }
           .user-name-text, .user-role-badge, .nav-user-dropdown-icon, .brand-text { display: none !important; }
-          .nav-user-btn { padding: 0.3rem !important; gap: 0 !important; }
+          .nav-user-btn { padding: 0 !important; border: none !important; background: transparent !important; height: auto !important; }
+          .nav-user-avatar { width: 32px !important; height: 32px !important; }
         }
       `}</style>
       <nav style={{
@@ -374,6 +407,7 @@ export default function AppNavbar() {
         </div>
 
         {/* Auth-aware right side */}
+        <div className="nav-right" style={{ display: "flex", alignItems: "center", gap: "1.15rem", marginLeft: "auto" }}>
         {!isLoggedIn ? (
           <Link href="/login" className="nav-user" style={{
             display: "flex", alignItems: "center", gap: "0.5rem",
@@ -399,7 +433,7 @@ export default function AppNavbar() {
             Log In
           </Link>
         ) : (
-          <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+          <>
             {/* Notification Bell */}
             <div ref={notifRef} style={{ position: "relative", flexShrink: 0 }}>
               <button
@@ -419,7 +453,19 @@ export default function AppNavbar() {
                 }}
               >
                 <IconBell />
-                {unreadCount > 0 && (
+                {notifError && (
+                  <span style={{
+                    position: "absolute", top: 2, right: 2,
+                    background: "#f59e0b", color: "white",
+                    fontSize: "0.6rem", fontWeight: 800,
+                    width: 16, height: 16, borderRadius: "50%",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    border: "2px solid #0f172a"
+                  }} title="Failed to load notifications">
+                    !
+                  </span>
+                )}
+                {!notifError && unreadCount > 0 && (
                   <span style={{
                     position: "absolute", top: 2, right: 2,
                     background: "#ef4444", color: "white",
@@ -474,7 +520,13 @@ export default function AppNavbar() {
                             borderLeft: `3px solid ${notif.is_read ? "transparent" : "#3b82f6"}`,
                             background: notif.is_read ? "transparent" : "#f8fafc",
                             cursor: notif.is_read ? "default" : "pointer",
-                            transition: "background 0.2s"
+                            transition: "background 0.2s, opacity 0.5s ease-out, max-height 0.5s ease-out, padding 0.5s ease-out, margin 0.5s ease-out, border 0.5s ease-out",
+                            opacity: notif.is_deleting ? 0 : 1,
+                            maxHeight: notif.is_deleting ? 0 : 200,
+                            paddingTop: notif.is_deleting ? 0 : "0.75rem",
+                            paddingBottom: notif.is_deleting ? 0 : "0.75rem",
+                            borderBottomWidth: notif.is_deleting ? 0 : 1,
+                            overflow: "hidden"
                           }}
                           onMouseEnter={(e) => {
                             if (!notif.is_read) e.currentTarget.style.background = "#eff6ff";
@@ -509,14 +561,14 @@ export default function AppNavbar() {
                 padding: "0.3rem 0.7rem 0.3rem 0.35rem", cursor: "pointer", transition: "background 0.2s ease",
               }}
             >
-              <div style={{
+              <div className="nav-user-avatar" style={{
                 width: 26, height: 26, borderRadius: "50%",
                 background: "linear-gradient(135deg, #f59e0b 0%, #ef4444 100%)",
                 display: "flex", alignItems: "center", justifyContent: "center",
                 fontSize: "0.6rem", fontWeight: 800, color: "white", flexShrink: 0, overflow: "hidden"
               }}>
                 {user?.profile_picture ? (
-                  <img src={user.profile_picture} alt="Profile" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  <img src={user.profile_picture} alt="Profile" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }} />
                 ) : (
                   initials
                 )}
@@ -591,7 +643,7 @@ export default function AppNavbar() {
               </div>
             )}
           </div>
-        </div>
+          </>
         )}
         
         {/* Hamburger Menu Toggle (Mobile Only) */}
@@ -602,6 +654,7 @@ export default function AppNavbar() {
         >
           {mobileMenuOpen ? <IconX /> : <IconMenu />}
         </button>
+        </div>
       </div>
     </nav>
     </>

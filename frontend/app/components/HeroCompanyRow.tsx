@@ -144,6 +144,7 @@ export default function HeroCompanyRow({
       <div
         role="button"
         tabIndex={0}
+        className="company-row-header"
         id={`company-accordion-${company.id}`}
         aria-expanded={isOpen}
         onClick={onToggle}
@@ -159,7 +160,7 @@ export default function HeroCompanyRow({
         }}
       >
         {/* Left */}
-        <div style={{ display: "flex", alignItems: "center", gap: "0.85rem", flex: 1, minWidth: 0 }}>
+        <div className="company-row-left" style={{ display: "flex", alignItems: "center", gap: "0.85rem", flex: 1, minWidth: 0 }}>
           <div style={{
             width: 34, height: 34, borderRadius: "50%", flexShrink: 0,
             backgroundColor: isOpen ? "#1d4ed8" : "#f1f5f9",
@@ -195,7 +196,7 @@ export default function HeroCompanyRow({
         </div>
 
         {/* Right */}
-        <div style={{ display: "flex", alignItems: "center", gap: "0.65rem", flexShrink: 0 }}>
+        <div className="company-row-right" style={{ display: "flex", alignItems: "center", gap: "0.65rem", flexShrink: 0 }}>
           {role === 'admin' && (
             <button
               onClick={(e) => {
