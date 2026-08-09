@@ -15,7 +15,8 @@ const nextConfig: NextConfig = {
   assetPrefix: repo ? `${repo}/` : "",
   allowedDevOrigins: ["127.0.0.1", "localhost", "172.18.0.1"],
   devIndicators: {
-    buildActivityPosition: 'bottom-right',
+    appIsrStatus: false,
+    position: 'bottom-right',
   },
 };
 
