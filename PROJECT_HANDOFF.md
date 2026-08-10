@@ -218,3 +218,11 @@ A Next.js frontend application for a BSCpE OJT e-portfolio. The application feat
   - Removed the `responsive-grid-2` wrapper so the OJT Deployment card is now full width.
   - Adjusted margins for tighter vertical flow between main page sections.
 - **Branch:** `feature/profile-accordion-and-merge`
+
+### 2026-08-10 - Production Seeders for Render
+- **Agent:** Antigravity
+- **Summary of Changes:** 
+  - Created a new branch `feature/production-seeders` specifically for production deployment on Render.
+  - Modified `UserSeeder.php` to remove all hardcoded pre-generated accounts (Prof, Test Student, default Admin).
+  - Configured `UserSeeder.php` to only seed a single super admin account using environment variables (`ADMIN_NAME`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`), allowing the user to securely set their credentials in the Render dashboard without hardcoding them in the repository.
+- **Branch:** `feature/production-seeders`
