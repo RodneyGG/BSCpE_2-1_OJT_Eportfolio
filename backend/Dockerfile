@@ -85,5 +85,7 @@ ENV FRANKENPHP_CONFIG="worker ./public/frankenphp-worker.php"
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
   CMD curl -f http://127.0.0.1:8000/up || exit 1
 
-# Start Laravel Octane
-CMD ["php", "artisan", "octane:start", "--server=frankenphp", "--host=0.0.0.0", "--port=8000"]
+# Start Laravel Octane (Auto-migrate and seed first for Render Free Tier)
+CMD php artisan migrate --force && \
+    php artisan db:seed --force && \
+    php artisan octane:start --server=frankenphp --host=0.0.0.0 --port=8000

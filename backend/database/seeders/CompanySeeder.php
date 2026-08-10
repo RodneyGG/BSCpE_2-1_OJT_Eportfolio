@@ -38,12 +38,14 @@ class CompanySeeder extends Seeder
         ];
 
         foreach ($companies as $company) {
-            Company::create([
-                'name' => $company['name'],
-                'address' => $company['address'],
-                'sector' => $company['sector'] ?? null,
-                'has_moa' => false,
-            ]);
+            Company::firstOrCreate(
+                ['name' => $company['name']],
+                [
+                    'address' => $company['address'],
+                    'sector' => $company['sector'] ?? null,
+                    'has_moa' => false,
+                ]
+            );
         }
     }
 }
