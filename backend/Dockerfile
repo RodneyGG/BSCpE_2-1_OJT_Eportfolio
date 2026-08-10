@@ -68,9 +68,11 @@ RUN mkdir -p storage/logs \
     && chmod -R 775 storage bootstrap/cache \
     && chown -R root:root storage bootstrap/cache
 
-# Run post-install scripts
+# Run post-install scripts and remove setcap from frankenphp to fix Render deployment
 RUN rm -rf bootstrap/cache/*.php \
-    && php artisan package:discover --ansi
+    && php artisan package:discover --ansi \
+    && apk add --no-cache libcap \
+    && setcap -r /usr/local/bin/frankenphp || true
 
 # Expose the FrankenPHP port (Octane default is 8000)
 EXPOSE 8000
