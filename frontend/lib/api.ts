@@ -53,7 +53,7 @@ export async function fetchApi(endpoint: string, options: RequestInit = {}) {
   const response = await fetch(`${base}/${path}`, {
     ...options,
     headers,
-    credentials: 'same-origin',
+    credentials: 'include',
   });
 
   const data = await response.json().catch(() => null);
