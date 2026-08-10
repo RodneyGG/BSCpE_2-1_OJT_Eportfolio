@@ -296,6 +296,36 @@ export default function AppNavbar() {
         .nav-center-links { display: flex; align-items: center; gap: 2.5rem; justify-content: flex-end; flex: 1; }
         .mobile-menu-btn { display: none; background: transparent; border: none; color: white; cursor: pointer; padding: 0.5rem; }
         
+      {/* Logo spin animation on hover - remove if ayaw niu :(( */}
+
+        .nav-logo-spin {
+          transition: transform 0.2s ease;
+        }
+
+        .nav-logo-spin:hover {
+          animation: navLogoSpin 1s ease-in-out;
+        }
+
+        @keyframes navLogoSpin {
+          0% {
+            transform: scale(1);
+          }
+          20% {
+            transform: scale(1.12);
+          }
+          30% {
+            transform: scale(1.12) rotate(0deg);
+          }
+          75% {
+            transform: scale(1.12) rotate(360deg);
+          }
+          100% {
+            transform: scale(1) rotate(360deg);
+          }
+        }
+
+        {/* End of logo hover Animation */}
+
         @media (max-width: 1024px) {
           .nav-center-links { gap: 1.5rem; }
         }
@@ -331,14 +361,18 @@ export default function AppNavbar() {
       <div className="nav-container">
         {/* Brand */}
         <Link href="/" className="nav-brand" style={{ display: "flex", alignItems: "center", gap: "0.75rem", textDecoration: "none", flexShrink: 0 }}>
-          <div style={{
-            background: "linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)",
-            width: 36, height: 36, borderRadius: "0.75rem",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            boxShadow: "0 4px 10px rgba(59, 130, 246, 0.3)",
-          }}>
-            <IconLogoMark />
-          </div>
+          <img
+            className="nav-logo-spin"
+            src="/website-logo.svg"
+            alt="Website Logo"
+            style={{
+              width: 36,
+              height: 36,
+              objectFit: "contain",
+              flexShrink: 0,
+              cursor: "default",
+            }}
+          />
           <span className="brand-text" style={{ fontSize: "1.1rem", fontWeight: 800, color: "white", letterSpacing: "0.02em" }}>
             OJT E-Portfolio
           </span>
