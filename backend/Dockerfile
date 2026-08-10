@@ -7,7 +7,7 @@ FROM dunglas/frankenphp:1.5-php8.4-alpine AS base
 RUN apk add --no-cache \
     bash \
     curl \
-    mysql-client \
+    postgresql-client \
     libpng-dev \
     libjpeg-turbo-dev \
     freetype-dev \
@@ -20,7 +20,7 @@ RUN apk add --no-cache \
 
 # Install PHP extensions
 RUN install-php-extensions \
-    pdo_mysql \
+    pdo_pgsql \
     gd \
     zip \
     bcmath \
