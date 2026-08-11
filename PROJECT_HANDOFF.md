@@ -4,7 +4,7 @@
 A Next.js frontend application for a BSCpE OJT e-portfolio. The application features student profiles, company dashboards, and document submission tracking.
 
 ## 2. Current State (Replace entirely on update)
-<<<<<<< HEAD
+
 **Status**: The student profile page (`frontend/app/profile/page.tsx`) has been refined and modernized, the Admin Checklist page (`frontend/app/admin/checklist/page.tsx`) has robust print support, and the application has undergone a full security and production-readiness audit alongside mobile layout fixes and notification/auth bug fixes.
 - The Required Documents section was successfully converted from a horizontal tab bar into a single-open accordion. The During OJT accordion body retains the complex week navigation, schedule card, and uploads grid functionality perfectly.
 - The top layout of the profile page was redesigned. The Student Information card and Hours Rendered card were merged into a single horizontal bar for a cleaner layout. OJT Deployment is now a standalone full-width card underneath the merged profile bar.
@@ -76,7 +76,7 @@ A Next.js frontend application for a BSCpE OJT e-portfolio. The application feat
   - **AppNavbar Bug Fix:** Updated the `loadNotifications` catch block to extract and log explicit error properties instead of silently swallowing the thrown API object. Added a `notifError` state to display an orange exclamation badge on the bell icon if the notifications fetch fails, preventing silent failures.
 - **Branch:** `feature/profile-accordion-and-merge`
 
->>>>>>> upstream/main
+
 ### 2026-08-08 - Checklist Print Readability Improvements
 - **Agent:** Antigravity
 - **Summary of Changes:**
@@ -226,3 +226,11 @@ A Next.js frontend application for a BSCpE OJT e-portfolio. The application feat
   - Modified `UserSeeder.php` to remove all hardcoded pre-generated accounts (Prof, Test Student, default Admin).
   - Configured `UserSeeder.php` to only seed a single super admin account using environment variables (`ADMIN_NAME`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`), allowing the user to securely set their credentials in the Render dashboard without hardcoding them in the repository.
 - **Branch:** `feature/production-seeders`
+
+### 2026-08-11 - Remove Setup Email and Set Default Password
+- **Agent:** Antigravity
+- **Summary of Changes:** 
+  - Modified `UserService.php` to bypass sending a setup email when creating a student account.
+  - Hardcoded the default password to `bscpe2-1` for all newly created student accounts, and forced `must_change_password` to `true`.
+  - Updated the frontend UI in `ManageUsersSection.tsx` to remove the "Resend Setup Email" action and updated the success creation toast to reflect the new default password behavior.
+- **Branch:** `dev`

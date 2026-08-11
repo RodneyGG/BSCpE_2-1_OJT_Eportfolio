@@ -147,7 +147,7 @@ export default function ManageUsersSection({ onViewStudent, onCountChange }: Man
       setShowCreate(false);
       if (createRole === "normal") {
         await showAlert(
-          `${createName.trim()} has been created and a setup link has been emailed to them.`,
+          `${createName.trim()}'s account has been created. The default password is bscpe2-1.`,
           "success",
           "Account Created"
         );
@@ -231,20 +231,6 @@ export default function ManageUsersSection({ onViewStudent, onCountChange }: Man
     }
   };
 
-  const handleResendSetup = async (user: ManagedUser) => {
-    const ok = await showConfirm(`Resend the account setup email to ${user.name} (${user.email})?`);
-    if (!ok) return;
-    setBusyId(user.id);
-    try {
-      await fetchApi(`/admin/users/${user.id}/resend-setup`, { method: "POST" });
-      await showAlert(`Setup email resent to ${user.email}.`);
-    } catch (err) {
-      const e = err as { message?: string };
-      await showAlert(e.message || "Failed to resend setup email.");
-    } finally {
-      setBusyId(null);
-    }
-  };
 
   const handleDelete = async (user: ManagedUser) => {
     const docTotal =
@@ -377,29 +363,18 @@ export default function ManageUsersSection({ onViewStudent, onCountChange }: Man
                       {user.can_review ? "Revoke Review" : "Grant Review"}
                     </button>
                   )}
-                  {!user.is_active && user.role === "normal" ? (
-                    <button
-                      className="btn-action"
-                      disabled={busyId === user.id}
-                      onClick={() => handleResendSetup(user)}
-                      style={{ background: "#dbeafe", borderColor: "#bfdbfe", color: "#1e40af" }}
-                    >
-                      Resend Setup Email
-                    </button>
-                  ) : (
-                    <button
-                      className="btn-action"
-                      disabled={busyId === user.id}
-                      onClick={() => handleToggleActive(user)}
-                      style={
-                        user.is_active
-                          ? { background: "#fee2e2", borderColor: "#fecaca", color: "#991b1b" }
-                          : { background: "#d1fae5", borderColor: "#a7f3d0", color: "#065f46" }
-                      }
-                    >
-                      {user.is_active ? "Deactivate" : "Reactivate"}
-                    </button>
-                  )}
+                  <button
+                    className="btn-action"
+                    disabled={busyId === user.id}
+                    onClick={() => handleToggleActive(user)}
+                    style={
+                      user.is_active
+                        ? { background: "#fee2e2", borderColor: "#fecaca", color: "#991b1b" }
+                        : { background: "#d1fae5", borderColor: "#a7f3d0", color: "#065f46" }
+                    }
+                  >
+                    {user.is_active ? "Deactivate" : "Reactivate"}
+                  </button>
                   {user.id !== currentUser?.id && (
                     <button
                       className="btn-action"
