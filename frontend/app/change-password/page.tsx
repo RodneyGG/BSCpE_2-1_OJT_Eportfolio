@@ -21,6 +21,9 @@ export default function ChangePasswordPage() {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -137,15 +140,22 @@ export default function ChangePasswordPage() {
                   <IconKey />
                 </div>
                 <input 
-                  type="password" 
+                  type={showCurrent ? "text" : "password"} 
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
                   placeholder="••••••••"
-                  style={{ width: "100%", padding: "0.85rem 1rem 0.85rem 3rem", borderRadius: "0.75rem", border: "1px solid #cbd5e1", fontSize: "0.95rem", outline: "none", transition: "border-color 0.2s, box-shadow 0.2s", background: "#f8fafc" }}
+                  style={{ width: "100%", padding: "0.85rem 3rem", borderRadius: "0.75rem", border: "1px solid #cbd5e1", fontSize: "0.95rem", outline: "none", transition: "border-color 0.2s, box-shadow 0.2s", background: "#f8fafc" }}
                   onFocus={(e) => { e.currentTarget.style.borderColor = "#3b82f6"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(59,130,246,0.1)"; }}
                   onBlur={(e) => { e.currentTarget.style.borderColor = "#cbd5e1"; e.currentTarget.style.boxShadow = "none"; }}
                   required 
                 />
+                <button 
+                  type="button" 
+                  onClick={() => setShowCurrent(!showCurrent)}
+                  style={{ position: "absolute", right: "0.5rem", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "#64748b", cursor: "pointer", padding: "0.5rem", fontSize: "0.85rem", fontWeight: 600 }}
+                >
+                  {showCurrent ? "Hide" : "Show"}
+                </button>
               </div>
             </div>
 
@@ -156,15 +166,22 @@ export default function ChangePasswordPage() {
                   <IconKey />
                 </div>
                 <input 
-                  type="password" 
+                  type={showNew ? "text" : "password"} 
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="••••••••"
-                  style={{ width: "100%", padding: "0.85rem 1rem 0.85rem 3rem", borderRadius: "0.75rem", border: "1px solid #cbd5e1", fontSize: "0.95rem", outline: "none", transition: "border-color 0.2s, box-shadow 0.2s", background: "#f8fafc" }}
+                  style={{ width: "100%", padding: "0.85rem 3rem", borderRadius: "0.75rem", border: "1px solid #cbd5e1", fontSize: "0.95rem", outline: "none", transition: "border-color 0.2s, box-shadow 0.2s", background: "#f8fafc" }}
                   onFocus={(e) => { e.currentTarget.style.borderColor = "#3b82f6"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(59,130,246,0.1)"; }}
                   onBlur={(e) => { e.currentTarget.style.borderColor = "#cbd5e1"; e.currentTarget.style.boxShadow = "none"; }}
                   required 
                 />
+                <button 
+                  type="button" 
+                  onClick={() => setShowNew(!showNew)}
+                  style={{ position: "absolute", right: "0.5rem", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "#64748b", cursor: "pointer", padding: "0.5rem", fontSize: "0.85rem", fontWeight: 600 }}
+                >
+                  {showNew ? "Hide" : "Show"}
+                </button>
               </div>
             </div>
 
@@ -175,15 +192,22 @@ export default function ChangePasswordPage() {
                   <IconKey />
                 </div>
                 <input 
-                  type="password" 
+                  type={showConfirm ? "text" : "password"} 
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••"
-                  style={{ width: "100%", padding: "0.85rem 1rem 0.85rem 3rem", borderRadius: "0.75rem", border: "1px solid #cbd5e1", fontSize: "0.95rem", outline: "none", transition: "border-color 0.2s, box-shadow 0.2s", background: "#f8fafc" }}
+                  style={{ width: "100%", padding: "0.85rem 3rem", borderRadius: "0.75rem", border: "1px solid #cbd5e1", fontSize: "0.95rem", outline: "none", transition: "border-color 0.2s, box-shadow 0.2s", background: "#f8fafc" }}
                   onFocus={(e) => { e.currentTarget.style.borderColor = "#3b82f6"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(59,130,246,0.1)"; }}
                   onBlur={(e) => { e.currentTarget.style.borderColor = "#cbd5e1"; e.currentTarget.style.boxShadow = "none"; }}
                   required 
                 />
+                <button 
+                  type="button" 
+                  onClick={() => setShowConfirm(!showConfirm)}
+                  style={{ position: "absolute", right: "0.5rem", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "#64748b", cursor: "pointer", padding: "0.5rem", fontSize: "0.85rem", fontWeight: 600 }}
+                >
+                  {showConfirm ? "Hide" : "Show"}
+                </button>
               </div>
             </div>
 

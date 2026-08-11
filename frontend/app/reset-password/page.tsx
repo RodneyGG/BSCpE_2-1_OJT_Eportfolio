@@ -23,6 +23,8 @@ function ResetPasswordForm() {
 
   const [password, setPassword] = useState("");
   const [passwordConfirmation, setPasswordConfirmation] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
@@ -116,14 +118,21 @@ function ResetPasswordForm() {
                   <IconLock />
                 </div>
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  style={{ width: "100%", padding: "0.85rem 1rem 0.85rem 3rem", borderRadius: "0.75rem", border: "1px solid #cbd5e1", fontSize: "0.95rem", outline: "none", background: "#f8fafc" }}
+                  style={{ width: "100%", padding: "0.85rem 3rem", borderRadius: "0.75rem", border: "1px solid #cbd5e1", fontSize: "0.95rem", outline: "none", background: "#f8fafc" }}
                   required
                   minLength={8}
                 />
+                <button 
+                  type="button" 
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{ position: "absolute", right: "0.5rem", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "#64748b", cursor: "pointer", padding: "0.5rem", fontSize: "0.85rem", fontWeight: 600 }}
+                >
+                  {showPassword ? "Hide" : "Show"}
+                </button>
               </div>
             </div>
 
@@ -134,14 +143,21 @@ function ResetPasswordForm() {
                   <IconLock />
                 </div>
                 <input
-                  type="password"
+                  type={showConfirmation ? "text" : "password"}
                   value={passwordConfirmation}
                   onChange={(e) => setPasswordConfirmation(e.target.value)}
                   placeholder="••••••••"
-                  style={{ width: "100%", padding: "0.85rem 1rem 0.85rem 3rem", borderRadius: "0.75rem", border: "1px solid #cbd5e1", fontSize: "0.95rem", outline: "none", background: "#f8fafc" }}
+                  style={{ width: "100%", padding: "0.85rem 3rem", borderRadius: "0.75rem", border: "1px solid #cbd5e1", fontSize: "0.95rem", outline: "none", background: "#f8fafc" }}
                   required
                   minLength={8}
                 />
+                <button 
+                  type="button" 
+                  onClick={() => setShowConfirmation(!showConfirmation)}
+                  style={{ position: "absolute", right: "0.5rem", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "#64748b", cursor: "pointer", padding: "0.5rem", fontSize: "0.85rem", fontWeight: 600 }}
+                >
+                  {showConfirmation ? "Hide" : "Show"}
+                </button>
               </div>
             </div>
 
