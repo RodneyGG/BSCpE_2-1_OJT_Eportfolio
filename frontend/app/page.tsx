@@ -380,14 +380,11 @@ const handleSyncCompanies = async () => {
               <div>
                 <div style={{ display: "flex", alignItems: "center", gap: "0.6rem",
                   marginBottom: "0.85rem" }}>
-                  <div style={{ width: 30, height: 30, borderRadius: "0.45rem",
-                    background: "linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)",
-                    display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <svg width={14} height={14} viewBox="0 0 24 24" fill="none"
-                      stroke="white" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>
-                    </svg>
-                  </div>
+                  <img
+                    src="/website-logo.svg"
+                    alt="Website Logo"
+                    style={{ width: 30, height: 30, objectFit: "contain" }}
+                  />
                   <span style={{ fontWeight: 800, fontSize: "0.85rem", color: "white",
                     letterSpacing: "0.04em" }}>BSCPE 2-1</span>
                 </div>
