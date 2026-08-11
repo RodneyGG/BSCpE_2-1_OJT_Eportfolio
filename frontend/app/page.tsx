@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import HeroCompanyRow from "./components/HeroCompanyRow";
 import ToastStack, { useToasts } from "./components/Toast";
 /* ═══════════════════════════ Data ═══════════════════════════ */
-interface Student { id: string; name: string; role: string; }
+interface Student { id: string; name: string; role: string; profile_picture?: string | null; }
 interface Company { id: number; name: string; location: string; studentCount: number; students: Student[]; }
 
 /* ═══════════════════════════ Page ════════════════════════════ */
