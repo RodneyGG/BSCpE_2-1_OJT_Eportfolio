@@ -23,6 +23,8 @@ class User extends Authenticatable
         'ojt_supervisor',
         'emergency_contact_name',
         'emergency_contact_number',
+        'phone',
+        'program',
         'hours_rendered',
         'required_hours',
         'ojt_start_date',

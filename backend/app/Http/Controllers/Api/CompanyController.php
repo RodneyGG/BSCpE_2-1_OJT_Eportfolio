@@ -44,7 +44,10 @@ class CompanyController extends Controller
             ->with(['users' => function ($q) {
                 $q->where('role', 'normal')
                   ->where('is_active', true)
-                  ->select('id', 'name', 'role', 'email', 'company_id');
+                  ->select('id', 'name', 'role', 'email', 'company_id', 'program', 'profile_picture')
+                  ->with(['deployments' => function ($dq) {
+                      $dq->orderByRaw("status = 'confirmed' desc")->latest('id');
+                  }]);
                 }])
             ->orderBy('name')
             ->get();
@@ -60,8 +63,9 @@ class CompanyController extends Controller
                         'id' => $user->id,
                         'name' => $user->name,
                         'email' => $user->email,
-                        'role' => 'IT Intern', // Dummy
-                        'program' => 'BSCpE 2-1', // Dummy
+                        'role' => $user->deployments->first()->role ?? 'N/A',
+                        'program' => $user->program ?: 'N/A',
+                        'profile_picture' => $user->profile_picture,
                         'hours' => 0,
                         'totalHours' => 300,
                         'status' => 'Active',
