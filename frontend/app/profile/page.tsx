@@ -315,7 +315,7 @@ export default function ProfilePage() {
         // Daily Attendance Report is now a one-time submission (no week), so
         // unlike other "during" docs it must come from baseDocs, not weeklyDocs.
         setDocuments([
-          ...baseDocs.filter(d => d.phase !== "during" || d.id === "daily-attendance-report"),
+          ...baseDocs.filter(d => d.phase !== "during" || d.name === "Daily Attendance Report"),
           ...weeklyDocs
         ]);
       })
@@ -876,7 +876,7 @@ export default function ProfilePage() {
                             </div>
                             <div style={{ maxWidth: 420 }}>
                               <DocumentCardItem
-                                doc={documents.find(d => d.id === "daily-attendance-report") || { id: "daily-attendance-report", name: "Daily Attendance Report", phase: "during", status: "not_submitted", date: "" }}
+                                doc={documents.find(d => d.name === "Daily Attendance Report") || { id: "daily-attendance-report", name: "Daily Attendance Report", phase: "during", status: "not_submitted", date: "" }}
                                 onUpload={handleUpload}
                                 onRemove={handleRemoveDocument}
                                 onView={handleViewPdf}
@@ -884,11 +884,32 @@ export default function ProfilePage() {
                             </div>
                           </div>
                           <div style={{ display: "flex", gap: "0.75rem", overflowX: "auto", paddingBottom: "1.5rem", borderBottom: "2px solid #e2e8f0", marginBottom: "2rem" }}>
-                            {weeksArray.map(w => (
-                              <button key={w} onClick={() => setActiveWeek(w)} style={{ padding: "0.75rem 1.75rem", borderRadius: "9999px", border: "none", background: activeWeek === w ? "#0f172a" : "white", color: activeWeek === w ? "white" : "#475569", borderStyle: "solid", borderWidth: 1, borderColor: activeWeek === w ? "#0f172a" : "#cbd5e1", fontSize: "1rem", fontWeight: 800, cursor: "pointer", transition: "all 0.2s", whiteSpace: "nowrap", boxShadow: activeWeek === w ? "0 4px 10px rgba(15,23,42,0.2)" : "none" }}>
-                                Week {w}
-                              </button>
-                            ))}
+                            {weeksArray.map(w => {
+                              const isLastWeek = w === Math.max(...weeksArray);
+                              const weekHasDocs = documents.some(d => d.week === w);
+                              const canDeleteWeek = isLastWeek && weeksArray.length > 1 && !weekHasDocs;
+                              return (
+                                <div key={w} style={{ position: "relative", display: "inline-flex" }}>
+                                  <button onClick={() => setActiveWeek(w)} style={{ padding: "0.75rem 1.75rem", borderRadius: "9999px", border: "none", background: activeWeek === w ? "#0f172a" : "white", color: activeWeek === w ? "white" : "#475569", borderStyle: "solid", borderWidth: 1, borderColor: activeWeek === w ? "#0f172a" : "#cbd5e1", fontSize: "1rem", fontWeight: 800, cursor: "pointer", transition: "all 0.2s", whiteSpace: "nowrap", boxShadow: activeWeek === w ? "0 4px 10px rgba(15,23,42,0.2)" : "none" }}>
+                                    Week {w}
+                                  </button>
+                                  {canDeleteWeek && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        const remaining = weeksArray.filter(week => week !== w);
+                                        setWeeksArray(remaining);
+                                        if (activeWeek === w) setActiveWeek(Math.max(...remaining));
+                                      }}
+                                      title="Delete this empty week"
+                                      style={{ position: "absolute", top: -6, right: -6, width: 20, height: 20, borderRadius: "9999px", border: "1px solid #fecaca", background: "#fef2f2", color: "#b91c1c", fontSize: "0.7rem", fontWeight: 800, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1, padding: 0 }}
+                                    >
+                                      ×
+                                    </button>
+                                  )}
+                                </div>
+                              );
+                            })}
                             <button onClick={() => setWeeksArray([...weeksArray, Math.max(...weeksArray) + 1])} style={{ padding: "0.75rem 1.75rem", borderRadius: "9999px", border: "2px dashed #cbd5e1", background: "transparent", color: "#64748b", fontSize: "1rem", fontWeight: 800, cursor: "pointer", transition: "all 0.2s", whiteSpace: "nowrap" }} onMouseEnter={(e) => {e.currentTarget.style.borderColor = "#94a3b8"; e.currentTarget.style.color = "#334155"}} onMouseLeave={(e) => {e.currentTarget.style.borderColor = "#cbd5e1"; e.currentTarget.style.color = "#64748b"}}>
                               + Add Week
                             </button>
