@@ -84,7 +84,8 @@ class AuthController extends Controller
             'phone' => $user->phone,
             'program' => $user->program,
             'hours_rendered' => $user->hours_rendered,
-        ]);
+            'required_hours' => $user->required_hours,
+        ]); 
     }
 
     /**

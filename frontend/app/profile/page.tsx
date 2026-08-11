@@ -6,6 +6,7 @@ import { fetchApi } from "../../lib/api";
 import AppNavbar from "../components/AppNavbar";
 import ProtectedRoute from "../components/ProtectedRoute";
 import { REQUIRED_DOCUMENTS, DocumentPhase } from "../data/documentTypes";
+import HoursInputModal from "../components/HoursInputModal";
 import DocumentViewerModal from "../components/DocumentViewerModal";
 import ConfirmDialog from "../components/ConfirmDialog";
 
@@ -75,8 +76,7 @@ function FieldInput({ label, value, onChange, type = "text" }: { label: string; 
 }
 
 /* ═══════════════════════════ Status Badge ══════════════════════ */
-function StatusBadge({ status }: { status: "not_submitted" | "submitted" | "pending" | "approved" | "rejected" | "uploading" | "ongoing" }) {
-  const map = {
+function StatusBadge({ status, label, small }: { status: "not_submitted" | "submitted" | "pending" | "approved" | "rejected" | "uploading" | "ongoing", label?: string, small?: boolean }) {  const map = {
     not_submitted: { bg: "#f1f5f9", color: "#64748b", label: "Not Submitted" },
     submitted: { bg: "#dbeafe", color: "#1e40af", label: "Submitted" },
     pending: { bg: "#fef9c3", color: "#a16207", label: "Under Review" },
@@ -87,8 +87,8 @@ function StatusBadge({ status }: { status: "not_submitted" | "submitted" | "pend
   };
   const s = map[status] || map.not_submitted;
   return (
-    <span style={{ background: s.bg, color: s.color, padding: "0.4rem 1rem", borderRadius: "9999px", fontSize: "clamp(0.65rem, 2.5vw, 0.85rem)", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.05em", whiteSpace: "nowrap" }}>
-      {s.label}
+    <span style={{ background: s.bg, color: s.color, padding: small ? "0.15rem 0.5rem" : "0.4rem 1rem", borderRadius: "9999px", fontSize: small ? "0.6rem" : "clamp(0.65rem, 2.5vw, 0.85rem)", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.05em", whiteSpace: "nowrap" }}>
+      {label || s.label}
     </span>
   );
 }
@@ -231,6 +231,8 @@ export default function ProfilePage() {
   const [weeksArray, setWeeksArray] = useState<number[]>([1]);
   const [viewingDoc, setViewingDoc] = useState<{title: string, link: string} | null>(null);
   const [deletingDoc, setDeletingDoc] = useState<string | null>(null);
+  const [darUploadPending, setDarUploadPending] = useState<{ id: string, file: File, week?: number } | null>(null);
+  const [submittingDarHours, setSubmittingDarHours] = useState(false);
 
   useEffect(() => {
     fetchApi('/me')
@@ -323,29 +325,10 @@ export default function ProfilePage() {
       .finally(() => setDocumentsLoading(false));
   }, []);
 
-  const handleUpload = async (id: string, file: File, week?: number) => {
-    const docToUpload = documents.find(d => d.id === id);
-    const reqDef = docToUpload
-      ? REQUIRED_DOCUMENTS.find(r => r.title === docToUpload.name)
-      : REQUIRED_DOCUMENTS.find(r => id === r.id || id.startsWith(`${r.id}-week-`));
-    let documentType = reqDef ? reqDef.id : docToUpload.name;
-    let claimedHours: string | undefined = undefined;
-
-    if (documentType === "daily-attendance-report" || documentType === "dtr" || reqDef?.aliases?.includes("dtr")) {
-      documentType = "dtr";
-      const promptMsg = week ? `How many hours did you render for Week ${week}?` : "How many hours are you claiming for this DTR?";
-      const hoursStr = window.prompt(promptMsg);
-      if (hoursStr === null) return; // User cancelled
-      const hoursNum = parseFloat(hoursStr);
-      if (isNaN(hoursNum) || hoursNum <= 0) {
-        alert("Please enter a valid number of hours.");
-        return;
-      }
-      claimedHours = hoursNum.toString();
-    }
-
+  const performUpload = async (id: string, file: File, documentType: string, week?: number, claimedHours?: string, requiredHours?: string) => {
     setDocuments(docs => {
       if (!docs.find(d => d.id === id)) {
+        const reqDef = REQUIRED_DOCUMENTS.find(r => r.id === documentType || r.aliases?.includes(documentType));
         if (reqDef) docs.push({ id, name: reqDef.title, phase: reqDef.phase, status: "uploading", date: "", week });
       }
       return docs.map(d => d.id === id ? { ...d, status: "uploading" } : d);
@@ -355,17 +338,48 @@ export default function ProfilePage() {
       const formData = new FormData();
       formData.append('document', file);
       formData.append('document_type', documentType);
-      if (week !== undefined) formData.append('week', week.toString());
+      if (week !== undefined && week !== null) formData.append('week', week.toString());
       if (claimedHours !== undefined) formData.append('claimed_hours', claimedHours);
+      if (requiredHours !== undefined) formData.append('required_hours', requiredHours);
 
       const res = await fetchApi('/documents/upload', { method: 'POST', body: formData });
 
       setDocuments(docs => docs.map(d =>
         d.id === id ? { ...d, status: "submitted", date: "Just now", fileLink: res.document?.file_link, originalFilename: res.document?.original_filename, reviewStatus: "pending", rejectionReason: null, week } : d
       ));
+
+      if (documentType === "dtr" && claimedHours !== undefined && requiredHours !== undefined) {
+        setProfileData((prev: any) => prev ? { ...prev, hours_rendered: claimedHours, required_hours: requiredHours } : prev);
+      }
     } catch (err: any) {
       alert(err.message || 'Failed to upload document.');
       setDocuments(docs => docs.map(d => d.id === id ? { ...d, status: "not_submitted" } : d));
+    }
+  };
+
+  const handleUpload = async (id: string, file: File, week?: number) => {
+    const docToUpload = documents.find(d => d.id === id);
+    const reqDef = docToUpload
+      ? REQUIRED_DOCUMENTS.find(r => r.title === docToUpload.name)
+      : REQUIRED_DOCUMENTS.find(r => id === r.id || id.startsWith(`${r.id}-week-`));
+    const documentType = reqDef ? reqDef.id : docToUpload.name;
+
+    if (documentType === "daily-attendance-report" || documentType === "dtr" || reqDef?.aliases?.includes("dtr")) {
+      setDarUploadPending({ id, file, week });
+      return;
+    }
+
+    await performUpload(id, file, documentType, week);
+  };
+
+  const handleConfirmDarUpload = async (requiredHours: number, hoursRendered: number) => {
+    if (!darUploadPending) return;
+    setSubmittingDarHours(true);
+    try {
+      await performUpload(darUploadPending.id, darUploadPending.file, "dtr", darUploadPending.week, hoursRendered.toString(), requiredHours.toString());
+    } finally {
+      setSubmittingDarHours(false);
+      setDarUploadPending(null);
     }
   };
 
@@ -385,7 +399,13 @@ export default function ProfilePage() {
     
     try {
       if (!isNaN(Number(docToDelete.id))) {
-        await fetchApi(`/documents/${docToDelete.id}`, { method: 'DELETE' });
+        try {
+          await fetchApi(`/documents/${docToDelete.id}`, { method: 'DELETE' });
+        } catch (err: any) {
+          // If it's already gone server-side (stale local state), treat as success
+          // rather than surfacing a confusing error — the end state is the same.
+          if (err?.status !== 404) throw err;
+        }
       }
       
       setDocuments(docs => docs.map(d => {
@@ -508,8 +528,11 @@ export default function ProfilePage() {
   };
 
   const hoursRendered = profileData ? (parseFloat(profileData.hours_rendered) || 0) : 0;
+  const requiredHours = profileData?.required_hours ? (parseFloat(profileData.required_hours) || 0) : 0;
+  const darSubmitted = documents.some(d => d.name === "Daily Attendance Report" && d.status === "submitted");
+  const hoursCompleted = darSubmitted && requiredHours > 0 && hoursRendered >= requiredHours;
   const displayName = profileData?.name || "—";
-  const displayProgram = profileData?.program || "Bachelor of Science in Computer Engineering | 2-1";
+  const displayProgram = profileData?.program || "—";
   const deploymentIncomplete = !!deployment && (
     !deployment.company?.name ||
     !deployment.role ||
@@ -540,10 +563,9 @@ export default function ProfilePage() {
         .disabled { opacity: 0.6; cursor: not-allowed; }
 
         .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
-        .profile-bar-content { display: flex; align-items: stretch; }
-        .profile-bar-left { flex: 65; display: flex; gap: 16px; align-items: center; min-width: 0; }
-        .profile-bar-divider { width: 1px; background: #e2e8f0; margin: 0 clamp(24px, 4vw, 40px); align-self: stretch; flex-shrink: 0; }
-        .profile-bar-hours { flex: 35; display: flex; flex-direction: column; justify-content: center; min-width: 0; }
+        .info-hours-grid { display: grid; grid-template-columns: 3fr 2fr; gap: 24px; margin-bottom: 32px; align-items: start; }
+        .profile-bar-left { display: flex; gap: 16px; align-items: center; min-width: 0; }
+        .hours-card-empty { display: flex; align-items: center; justify-content: center; height: 100%; text-align: center; color: #94a3b8; font-size: 0.9rem; font-weight: 600; padding: 1rem; }
         .accordion-header { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.25rem; background: white; border: none; border-bottom: 1px solid #e2e8f0; cursor: pointer; transition: background 0.3s ease; font-family: inherit; font-size: inherit; }
         .accordion-header:hover { background: #f8fafc; }
         .accordion-header.open { background: linear-gradient(90deg, #eff6ff 0%, #f0f9ff 100%); }
@@ -572,8 +594,7 @@ export default function ProfilePage() {
           .upload-icon { width: 16px; height: 16px; }
           .field-grid { grid-template-columns: 1fr; gap: 1rem; }
           .card-edit-btn, .card-save-btn, .card-cancel-btn { min-width: fit-content; }
-          .profile-bar-content { flex-direction: column; }
-          .profile-bar-divider { width: 100%; height: 1px; margin: 16px 0; }
+          .info-hours-grid { grid-template-columns: 1fr; }
         }
 
         @media (max-width: 640px) {
@@ -584,105 +605,128 @@ export default function ProfilePage() {
 
       <main className="main-container">
         
-        {/* Combined Profile & Hours Bar */}
-        <RevealBox delay={0}>
-          <div className="ui-card" style={{ marginBottom: "32px", padding: "16px" }}>
-            {editingGeneral ? (
-              <>
-                <div style={{ display: "flex", gap: "24px", alignItems: "center", marginBottom: "32px", flexWrap: "wrap" }}>
-                  <label style={{ cursor: "pointer", position: "relative", flexShrink: 0 }}>
-                    <input type="file" accept="image/jpeg,image/png,image/webp" style={{ display: "none" }} onChange={handleUploadPhoto} disabled={uploadingAvatar} />
-                    <div className="profile-avatar" style={{ overflow: "hidden", position: "relative" }}>
-                      {avatarPreview ? (
-                        <img src={avatarPreview} alt="Profile" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }} />
-                      ) : (
-                        displayName.split(" ").map((w: string) => w[0]).slice(0, 2).join("")
-                      )}
-                      <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", opacity: 0, transition: "opacity 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.opacity = "1"} onMouseLeave={(e) => e.currentTarget.style.opacity = "0"}>
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+     {/* Profile Info + Hours Cards */}
+        <div className="info-hours-grid">
+          <RevealBox delay={0}>
+            <div className="ui-card" style={{ padding: "16px", height: "100%" }}>
+              {editingGeneral ? (
+                <>
+                  <div style={{ display: "flex", gap: "24px", alignItems: "center", marginBottom: "32px", flexWrap: "wrap" }}>
+                    <label style={{ cursor: "pointer", position: "relative", flexShrink: 0 }}>
+                      <input type="file" accept="image/jpeg,image/png,image/webp" style={{ display: "none" }} onChange={handleUploadPhoto} disabled={uploadingAvatar} />
+                      <div className="profile-avatar" style={{ overflow: "hidden", position: "relative" }}>
+                        {avatarPreview ? (
+                          <img src={avatarPreview} alt="Profile" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }} />
+                        ) : (
+                          displayName.split(" ").map((w: string) => w[0]).slice(0, 2).join("")
+                        )}
+                        <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", opacity: 0, transition: "opacity 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.opacity = "1"} onMouseLeave={(e) => e.currentTarget.style.opacity = "0"}>
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        </div>
                       </div>
-                    </div>
-                  </label>
-                  
-                  <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                    <h2 style={{ fontSize: "24px", fontWeight: 800, color: displayName === "—" ? "#cbd5e1" : "#0f172a", margin: 0, lineHeight: 1 }}>{displayName}</h2>
-                    <div style={{ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap" }}>
-                      <label className={`btn-upload-photo ${uploadingAvatar ? 'disabled' : ''}`}>
-                        {uploadingAvatar ? "Uploading..." : "Upload Photo"}
-                        <input type="file" accept="image/jpeg,image/png,image/webp" style={{ display: "none" }} onChange={handleUploadPhoto} disabled={uploadingAvatar} />
-                      </label>
-                      {avatarPreview && (
-                        <button className={`btn-remove-photo ${uploadingAvatar ? 'disabled' : ''}`} onClick={handleRemovePhoto} disabled={uploadingAvatar}>
-                          Remove Photo
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="field-grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))" }}>
-                  <FieldInput label="Full Name" value={generalForm.name} onChange={(v) => setGeneralForm({ ...generalForm, name: v })} />
-                  <FieldInput label="Program & Year" value={generalForm.program} onChange={(v) => setGeneralForm({ ...generalForm, program: v })} />
-                  <FieldInput label="Email Address" type="email" value={generalForm.email} onChange={(v) => setGeneralForm({ ...generalForm, email: v })} />
-                  <FieldInput label="Phone Number" value={generalForm.phone} onChange={(v) => setGeneralForm({ ...generalForm, phone: v })} />
-                </div>
-                <div style={{ display: "flex", gap: "0.75rem", justifyContent: "flex-end", marginTop: "2rem" }}>
-                  <button className="card-cancel-btn" onClick={() => setEditingGeneral(false)}>Cancel</button>
-                  <button className="card-save-btn" onClick={handleSaveGeneral}>
-                    {savingGeneral ? "Saving..." : "Save Profile"}
-                  </button>
-                </div>
-              </>
-            ) : (
-              <div className="profile-bar-content">
-                <div className="profile-bar-left">
-                  <div className="profile-avatar" style={{ overflow: "hidden" }}>
-                      {profileData?.profile_picture ? (
-                      <img src={profileData.profile_picture} alt="Profile" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }} />
-                    ) : (
-                      displayName.split(" ").map((w: string) => w[0]).slice(0, 2).join("")
-                    )}
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0, display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "16px", flexWrap: "wrap" }}>
-                    <div>
-                      <h2 style={{ fontSize: "20px", fontWeight: 700, color: displayName === "—" ? "#cbd5e1" : "#0f172a", margin: "0 0 0.15rem 0" }}>{displayName}</h2>
-                      <div style={{ fontSize: "clamp(0.85rem, 2vw, 0.95rem)", color: displayProgram === "—" ? "#cbd5e1" : "#64748b", fontWeight: 600 }}>{displayProgram}</div>
-                      <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.35rem", fontSize: "0.8rem", color: "#94a3b8", fontWeight: 500, flexWrap: "wrap", alignItems: "center" }}>
-                        <span>{profileData?.email || "—"}</span>
-                        {profileData?.phone && (
-                          <>
-                            <span style={{ color: "#cbd5e1" }}>&middot;</span>
-                            <span>{profileData.phone}</span>
-                          </>
+                    </label>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                      <h2 style={{ fontSize: "24px", fontWeight: 800, color: displayName === "—" ? "#cbd5e1" : "#0f172a", margin: 0, lineHeight: 1 }}>{displayName}</h2>
+                      <div style={{ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap" }}>
+                        <label className={`btn-upload-photo ${uploadingAvatar ? 'disabled' : ''}`}>
+                          {uploadingAvatar ? "Uploading..." : "Upload Photo"}
+                          <input type="file" accept="image/jpeg,image/png,image/webp" style={{ display: "none" }} onChange={handleUploadPhoto} disabled={uploadingAvatar} />
+                        </label>
+                        {avatarPreview && (
+                          <button className={`btn-remove-photo ${uploadingAvatar ? 'disabled' : ''}`} onClick={handleRemovePhoto} disabled={uploadingAvatar}>
+                            Remove Photo
+                          </button>
                         )}
                       </div>
                     </div>
-                    <button className="card-edit-btn" onClick={() => setEditingGeneral(true)} style={{ flexShrink: 0 }}>Edit Profile</button>
+                  </div>
+                  <div className="field-grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))" }}>
+                    <FieldInput label="Full Name" value={generalForm.name} onChange={(v) => setGeneralForm({ ...generalForm, name: v })} />
+                    <FieldInput label="Program & Year" value={generalForm.program} onChange={(v) => setGeneralForm({ ...generalForm, program: v })} />
+                    <FieldInput label="Email Address" type="email" value={generalForm.email} onChange={(v) => setGeneralForm({ ...generalForm, email: v })} />
+                    <FieldInput label="Phone Number" value={generalForm.phone} onChange={(v) => setGeneralForm({ ...generalForm, phone: v })} />
+                  </div>
+                  <div style={{ display: "flex", gap: "0.75rem", justifyContent: "flex-end", marginTop: "2rem" }}>
+                    <button className="card-cancel-btn" onClick={() => setEditingGeneral(false)}>Cancel</button>
+                    <button className="card-save-btn" onClick={handleSaveGeneral}>
+                      {savingGeneral ? "Saving..." : "Save Profile"}
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <div>
+                  <div style={{ fontSize: "0.7rem", fontWeight: 800, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "0.75rem" }}>
+                    Profile
+                  </div>
+                  <div className="profile-bar-left">
+                    <div className="profile-avatar" style={{ overflow: "hidden" }}>
+                        {profileData?.profile_picture ? (
+                        <img src={profileData.profile_picture} alt="Profile" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }} />
+                      ) : (
+                        displayName.split(" ").map((w: string) => w[0]).slice(0, 2).join("")
+                      )}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0, display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "16px", flexWrap: "wrap" }}>
+                      <div>
+                        <h2 style={{ fontSize: "20px", fontWeight: 700, color: displayName === "—" ? "#cbd5e1" : "#0f172a", margin: "0 0 0.15rem 0" }}>Hi, {displayName}</h2>
+                        <div style={{ fontSize: "clamp(0.85rem, 2vw, 0.95rem)", color: "#64748b", fontWeight: 600 }}>Polytechnic University of The Philippines</div>
+                        <div style={{ fontSize: "clamp(0.8rem, 1.8vw, 0.9rem)", color: displayProgram === "—" ? "#cbd5e1" : "#64748b", fontWeight: 500 }}>{displayProgram}</div>
+                        <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.35rem", fontSize: "0.8rem", color: "#94a3b8", fontWeight: 500, flexWrap: "wrap", alignItems: "center" }}>
+                          <span>{profileData?.email || "—"}</span>
+                          {profileData?.phone && (
+                            <>
+                              <span style={{ color: "#cbd5e1" }}>&middot;</span>
+                              <span>{profileData.phone}</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      <button className="card-edit-btn" onClick={() => setEditingGeneral(true)} style={{ flexShrink: 0 }}>Edit Profile</button>
+                    </div>
                   </div>
                 </div>
-                <div className="profile-bar-divider" />
-                <div className="profile-bar-hours" style={{ justifyContent: "space-between", paddingTop: "4px", paddingBottom: "2px" }}>
+              )}
+            </div>
+          </RevealBox>
+
+          <RevealBox delay={0.1}>
+            <div className="ui-card" style={{ padding: "16px" }}>
+              {!darSubmitted ? (
+                <div className="hours-card-empty">
+                  Submit your Daily Attendance Report to track your rendered hours.
+                </div>
+              ) : (
+                <div style={{ justifyContent: "space-between", paddingTop: "4px", paddingBottom: "2px", height: "100%", display: "flex", flexDirection: "column" }}>
+                  <div style={{ fontSize: "0.7rem", fontWeight: 800, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "0.5rem" }}>
+                    Hours Rendered
+                  </div>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px", flexWrap: "wrap", gap: "12px" }}>
                     <div style={{ display: "flex", alignItems: "baseline", gap: "8px", flexWrap: "wrap" }}>
                       <span style={{ fontSize: "28px", fontWeight: 800, color: "#0f172a", lineHeight: 1 }}>{hoursRendered.toFixed(2)}</span>
-                      <span style={{ fontSize: "clamp(0.8rem, 1.5vw, 0.9rem)", color: "#64748b", fontWeight: 700 }}>/ 300 hrs</span>
+                      <span style={{ fontSize: "clamp(0.8rem, 1.5vw, 0.9rem)", color: "#64748b", fontWeight: 700 }}>/ {requiredHours.toFixed(2)} hrs</span>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: "10px", flexShrink: 0, flexWrap: "wrap", justifyContent: "flex-end" }}>
-                      <StatusBadge status={hoursRendered >= 300 ? "approved" : "ongoing"} />
+                      <StatusBadge status={hoursCompleted ? "approved" : "ongoing"} label={hoursCompleted ? "Completed" : undefined} small />
                     </div>
                   </div>
                   <div style={{ width: "100%", height: 10, background: "#f1f5f9", borderRadius: 9999, overflow: "hidden", marginBottom: "10px" }}>
-                    <div style={{ width: `${Math.min((hoursRendered / 300) * 100, 100)}%`, height: "100%", background: "linear-gradient(90deg, #3b82f6, #6366f1)", transition: "width 0.5s ease" }} />
+                    <div style={{ width: `${requiredHours > 0 ? Math.min((hoursRendered / requiredHours) * 100, 100) : 0}%`, height: "100%", background: "linear-gradient(90deg, #3b82f6, #6366f1)", transition: "width 0.5s ease" }} />
                   </div>
-                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "clamp(0.8rem, 2vw, 0.9rem)", gap: "12px" }}>
-                    <span style={{ color: "#3b82f6", fontWeight: 800, whiteSpace: "nowrap" }}>{Math.round((hoursRendered / 300) * 100)}% Complete</span>
-                    <span style={{ color: "#64748b", fontWeight: 700, whiteSpace: "nowrap" }}>{Math.max(0, 300 - hoursRendered).toFixed(2)} Hours Remaining</span>
-                  </div>
+                  {hoursCompleted ? (
+                    <div style={{ fontSize: "0.9rem", color: "#15803d", fontWeight: 700 }}>
+                      Congratulations! You've completed your required OJT hours.
+                    </div>
+                  ) : (
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "clamp(0.8rem, 2vw, 0.9rem)", gap: "12px" }}>
+                      <span style={{ color: "#3b82f6", fontWeight: 800, whiteSpace: "nowrap" }}>{requiredHours > 0 ? Math.round((hoursRendered / requiredHours) * 100) : 0}% Complete</span>
+                      <span style={{ color: "#64748b", fontWeight: 700, whiteSpace: "nowrap" }}>{Math.max(0, requiredHours - hoursRendered).toFixed(2)} Hours Remaining</span>
+                    </div>
+                  )}
                 </div>
-              </div>
-            )}
-          </div>
-        </RevealBox>
+              )}
+            </div>
+          </RevealBox>
+        </div>
 
 
         <div style={{ marginBottom: "32px" }}>
@@ -1000,8 +1044,13 @@ export default function ProfilePage() {
             </div>
           </div>
         </RevealBox>
-
       </main>
+      <HoursInputModal
+        open={!!darUploadPending}
+        isProcessing={submittingDarHours}
+        onCancel={() => setDarUploadPending(null)}
+        onConfirm={handleConfirmDarUpload}
+      />
 
       {viewingDoc && (
         <DocumentViewerModal
