@@ -156,13 +156,11 @@ class AuthController extends Controller
         if ($request->hasFile('photo')) {
             // Delete old photo if exists
             if ($user->profile_picture) {
-                // Determine if we are storing in public or a specific disk
-                $oldPath = str_replace(asset('storage/'), '', $user->profile_picture);
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($oldPath);
+                $oldPath = str_replace(rtrim(config('filesystems.disks.r2.url'), '/') . '/', '', $user->profile_picture);
+                \Illuminate\Support\Facades\Storage::disk('r2')->delete($oldPath);
             }
-
-            $path = $request->file('photo')->store('profile_pictures', 'public');
-            $user->profile_picture = asset('storage/' . $path);
+            $path = $request->file('photo')->store('profile_pictures', 'r2');
+            $user->profile_picture = \Illuminate\Support\Facades\Storage::disk('r2')->url($path);
             $user->save();
         }
 
@@ -180,12 +178,11 @@ class AuthController extends Controller
         $user = $request->user();
 
         if ($user->profile_picture) {
-            $oldPath = str_replace(asset('storage/'), '', $user->profile_picture);
-            \Illuminate\Support\Facades\Storage::disk('public')->delete($oldPath);
+            $oldPath = str_replace(rtrim(config('filesystems.disks.r2.url'), '/') . '/', '', $user->profile_picture);
+            \Illuminate\Support\Facades\Storage::disk('r2')->delete($oldPath);
             $user->profile_picture = null;
             $user->save();
         }
-
         return response()->json([
             'message' => 'Profile picture removed successfully'
         ]);
