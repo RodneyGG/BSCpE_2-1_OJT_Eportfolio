@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRole } from "../context/RoleContext";
 import { useReveal } from "../hooks/useReveal";
 
-interface Student { id: string; name: string; role: string; }
+interface Student { id: string; name: string; role: string; profile_picture?: string | null; }
 interface Company { id: number; name: string; location: string; studentCount: number; students: Student[]; }
 
 const IconChevron = ({ open }: { open: boolean }) => (
@@ -79,15 +79,13 @@ function StudentProfile({ student, index, onClick }: { student: Student; index: 
         position: "relative", flexShrink: 0,
         transition: "all 0.25s ease",
         transform: hovered ? "scale(1.07) translateY(-3px)" : "scale(1) translateY(0)",
+        overflow: "hidden",
       }}>
-        <IconUser />
-        <div style={{
-          position: "absolute", bottom: -2, right: -2,
-          width: 22, height: 22, borderRadius: "50%",
-          backgroundColor: "#1d4ed8", border: "2px solid white",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: "0.52rem", fontWeight: 800, color: "white",
-        }}>{initials}</div>
+        <img
+          src={student.profile_picture || `https://ui-avatars.com/api/?name=${encodeURIComponent(student.name)}&size=100&background=random&color=fff&bold=true`}
+          alt={student.name}
+          style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }}
+        />
       </div>
       <div style={{ textAlign: "center" }}>
         <p style={{ fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.08em",
