@@ -599,7 +599,7 @@ export default function AppNavbar() {
                 overflow: "hidden", zIndex: 60,
               }}>
                 {[
-                  { href: "/profile", label: "My Profile", icon: <IconUser />, external: false },
+                  ...(role === "normal" ? [{ href: "/profile", label: "My Profile", icon: <IconUser />, external: false }] : []),
                   { href: "/change-password", label: "Change Password", icon: <IconLock />, external: false },
                   { href: "/help", label: "Help / Docs", icon: <IconHelp />, external: false },
                   { href: "/user-manual", label: "User Manual", icon: <IconBook />, external: false },
