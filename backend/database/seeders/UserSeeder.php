@@ -11,31 +11,15 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        User::create([
-            'name' => 'Admin',
-            'email' => 'admin@ojt.dev',
-            'password' => Hash::make('Admin@2026'),
-            'role' => 'admin',
-            'must_change_password' => false,
-        ]);
-
-        User::create([
-            'name' => 'Engr. Jake A. Binuya',
-            'email' => 'prof@ojt.dev',
-            'password' => Hash::make('Prof@2026'),
-            'role' => 'prof',
-            'must_change_password' => false,
-        ]);
-
-        $testCompany = Company::where('name', 'BSCpE 2-1')->first();
-
-        User::create([
-            'name' => 'Test Student',
-            'email' => 'student@ojt.dev',
-            'password' => Hash::make('Student@2026'),
-            'role' => 'normal',
-            'must_change_password' => false,
-            'company_id' => $testCompany ? $testCompany->id : null,
-        ]);
+        // Creates a superadmin using environment variables (defaults if not provided)
+        User::firstOrCreate(
+            ['email' => env('ADMIN_EMAIL', 'admin@example.com')],
+            [
+                'name' => env('ADMIN_NAME', 'Super Admin'),
+                'password' => Hash::make(env('ADMIN_PASSWORD', 'SecurePassword123!')),
+                'role' => 'admin',
+                'must_change_password' => false,
+            ]
+        );
     }
 }

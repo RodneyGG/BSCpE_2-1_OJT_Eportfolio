@@ -121,7 +121,7 @@ class UserController extends Controller
 
             return response()->json([
                 'user' => $user,
-                'message' => 'Account created. A setup email has been sent to the student.',
+                'message' => 'Account created successfully with default password bscpe2-1.',
             ], 201);
         }
 

@@ -1,19 +1,30 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
     public function up(): void
     {
-        DB::statement('ALTER TABLE users MODIFY hours_rendered DECIMAL(6,2) NOT NULL DEFAULT 0');
-        DB::statement('ALTER TABLE documents MODIFY claimed_hours DECIMAL(6,2) NULL');
+        Schema::table('users', function (Blueprint $table) {
+            $table->decimal('hours_rendered', 6, 2)->default(0)->change();
+        });
+
+        Schema::table('documents', function (Blueprint $table) {
+            $table->decimal('claimed_hours', 6, 2)->nullable()->change();
+        });
     }
 
     public function down(): void
     {
-        DB::statement('ALTER TABLE users MODIFY hours_rendered INT UNSIGNED NOT NULL DEFAULT 0');
-        DB::statement('ALTER TABLE documents MODIFY claimed_hours INT UNSIGNED NULL');
+        Schema::table('users', function (Blueprint $table) {
+            $table->unsignedInteger('hours_rendered')->default(0)->change();
+        });
+
+        Schema::table('documents', function (Blueprint $table) {
+            $table->unsignedInteger('claimed_hours')->nullable()->change();
+        });
     }
 };

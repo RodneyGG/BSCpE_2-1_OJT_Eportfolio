@@ -45,8 +45,8 @@ class AuthController extends Controller
                 'must_change_password' => $result['user']->must_change_password,
             ],
         ])
-        ->cookie('access_token', $result['token'], 60*24*7, '/', null, false, true, false, 'Strict')
-        ->cookie('csrf_token', $csrfToken, 60*24*7, '/', null, false, false, false, 'Strict');
+        ->cookie('access_token', $result['token'], 60*24*7, '/', null, true, true, false, 'None')
+        ->cookie('csrf_token', $csrfToken, 60*24*7, '/', null, true, false, false, 'None');
     }
 
     /**

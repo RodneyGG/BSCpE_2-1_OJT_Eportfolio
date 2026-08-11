@@ -9,13 +9,15 @@ class CookieAuthMiddleware
 {
     public function handle(Request $request, Closure $next)
     {
-        // 1. Extract Bearer token from HttpOnly cookie
-        if ($token = $request->cookie('access_token')) {
+        // 1. Extract Bearer token from HttpOnly cookie if not already in header
+        $isCookieAuth = false;
+        if (!$request->bearerToken() && $token = $request->cookie('access_token')) {
             $request->headers->set('Authorization', 'Bearer ' . $token);
+            $isCookieAuth = true;
         }
 
-        // 2. CSRF Protection for mutating requests
-        if (in_array($request->method(), ['POST', 'PUT', 'PATCH', 'DELETE'])) {
+        // 2. CSRF Protection for mutating requests (Only needed if using Cookie auth)
+        if ($isCookieAuth && in_array($request->method(), ['POST', 'PUT', 'PATCH', 'DELETE'])) {
             $exemptRoutes = ['api/login', 'api/setup-account', 'api/forgot-password', 'api/reset-password'];
             
             if (!$request->is(...$exemptRoutes)) {

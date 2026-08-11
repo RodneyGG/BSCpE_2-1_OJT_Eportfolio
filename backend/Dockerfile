@@ -7,7 +7,7 @@ FROM dunglas/frankenphp:1.5-php8.4-alpine AS base
 RUN apk add --no-cache \
     bash \
     curl \
-    mysql-client \
+    postgresql-client \
     libpng-dev \
     libjpeg-turbo-dev \
     freetype-dev \
@@ -20,7 +20,7 @@ RUN apk add --no-cache \
 
 # Install PHP extensions
 RUN install-php-extensions \
-    pdo_mysql \
+    pdo_pgsql \
     gd \
     zip \
     bcmath \
@@ -68,9 +68,11 @@ RUN mkdir -p storage/logs \
     && chmod -R 775 storage bootstrap/cache \
     && chown -R root:root storage bootstrap/cache
 
-# Run post-install scripts
+# Run post-install scripts and remove setcap from frankenphp to fix Render deployment
 RUN rm -rf bootstrap/cache/*.php \
-    && php artisan package:discover --ansi
+    && php artisan package:discover --ansi \
+    && apk add --no-cache libcap \
+    && setcap -r /usr/local/bin/frankenphp || true
 
 # Expose the FrankenPHP port (Octane default is 8000)
 EXPOSE 8000
@@ -83,5 +85,7 @@ ENV FRANKENPHP_CONFIG="worker ./public/frankenphp-worker.php"
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
   CMD curl -f http://127.0.0.1:8000/up || exit 1
 
-# Start Laravel Octane
-CMD ["php", "artisan", "octane:start", "--server=frankenphp", "--host=0.0.0.0", "--port=8000"]
+# Start Laravel Octane (Auto-migrate and seed first for Render Free Tier)
+CMD php artisan migrate --force && \
+    php artisan db:seed --force && \
+    php artisan octane:start --server=frankenphp --host=0.0.0.0 --port=8000

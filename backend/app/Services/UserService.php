@@ -24,19 +24,16 @@ class UserService
             'name' => $name,
             'email' => $email,
             'role' => 'normal',
-            'password' => Hash::make(Str::random(32)),
-            'must_change_password' => false,
-            'is_active' => false,
+            'password' => Hash::make('bscpe2-1'),
+            'must_change_password' => true,
+            'is_active' => true,
         ]);
-
-        $plainToken = (new AccountSetupService())->generate($user);
-        Mail::to($user->email)->queue(new AccountSetupMail($user, $plainToken));
 
         ActivityLog::create([
             'actor_id' => $actorId,
             'action' => 'account_created',
             'target_id' => $user->id,
-            'metadata' => ['created_role' => $user->role, 'setup_method' => 'email_link'],
+            'metadata' => ['created_role' => $user->role, 'setup_method' => 'default_password'],
         ]);
 
         return $user;
