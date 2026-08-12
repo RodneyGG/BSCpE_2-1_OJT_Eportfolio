@@ -72,7 +72,7 @@ export default function StudentPreviewModal({
         <div style={{ padding: "2rem", textAlign: "center", borderBottom: "1px solid #e2e8f0", background: "#f8fafc" }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={student.profile_picture || `https://ui-avatars.com/api/?name=${encodeURIComponent(student.name)}&size=100&background=random&color=fff&bold=true`}
+            src={student.profile_picture || `https://ui-avatars.com/api/?name=${encodeURIComponent(student.name)}&size=100&background=0f172a&color=fff&bold=true`}
             alt={student.name}
             style={{ width: 80, height: 80, borderRadius: "50%", margin: "0 auto 1rem", border: "4px solid white", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1)", objectFit: "cover", objectPosition: "center" }}
           />
