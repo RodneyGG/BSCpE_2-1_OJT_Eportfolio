@@ -229,6 +229,24 @@ export default function ProfilePage() {
   const [openSection, setOpenSection] = useState<string | null>("before");
   const [activeWeek, setActiveWeek] = useState<number>(1);
   const [weeksArray, setWeeksArray] = useState<number[]>([1]);
+  const [weekDates, setWeekDates] = useState<Record<number, {start: string, end: string}>>({});
+
+  // Load weekDates from localStorage on mount
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("ojt_week_dates");
+      if (stored) setWeekDates(JSON.parse(stored));
+    } catch (e) {}
+  }, []);
+
+  // Save weekDates to localStorage when it changes
+  useEffect(() => {
+    try {
+      if (Object.keys(weekDates).length > 0) {
+        localStorage.setItem("ojt_week_dates", JSON.stringify(weekDates));
+      }
+    } catch (e) {}
+  }, [weekDates]);
   const [viewingDoc, setViewingDoc] = useState<{title: string, link: string} | null>(null);
   const [deletingDoc, setDeletingDoc] = useState<string | null>(null);
   const [darUploadPending, setDarUploadPending] = useState<{ id: string, file: File, week?: number } | null>(null);
@@ -966,9 +984,19 @@ export default function ProfilePage() {
                               <div style={{ fontSize: "1rem", color: "#64748b" }}>Edit dates for this specific week</div>
                             </div>
                             <div style={{ display: "flex", gap: "1.25rem", alignItems: "center" }}>
-                              <input type="date" style={{ padding: "0.75rem 1rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1", fontSize: "1rem", outline: "none", color: "#475569", fontWeight: 600 }} />
+                              <input 
+                                type="date" 
+                                value={weekDates[activeWeek]?.start || ""}
+                                onChange={(e) => setWeekDates(prev => ({...prev, [activeWeek]: {...prev[activeWeek], start: e.target.value}}))}
+                                style={{ padding: "0.75rem 1rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1", fontSize: "1rem", outline: "none", color: "#475569", fontWeight: 600 }} 
+                              />
                               <span style={{ color: "#94a3b8", fontWeight: 800, fontSize: "1.1rem" }}>—</span>
-                              <input type="date" style={{ padding: "0.75rem 1rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1", fontSize: "1rem", outline: "none", color: "#475569", fontWeight: 600 }} />
+                              <input 
+                                type="date" 
+                                value={weekDates[activeWeek]?.end || ""}
+                                onChange={(e) => setWeekDates(prev => ({...prev, [activeWeek]: {...prev[activeWeek], end: e.target.value}}))}
+                                style={{ padding: "0.75rem 1rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1", fontSize: "1rem", outline: "none", color: "#475569", fontWeight: 600 }} 
+                              />
                             </div>
                           </div>
 

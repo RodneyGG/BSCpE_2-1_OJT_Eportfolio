@@ -115,7 +115,7 @@ export default function StudentsPage() {
                   )}
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={student.profile_picture || `https://ui-avatars.com/api/?name=${encodeURIComponent(student.name)}&size=100&background=random&color=fff&bold=true`}
+                    src={student.profile_picture || `https://ui-avatars.com/api/?name=${encodeURIComponent(student.name)}&size=100&background=0f172a&color=fff&bold=true`}
                     alt={student.name}
                     style={{ width: 72, height: 72, borderRadius: "50%", margin: "0 auto 0.75rem", display: "block", objectFit: "cover", objectPosition: "center" }}
                   />

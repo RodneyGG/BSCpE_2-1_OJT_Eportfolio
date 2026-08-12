@@ -95,14 +95,15 @@ function IconBell() {
 function timeAgo(dateString: string) {
   const date = new Date(dateString);
   const now = new Date();
-  const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+  let seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+  if (seconds < 0) seconds = 0;
   if (seconds < 60) return "Just now";
   const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
+  if (minutes < 60) return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
+  if (hours < 24) return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
   const days = Math.floor(hours / 24);
-  return `${days}d ago`;
+  return `${days} day${days !== 1 ? 's' : ''} ago`;
 }
 
 function IconMenu() {
@@ -381,7 +382,7 @@ export default function AppNavbar() {
         {/* Middle links */}
         <div className={`nav-center-links ${mobileMenuOpen ? "open" : ""}`}>
           {(() => {
-            const isCompaniesActive = pathname === "/";
+            const isCompaniesActive = pathname === "/companies";
             return (
               <Link
                 href="/#companies"
@@ -516,7 +517,7 @@ export default function AppNavbar() {
               {notifOpen && (
                 <div style={{
                   position: "absolute", top: "calc(100% + 0.5rem)", right: 0,
-                  width: 320, background: "white", borderRadius: "0.75rem",
+                  width: 320, maxWidth: "calc(100vw - 2rem)", background: "white", borderRadius: "0.75rem",
                   boxShadow: "0 10px 30px rgba(0,0,0,0.15)", border: "1px solid #e2e8f0",
                   overflow: "hidden", zIndex: 60, display: "flex", flexDirection: "column"
                 }}>
@@ -628,7 +629,7 @@ export default function AppNavbar() {
             {menuOpen && (
               <div style={{
                 position: "absolute", top: "calc(100% + 0.5rem)", right: 0,
-                width: 220, background: "white", borderRadius: "0.75rem",
+                width: 220, maxWidth: "calc(100vw - 2rem)", background: "white", borderRadius: "0.75rem",
                 boxShadow: "0 10px 30px rgba(0,0,0,0.15)", border: "1px solid #e2e8f0",
                 overflow: "hidden", zIndex: 60,
               }}>
