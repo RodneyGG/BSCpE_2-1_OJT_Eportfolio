@@ -348,7 +348,7 @@ export default function AppNavbar() {
         {/* Middle links */}
         <div className={`nav-center-links ${mobileMenuOpen ? "open" : ""}`}>
           {(() => {
-            const isCompaniesActive = pathname === "/";
+            const isCompaniesActive = pathname === "/companies";
             return (
               <Link
                 href="/#companies"

@@ -5,8 +5,14 @@ A Next.js frontend application for a BSCpE OJT e-portfolio. The application feat
 
 ## 2. Current State (Replace entirely on update)
 
-**Status**: The student profile page (`frontend/app/profile/page.tsx`) has been refined and modernized, the Admin Checklist page (`frontend/app/admin/checklist/page.tsx`) has robust print support, and the application has undergone a full security and production-readiness audit alongside mobile layout fixes and notification/auth bug fixes.
+**Status**: The student profile page (`frontend/app/profile/page.tsx`) has been refined and modernized, the Admin Checklist page (`frontend/app/admin/checklist/page.tsx`) has robust print support, and the application has undergone a full security and production-readiness audit alongside mobile layout fixes and notification/auth bug fixes. Several Priority 1 and Priority 3 UX bugs were resolved on the `dev` branch.
 - The Required Documents section was successfully converted from a horizontal tab bar into a single-open accordion. The During OJT accordion body retains the complex week navigation, schedule card, and uploads grid functionality perfectly.
+- The Week Schedule date picker issue (dates bleeding between weeks when submitted mid-week) was resolved by implementing state-based tracking using a `weekDates` object bound to `localStorage`.
+- Admin panel loading states were enhanced. `StudentPreviewModal.tsx` now handles async API status explicitly to prevent empty UI flashing.
+- Addressed several mobile UI overflows including adding max-widths to `AppNavbar` drop-downs, and centering/stacking the Hero section grid.
+- Avatars fetched from `ui-avatars.com` were updated to use `background=0f172a` and `color=fff` for vastly improved contrast against white modals and panels.
+- Notification feed timestamps now render in relative format (e.g. "2 hours ago") instead of a hardcoded "Just now". Unresolved: Login session notifications are missing (pending investigation).
+- Navbar active links logic was refined. "Companies" only underlines when exactly matching `/companies`, instead of triggering falsely on the `/` root.
 - The top layout of the profile page was redesigned. The Student Information card and Hours Rendered card were merged into a single horizontal bar for a cleaner layout. OJT Deployment is now a standalone full-width card underneath the merged profile bar.
 - An exact hardcoded UI scale-down was executed to strictly enforce smaller constraints and remove clamps: section headers are fixed at `16px`, main metrics (0.00) at `28px`, the student name at `20px`, and global card paddings are explicitly `16px` (except OJT Deployment, which remains completely untouched).
 - The Profile Bar was rebalanced to a 65/35 ratio, giving the student information area more visual dominance over the hours metric. The "Edit Profile" button was logically relocated to the top-right of this student info block, separating it from the hours-submission status badge.
@@ -31,6 +37,18 @@ A Next.js frontend application for a BSCpE OJT e-portfolio. The application feat
 - Work from both `feature/profile-accordion-and-merge` and `feature/profile-pic-and-readme` (Rodney's side) and `feature/checklist-redesign-and-print-export` (Altheo's side) is now reconciled on `main`.
 
 ## 3. Session Logs
+### 2026-08-12 - UX Bugs & Minor Polish Fixes
+- **Agent:** Antigravity
+- **Summary of Changes:**
+  - **Week Schedule Persistence:** Fixed a state bleeding bug in `profile/page.tsx` where entering a date on one week schedule tab carried over visually to other tabs. Solved by decoupling the native date inputs into a `weekDates` state object and persisting them uniquely per-week using `localStorage`.
+  - **Admin Panel UI Enhancements:** Added explicit `blockLoading` states to modals (like `StudentPreviewModal.tsx`) to handle async loading without flashing empty frames.
+  - **Mobile Navbar Overflows:** Set a `maxWidth: 240` constraint on the user menu dropdowns in `AppNavbar.tsx` so long names don't expand the page horizontally on tiny screens.
+  - **Hero Banner Repositioning:** Transitioned the hero statistic counters into a centered, stacked layout on mobile by adjusting flex-direction and aligning the badges explicitly.
+  - **Avatar Contrast:** Changed the `ui-avatars.com` generation params from `background=random` to `background=0f172a&color=fff` for consistent, accessible contrast across the Student Grid and Modals.
+  - **Notification Feed Relative Time:** Rewrote the `timeAgo` function to handle timezone drift (which was causing future-dated negative second calculations to resolve as "Just now") and expanded formatting to full readable words (e.g. "2 hours ago").
+  - **Navbar Active Link Fix:** Refactored `AppNavbar.tsx` so the "Companies" link is only underlined/highlighted if `pathname === "/companies"`.
+- **Branch:** `dev`
+
 ### 2026-08-09 - Mobile Layout & Avatar Sync Fixes
 - **Agent:** Antigravity
 - **Summary of Changes:**
