@@ -922,14 +922,20 @@ export default function ProfilePage() {
                               <input 
                                 type="date" 
                                 value={weekDates[activeWeek]?.start || ""}
-                                onChange={(e) => setWeekDates(prev => ({...prev, [activeWeek]: {...prev[activeWeek], start: e.target.value}}))}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setWeekDates(prev => ({ ...prev, [activeWeek]: { ...(prev[activeWeek] || { start: "", end: "" }), start: val } }));
+                                }}
                                 style={{ padding: "0.75rem 1rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1", fontSize: "1rem", outline: "none", color: "#475569", fontWeight: 600 }} 
                               />
                               <span style={{ color: "#94a3b8", fontWeight: 800, fontSize: "1.1rem" }}>—</span>
                               <input 
                                 type="date" 
                                 value={weekDates[activeWeek]?.end || ""}
-                                onChange={(e) => setWeekDates(prev => ({...prev, [activeWeek]: {...prev[activeWeek], end: e.target.value}}))}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setWeekDates(prev => ({ ...prev, [activeWeek]: { ...(prev[activeWeek] || { start: "", end: "" }), end: val } }));
+                                }}
                                 style={{ padding: "0.75rem 1rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1", fontSize: "1rem", outline: "none", color: "#475569", fontWeight: 600 }} 
                               />
                             </div>
