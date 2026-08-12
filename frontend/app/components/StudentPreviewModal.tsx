@@ -39,12 +39,14 @@ export default function StudentPreviewModal({
 }) {
   const [block, setBlock] = useState<BlockInfo | null>(null);
   const [blockError, setBlockError] = useState(false);
+  const [blockLoading, setBlockLoading] = useState(true);
 
   useEffect(() => {
     // Confirmed via curl: GET /api/block returns { "block": {...} }
     fetchApi("/block")
       .then((data: { block: BlockInfo }) => setBlock(data.block))
-      .catch(() => setBlockError(true));
+      .catch(() => setBlockError(true))
+      .finally(() => setBlockLoading(false));
   }, []);
 
   const rendered = parseFloat(student.hours_rendered ?? "0");
@@ -101,14 +103,18 @@ export default function StudentPreviewModal({
             <h3 style={{ fontSize: "0.75rem", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "0.5rem" }}>
               Adviser / Block
             </h3>
-            {block ? (
+            {blockLoading ? (
+              <div style={{ fontSize: "0.85rem", color: "#94a3b8" }}>
+                Loading...
+              </div>
+            ) : block ? (
               <div style={{ fontSize: "0.85rem", color: "#334155" }}>
                 {block.block_name} ({block.block_code})
                 {block.adviser_name ? ` · ${block.adviser_name}` : ""}
               </div>
             ) : (
               <div style={{ fontSize: "0.85rem", color: "#94a3b8" }}>
-                {blockError ? "Adviser info unavailable." : "Loading..."}
+                {blockError ? "Adviser info unavailable." : "No block info set yet."}
               </div>
             )}
           </div>

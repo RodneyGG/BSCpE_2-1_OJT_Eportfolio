@@ -482,7 +482,7 @@ export default function AppNavbar() {
               {notifOpen && (
                 <div style={{
                   position: "absolute", top: "calc(100% + 0.5rem)", right: 0,
-                  width: 320, background: "white", borderRadius: "0.75rem",
+                  width: 320, maxWidth: "calc(100vw - 2rem)", background: "white", borderRadius: "0.75rem",
                   boxShadow: "0 10px 30px rgba(0,0,0,0.15)", border: "1px solid #e2e8f0",
                   overflow: "hidden", zIndex: 60, display: "flex", flexDirection: "column"
                 }}>
@@ -594,7 +594,7 @@ export default function AppNavbar() {
             {menuOpen && (
               <div style={{
                 position: "absolute", top: "calc(100% + 0.5rem)", right: 0,
-                width: 220, background: "white", borderRadius: "0.75rem",
+                width: 220, maxWidth: "calc(100vw - 2rem)", background: "white", borderRadius: "0.75rem",
                 boxShadow: "0 10px 30px rgba(0,0,0,0.15)", border: "1px solid #e2e8f0",
                 overflow: "hidden", zIndex: 60,
               }}>

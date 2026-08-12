@@ -180,12 +180,13 @@ const handleSyncCompanies = async () => {
             ))}
 
             <div className="hero-inner" style={{
-              display: "flex", alignItems: "center",
-              justifyContent: "space-between", flexWrap: "wrap",
-              gap: "2rem", position: "relative", zIndex: 1,
+              display: "flex", flexDirection: "column", alignItems: "center",
+              justifyContent: "center", textAlign: "center",
+              gap: "2.5rem", position: "relative", zIndex: 1,
+              maxWidth: 800, margin: "0 auto",
             }}>
               {/* Text */}
-              <div style={{ animation: "fadeSlideUp 0.6s ease 0.1s both" }}>
+              <div style={{ animation: "fadeSlideUp 0.6s ease 0.1s both", display: "flex", flexDirection: "column", alignItems: "center" }}>
                 <p style={{ fontSize: "0.6rem", letterSpacing: "0.28em",
                   textTransform: "uppercase", color: "#93c5fd", fontWeight: 600,
                   marginBottom: "0.5rem" }}>
@@ -212,7 +213,7 @@ const handleSyncCompanies = async () => {
 
               {/* Stats */}
               <div className="hero-stats" style={{
-                display: "flex", gap: "0.85rem", flexWrap: "wrap",
+                display: "flex", gap: "0.85rem", flexWrap: "wrap", justifyContent: "center",
                 animation: "fadeSlideUp 0.6s ease 0.25s both",
               }}>
                 {[
@@ -232,11 +233,12 @@ const handleSyncCompanies = async () => {
                       border: "1px solid rgba(255,255,255,0.12)",
                       borderRadius: "0.875rem", padding: "1rem 1.25rem",
                       textAlign: "center", minWidth: 90,
+                      display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
                       transition: "all 0.25s ease", cursor: s.href ? "pointer" : "default",
                       animation: `fadeSlideUp 0.5s ease ${0.3 + i * 0.1}s both`,
                     }}
                   >
-                    <div style={{ fontSize: "1.1rem", marginBottom: "0.3rem" }}>{s.icon}</div>
+                    <div style={{ fontSize: "1.1rem", marginBottom: "0.3rem", display: "flex", alignItems: "center", justifyContent: "center" }}>{s.icon}</div>
                     <div style={{ fontSize: "1.6rem", fontWeight: 900, color: "white",
                       letterSpacing: "-0.03em", lineHeight: 1 }}>{s.value}</div>
                     <div style={{ fontSize: "0.58rem", letterSpacing: "0.1em",
