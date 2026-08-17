@@ -25,15 +25,9 @@ class DocumentService
      * (deletes) any previous DTR record the student had, so there is
      * never more than one DTR document in the review queue per student.
      */
-    public function uploadDocument(UploadedFile $file, User $user, string $documentType, ?float $claimedHours = null, ?int $week = null, ?string $submittedDate = null): array
+    public function uploadDocument(UploadedFile $file, User $user, string $documentType, ?float $claimedHours = null, ?int $week = null, ?string $submittedDate = null, ?float $requiredHours = null): array
     {
         // For DTR or other weekly documents, we might not want to delete the old one if they are for a different week,
-        // but if no week is provided, assume legacy behavior.
-        if ($documentType === 'dtr' && !$week) {
-            Document::where('user_id', $user->id)
-                ->where('document_type', 'dtr')
-                ->delete();
-        }
 
         $folderName = $user->email . ' - ' . $user->name;
         $existingFolders = $this->driveService->listFiles();
@@ -89,6 +83,14 @@ class DocumentService
             'extraction_status' => $extractionStatus,
             'status' => 'pending',
         ]);
+
+        if ($documentType === 'dtr') {
+            $user->update([
+                'hours_rendered' => $claimedHours ?? $user->hours_rendered,
+                'required_hours' => $requiredHours ?? $user->required_hours,
+            ]);
+        }
+
         // Notify profs/admins (assuming anyone who can review is notified, or just all profs)
         $reviewers = User::whereIn('role', ['admin', 'prof'])->get();
         $notificationTitle = $weekMismatch ? 'Weekly Report Week Mismatch' : 'New Document Submission';
@@ -145,9 +147,9 @@ class DocumentService
             'rejection_reason' => $status === 'rejected' ? $reason : null,
         ]);
 
-        if ($document->document_type === 'dtr' && $status === 'approved' && $document->claimed_hours !== null) {
+        if ($document->document_type === 'dtr' && $status === 'rejected') {
             $document->user->update([
-                'hours_rendered' => $document->user->hours_rendered + $document->claimed_hours,
+                'hours_rendered' => 0,
             ]);
         }
 
