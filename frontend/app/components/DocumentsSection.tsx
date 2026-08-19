@@ -12,6 +12,7 @@ interface CatalogEntry {
   color: string;
   bgColor: string;
   description: string;
+  matchAlias?: string;
 }
 
 interface RealDocument {
@@ -85,12 +86,13 @@ const CATALOG: CatalogEntry[] = [
   },
   {
     id: "narrative-report",
-    title: "Narrative Report",
+    title: "Portfolio",
+    matchAlias: "Narrative Report",
     type: "DOCX",
     icon: "📝",
     color: "#0f766e",
     bgColor: "#ccfbf1",
-    description: "Comprehensive narrative report of OJT experience",
+    description: "Comprehensive portfolio of OJT experience",
   },
   {
     id: "photo-documentation",
@@ -135,7 +137,7 @@ export default function DocumentsSection() {
   // Match each catalog entry to the most recent upload of that type, if any
   const catalogWithStatus = CATALOG.map((entry) => {
     const matches = myDocs.filter(
-      (d) => normalize(d.document_type) === normalize(entry.title)
+      (d) => normalize(d.document_type) === normalize(entry.title) || (entry.matchAlias && normalize(d.document_type) === normalize(entry.matchAlias)) || normalize(d.document_type) === normalize(entry.id)
     );
     const latest = matches.length > 0 ? matches[0] : null; // myDocs is already newest-first
     return { entry, latest };

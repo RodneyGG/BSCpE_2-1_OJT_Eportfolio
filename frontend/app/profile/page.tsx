@@ -182,27 +182,63 @@ function getPhaseSummary(phase: DocumentPhase, documents: any[]) {
   const requiredDefs = REQUIRED_DOCUMENTS.filter(r => r.phase === phase && r.required !== false);
   const optionalDefs = REQUIRED_DOCUMENTS.filter(r => r.phase === phase && r.required === false);
 
-  const requiredTotal = requiredDefs.length;
-  const requiredDocs = requiredDefs.map(def =>
-    documents.find(d => d.name === def.title && d.week == null)
-  );
-  const uploadedRequired = requiredDocs.filter(d => d && d.status === "submitted");
-  const uploadedCount = Math.min(uploadedRequired.length, requiredTotal);
+  let requiredTotal = 0;
+  let uploadedRequiredCount = 0;
+  let optionalUploaded = 0;
+  let hasPendingOrNotSubmitted = false;
+  let hasRejected = false;
 
-  const optionalUploaded = optionalDefs.filter(def =>
-    documents.some(d => d.name === def.title && d.week == null && d.status === "submitted")
-  ).length;
+  const maxWeek = documents.some(d => d.week != null) ? Math.max(...documents.map(d => d.week || 1)) : 1;
+
+  for (const def of requiredDefs) {
+    if (def.phase === "during" && def.id !== "daily-attendance-report") {
+      requiredTotal += maxWeek;
+      for (let w = 1; w <= maxWeek; w++) {
+        const doc = documents.find(d => d.name === def.title && d.week === w);
+        if (doc && doc.status === "submitted") {
+          uploadedRequiredCount++;
+          if (doc.reviewStatus === "rejected") hasRejected = true;
+          else if (doc.reviewStatus === "pending") hasPendingOrNotSubmitted = true;
+        } else {
+          hasPendingOrNotSubmitted = true;
+        }
+      }
+    } else {
+      requiredTotal++;
+      const doc = documents.find(d => d.name === def.title && d.week == null);
+      if (doc && doc.status === "submitted") {
+        uploadedRequiredCount++;
+        if (doc.reviewStatus === "rejected") hasRejected = true;
+        else if (doc.reviewStatus === "pending") hasPendingOrNotSubmitted = true;
+      } else {
+        hasPendingOrNotSubmitted = true;
+      }
+    }
+  }
+
+  for (const def of optionalDefs) {
+    const docs = documents.filter(d => d.name === def.title && d.status === "submitted");
+    optionalUploaded += docs.length;
+    for (const doc of docs) {
+      if (doc.reviewStatus === "rejected") hasRejected = true;
+      else if (doc.reviewStatus === "pending") hasPendingOrNotSubmitted = true;
+    }
+  }
 
   let status: "not_submitted" | "pending" | "approved" | "rejected" = "not_submitted";
-  if (uploadedRequired.some(d => d.reviewStatus === "rejected")) {
+  if (hasRejected) {
     status = "rejected";
-  } else if (uploadedRequired.some(d => d.reviewStatus === "pending") || (uploadedCount > 0 && uploadedCount < requiredTotal)) {
-    status = "pending";
-  } else if (uploadedCount === requiredTotal && requiredTotal > 0 && uploadedRequired.every(d => d.reviewStatus === "approved")) {
+  } else if (hasPendingOrNotSubmitted || uploadedRequiredCount === 0) {
+    if (uploadedRequiredCount === 0 && optionalUploaded === 0) {
+      status = "not_submitted";
+    } else {
+      status = "pending";
+    }
+  } else {
     status = "approved";
   }
 
-  return { uploadedCount, requiredTotal, optionalUploaded, status };
+  return { uploadedCount: uploadedRequiredCount, requiredTotal, optionalUploaded, status };
 }
 export default function ProfilePage() {
   const { user, login } = useRole();
