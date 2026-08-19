@@ -145,9 +145,10 @@ export const REQUIRED_DOCUMENTS: RequiredDocument[] = [
   },
   {
     id: "narrative-report",
-    title: "Narrative Report",
-    shortTitle: "NARRATIVE",
+    title: "Portfolio",
+    shortTitle: "PORTFOLIO",
     phase: "other",
+    aliases: ["Narrative Report"],
   },
 ];
 
