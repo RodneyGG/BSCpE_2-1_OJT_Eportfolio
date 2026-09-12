@@ -5,7 +5,14 @@ A Next.js frontend application for a BSCpE OJT e-portfolio. The application feat
 
 ## 2. Current State (Replace entirely on update)
 
-**Status**: All prior features remain intact. A Drive reconciliation system has been added to recover from database wipes by reconstructing `documents` table records from files already present in Google Drive. The `GoogleDriveService` now falls back to service-account auth when no OAuth tokens exist in the DB (e.g. after a wipe). No existing logic was changed — this is purely additive.
+**Status**: All prior features remain intact. Full Google Drive auto-reconciliation, database wipe resilience, and duplicate/resubmission tracking have been implemented. The system automatically recovers student submission records from Google Drive whenever the Render free-tier PostgreSQL database resets.
+- **Auto-Reconciliation on Startup & On-Demand**: `backend/Dockerfile` now runs `php artisan drive:reconcile || true` automatically on container boot after `migrate` and `db:seed`. In addition, `GET /api/admin/drive/audit` and `POST /api/admin/drive/reconcile` API endpoints allow staff to inspect Drive contents and trigger reconciliation on-demand.
+- **Student Account Auto-Recreation**: When reconciling from Drive after a complete database wipe, `DriveReconciliationService` matches student folders (`email - name`) and automatically recreates missing student accounts (default role `normal`, default password `bscpe2-1`, `must_change_password = true`) so their Drive files are never orphaned or skipped.
+- **Resilient Filename & Metadata Parser**: Filename parsing matches all 18 document types and known aliases (case-insensitively, handling hyphens, underscores, and spaces), extracts week numbers, and falls back to Drive file `createdTime` if no timestamp is present in the filename.
+- **Status & Re-Review Guarantee**: All reconstructed records are saved with `status = 'pending'`, `is_resubmission = true`, and `submission_note = 'Recovered from Google Drive (Pending Re-review)'` so teachers/professors must review and approve them before they count as passed.
+- **Duplicate & Resubmission Detection**: In `DocumentService::uploadDocument`, before uploading a file, the system checks if a file for this document type (+week) already exists in Drive or the DB. If found, the upload is preserved without overwriting the previous file and is tagged with `is_duplicate = true`, `is_resubmission = true`, and `submission_note = 'Re-upload / Duplicate: Previous file exists in Drive'`, alerting reviewers with a specialized notification.
+- **On-the-Fly Profile Recovery**: In `DocumentService::getMyDocuments`, if a student views their profile and has 0 documents in the database (e.g., after a DB wipe), the backend runs a targeted Drive reconciliation for that specific student, immediately loading their submissions into view.
+- **Service Account Fallback**: `GoogleDriveService` constructor safely catches token query failures and falls back to service account credentials (`GOOGLE_DRIVE_*`) from the environment whenever OAuth tokens are missing from the database.
 - The Required Documents section was successfully converted from a horizontal tab bar into a single-open accordion. The During OJT accordion body retains the complex week navigation, schedule card, and uploads grid functionality perfectly.
 - The Week Schedule date picker issue (dates bleeding between weeks when submitted mid-week) was resolved by implementing state-based tracking using a `weekDates` object bound to `localStorage`.
 - Admin panel loading states were enhanced. `StudentPreviewModal.tsx` now handles async API status explicitly to prevent empty UI flashing.
@@ -253,11 +260,22 @@ A Next.js frontend application for a BSCpE OJT e-portfolio. The application feat
   - Updated the frontend UI in `ManageUsersSection.tsx` to remove the "Resend Setup Email" action and updated the success creation toast to reflect the new default password behavior.
 - **Branch:** `dev`
 
-### 2026-09-12 - Drive Reconciliation & Service Account Fallback
+### 2026-09-12 - Drive Auto-Reconciliation, Duplicate Detection & Database Wipe Resilience
 - **Agent:** Antigravity
 - **Summary of Changes:**
-  - **GoogleDriveService.php**: Added a service-account auth fallback in the constructor. When no OAuth tokens exist in the `google_oauth_tokens` table (e.g., after a database wipe), the service automatically falls back to the service account credentials from env vars (`GOOGLE_DRIVE_*`). The existing OAuth flow is completely untouched — this is an additive `else` branch only.
-  - **New: DriveReconciliationService.php**: A new service that scans all student folders under the root Google Drive folder, parses filenames (format: `{document_type}[-week-{N}]-{YmdHis}.{ext}`), matches folder names (`{email} - {name}`) to User records, and creates `documents` table rows for any Drive files not already tracked by `file_id`. All reconstructed records are set to `status = 'pending'` so teachers must re-review them. The service is idempotent — safe to run multiple times; files already in the DB are skipped.
-  - **New: ReconcileDriveDocuments.php (artisan command)**: `php artisan drive:reconcile [--dry-run]`. Supports a `--dry-run` flag to preview what would be reconstructed. Outputs detailed summary tables: folders scanned/matched/unmatched, files found/tracked/reconstructed, and unparseable filenames.
-  - **No existing logic was changed**: DocumentController, DocumentService upload/review flow, Document model, frontend files, API routes, and database migrations are all untouched.
+  - **Database Migration**: Added `2026_09_12_100000_add_resubmission_flags_to_documents_table.php` introducing `is_resubmission`, `is_duplicate`, and `submission_note` columns to the `documents` table. Updated `Document` model's `$fillable` and `$casts`.
+  - **GoogleDriveService.php**: Wrapped OAuth token database queries in try-catch to guarantee clean fallback to Service Account credentials from the environment (`GOOGLE_DRIVE_*`) if the database is reset or tokens are absent. Added `pageSize => 1000` to `listFiles` to prevent truncation.
+  - **DriveReconciliationService.php**:
+    - Automatic student account recreation: if student folders in Drive (`email - name`) have no corresponding DB user record (e.g. after a full Render database wipe), the service recreates the student user account (default role `normal`, default password `bscpe2-1`, `must_change_password = true`) so documents are never skipped.
+    - Resilient filename parser: resolves all 18 document types and aliases case-insensitively, extracts week numbers, and falls back to Google Drive `createdTime` if no timestamp is present in the filename.
+    - Reconstructed documents are marked `status = 'pending'`, `is_resubmission = true`, and `submission_note = 'Recovered from Google Drive (Pending Re-review)'` ensuring professors re-review them.
+    - Added `reconcileForUser(User $user)` for instant single-student recovery.
+    - Added `audit()` method returning a structured audit report of Drive folders and files.
+  - **DocumentService.php**:
+    - In `uploadDocument()`: Added detection for existing files in Drive/DB for the same document type (+week). Prevents silent rejection or overwriting by flagging re-uploads with `is_duplicate = true`, `is_resubmission = true`, and `submission_note = 'Re-upload / Duplicate: Previous file exists in Drive'`, alerting reviewers via notification.
+    - In `getMyDocuments($userId)`: Added on-the-fly reconciliation. If a student opens `/profile` and has 0 DB documents after a wipe, the system immediately runs a targeted Drive scan for that student and returns their recovered submissions.
+  - **DocumentController.php & api.php**:
+    - Added `GET /api/admin/drive/audit` and `POST /api/admin/drive/reconcile` routes (role: admin, prof) to inspect Drive files and trigger reconciliation via HTTP API.
+  - **Dockerfile**:
+    - Added `(php artisan drive:reconcile || true)` to the production startup command right after `migrate` and `db:seed`, ensuring every container boot or redeploy on Render automatically syncs files from Drive.
 - **Branch:** `feature/drive-reconciliation`

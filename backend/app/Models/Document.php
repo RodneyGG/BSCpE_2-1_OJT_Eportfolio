@@ -25,6 +25,9 @@ class Document extends Model
         'reviewed_by',
         'reviewed_at',
         'rejection_reason',
+        'is_resubmission',
+        'is_duplicate',
+        'submission_note',
     ];
 
     protected function casts(): array
@@ -33,6 +36,8 @@ class Document extends Model
             'reviewed_at' => 'datetime',
             'claimed_hours' => 'decimal:2',
             'weekly_activities' => 'array',
+            'is_resubmission' => 'boolean',
+            'is_duplicate' => 'boolean',
         ];
     }
 

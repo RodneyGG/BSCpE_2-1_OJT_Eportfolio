@@ -11,10 +11,16 @@ class DocumentService
 {
     protected GoogleDriveService $driveService;
     protected WeeklyReportExtractor $reportExtractor;
-    public function __construct(GoogleDriveService $driveService, WeeklyReportExtractor $reportExtractor)
-    {
+    protected DriveReconciliationService $reconciliationService;
+
+    public function __construct(
+        GoogleDriveService $driveService,
+        WeeklyReportExtractor $reportExtractor,
+        DriveReconciliationService $reconciliationService
+    ) {
         $this->driveService = $driveService;
         $this->reportExtractor = $reportExtractor;
+        $this->reconciliationService = $reconciliationService;
     }
 
     /**
@@ -69,6 +75,41 @@ class DocumentService
             }
         }
 
+        // Check if there is an existing file for this documentType (and week) in Drive or DB
+        $isDuplicate = false;
+        $isResubmission = false;
+        $submissionNote = null;
+
+        $existingDbDoc = Document::where('user_id', $user->id)
+            ->where('document_type', $documentType)
+            ->when($week !== null, fn($q) => $q->where('week', $week))
+            ->first();
+
+        $existingDriveFile = null;
+        if ($userFolder) {
+            try {
+                $folderFiles = $this->driveService->listFiles($userFolder->id);
+                foreach ($folderFiles as $f) {
+                    if ($f->mimeType === 'application/vnd.google-apps.folder') {
+                        continue;
+                    }
+                    $parsed = $this->reconciliationService->parseFilename($f->name);
+                    if ($parsed && $parsed['document_type'] === $documentType && ($week === null || $parsed['week'] === $week)) {
+                        $existingDriveFile = $f;
+                        break;
+                    }
+                }
+            } catch (\Throwable $e) {
+                // Continue gracefully if listing folder fails
+            }
+        }
+
+        if ($existingDbDoc || $existingDriveFile) {
+            $isDuplicate = true;
+            $isResubmission = true;
+            $submissionNote = 'Re-upload / Duplicate: Previous file exists in Drive';
+        }
+
         $uploadedFile = $this->driveService->upload($file, $userFolder->id, $customFileName);
         $document = Document::create([
             'user_id' => $user->id,
@@ -82,6 +123,9 @@ class DocumentService
             'weekly_activities' => $weeklyActivities,
             'extraction_status' => $extractionStatus,
             'status' => 'pending',
+            'is_resubmission' => $isResubmission,
+            'is_duplicate' => $isDuplicate,
+            'submission_note' => $submissionNote,
         ]);
 
         if ($documentType === 'dtr') {
@@ -91,12 +135,17 @@ class DocumentService
             ]);
         }
 
-        // Notify profs/admins (assuming anyone who can review is notified, or just all profs)
+        // Notify profs/admins
         $reviewers = User::whereIn('role', ['admin', 'prof'])->get();
-        $notificationTitle = $weekMismatch ? 'Weekly Report Week Mismatch' : 'New Document Submission';
-        $notificationMessage = $weekMismatch
-            ? "{$user->name} submitted a weekly report whose content says Week {$parsedWeekNumber}, but it was uploaded to the Week {$week} slot. Please review."
-            : "{$user->name} has submitted a {$documentType} document for review.";
+        $notificationTitle = $isDuplicate
+            ? 'Document Resubmission / Duplicate'
+            : ($weekMismatch ? 'Weekly Report Week Mismatch' : 'New Document Submission');
+        $notificationMessage = $isDuplicate
+            ? "{$user->name} re-uploaded a {$documentType}" . ($week ? " (Week {$week})" : "") . ". A previous file exists in Drive. Please review."
+            : ($weekMismatch
+                ? "{$user->name} submitted a weekly report whose content says Week {$parsedWeekNumber}, but it was uploaded to the Week {$week} slot. Please review."
+                : "{$user->name} has submitted a {$documentType} document for review.");
+
         foreach ($reviewers as $reviewer) {
             Notification::create([
                 'user_id' => $reviewer->id,
@@ -126,10 +175,25 @@ class DocumentService
      */
     public function getMyDocuments(int $userId)
     {
-        return Document::with('reviewer')
+        $docs = Document::with('reviewer')
             ->where('user_id', $userId)
             ->orderBy('created_at', 'desc')
             ->get();
+
+        // If user has no documents in DB (e.g. after database reset),
+        // try a targeted Drive recovery for this user
+        if ($docs->isEmpty()) {
+            $user = User::find($userId);
+            if ($user) {
+                $this->reconciliationService->reconcileForUser($user);
+                $docs = Document::with('reviewer')
+                    ->where('user_id', $userId)
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+            }
+        }
+
+        return $docs;
     }
 
     /**

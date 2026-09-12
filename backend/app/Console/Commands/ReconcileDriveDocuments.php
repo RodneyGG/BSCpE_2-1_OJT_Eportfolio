@@ -54,6 +54,7 @@ class ReconcileDriveDocuments extends Command
             [
                 ['Student folders scanned', $result['folders_scanned']],
                 ['Folders matched to users', $result['folders_matched']],
+                ['Users recreated from folders', $result['users_recreated'] ?? 0],
                 ['Unmatched folders', count($result['folders_unmatched'])],
                 ['Drive files found', $result['files_found']],
                 ['Already tracked in DB', $result['files_already_tracked']],
