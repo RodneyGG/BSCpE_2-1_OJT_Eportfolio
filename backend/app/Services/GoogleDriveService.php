@@ -21,31 +21,45 @@ class GoogleDriveService
         $this->client->addScope(Drive::DRIVE);
         $this->client->setAccessType('offline');
 
-        $token = \App\Models\GoogleOAuthToken::first();
-        if ($token) {
-            $this->client->setAccessToken([
-                'access_token' => $token->access_token,
-                'refresh_token' => $token->refresh_token,
-                'expires_in' => $token->expires_in,
-                'created' => $token->created,
-            ]);
+        $token = null;
+        try {
+            $token = \App\Models\GoogleOAuthToken::first();
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('GoogleDriveService: Could not query google_oauth_tokens: ' . $e->getMessage());
+        }
 
-            if ($this->client->isAccessTokenExpired()) {
-                $this->client->fetchAccessTokenWithRefreshToken($this->client->getRefreshToken());
-                $newToken = $this->client->getAccessToken();
-                if (isset($newToken['access_token'])) {
-                    $token->update([
-                        'access_token' => $newToken['access_token'],
-                        'expires_in' => $newToken['expires_in'],
-                        'created' => $newToken['created'],
-                    ]);
+        $authenticatedViaOAuth = false;
+        if ($token && !empty($token->access_token)) {
+            try {
+                $this->client->setAccessToken([
+                    'access_token' => $token->access_token,
+                    'refresh_token' => $token->refresh_token,
+                    'expires_in' => $token->expires_in,
+                    'created' => $token->created,
+                ]);
+
+                if ($this->client->isAccessTokenExpired() && $token->refresh_token) {
+                    $this->client->fetchAccessTokenWithRefreshToken($token->refresh_token);
+                    $newToken = $this->client->getAccessToken();
+                    if (isset($newToken['access_token'])) {
+                        $token->update([
+                            'access_token' => $newToken['access_token'],
+                            'expires_in' => $newToken['expires_in'] ?? $token->expires_in,
+                            'created' => $newToken['created'] ?? time(),
+                        ]);
+                    }
                 }
+                $authenticatedViaOAuth = true;
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('GoogleDriveService: OAuth token refresh failed, falling back to service account: ' . $e->getMessage());
+                $authenticatedViaOAuth = false;
             }
-        } else {
+        }
+
+        if (!$authenticatedViaOAuth) {
             // Fallback: use service account credentials from env when no
-            // OAuth tokens exist in the DB (e.g. after a database wipe).
-            // This keeps the Drive API functional until the admin
-            // re-authenticates via the browser OAuth flow.
+            // OAuth tokens exist in the DB (e.g. after a database wipe)
+            // or when OAuth token refresh fails.
             $credentials = config('services.google_drive.credentials');
             if (!empty($credentials['private_key'])) {
                 $this->client->setAuthConfig($credentials);
@@ -111,6 +125,7 @@ class GoogleDriveService
             'q' => "'{$folderId}' in parents and trashed = false",
             'fields' => 'files(id, name, mimeType, webViewLink, webContentLink, size, createdTime)',
             'orderBy' => 'name',
+            'pageSize' => 1000,
         ]);
 
         return $results->getFiles();

@@ -101,4 +101,42 @@ class DocumentController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Audit Google Drive contents and compare with documents table.
+     */
+    public function driveAudit(\App\Services\DriveReconciliationService $reconciliationService): JsonResponse
+    {
+        try {
+            $audit = $reconciliationService->audit();
+            return response()->json($audit);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Drive Audit Failed: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Failed to audit Google Drive',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Trigger Drive reconciliation manually.
+     */
+    public function driveReconcile(\Illuminate\Http\Request $request, \App\Services\DriveReconciliationService $reconciliationService): JsonResponse
+    {
+        $dryRun = $request->boolean('dry_run', false);
+        try {
+            $result = $reconciliationService->reconcile($dryRun, true);
+            return response()->json([
+                'message' => $dryRun ? 'Reconciliation dry-run completed' : 'Reconciliation completed',
+                'result' => $result,
+            ]);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Drive Reconcile Failed: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Failed to reconcile Google Drive documents',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
 }

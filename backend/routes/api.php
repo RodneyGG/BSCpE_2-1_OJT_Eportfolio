@@ -59,6 +59,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/documents/{document}', [DocumentController::class, 'destroy']);
     Route::get('/documents/pending', [DocumentController::class, 'pending'])->middleware('role:admin,prof');
     Route::patch('/documents/{document}/review', [DocumentController::class, 'review'])->middleware('role:admin,prof');
+    Route::get('/admin/drive/audit', [DocumentController::class, 'driveAudit'])->middleware('role:admin,prof');
+    Route::post('/admin/drive/reconcile', [DocumentController::class, 'driveReconcile'])->middleware('role:admin,prof');
 
     // Deployments
     Route::get('/deployments/mine', [DeploymentController::class, 'mine']);
