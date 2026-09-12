@@ -41,6 +41,15 @@ class GoogleDriveService
                     ]);
                 }
             }
+        } else {
+            // Fallback: use service account credentials from env when no
+            // OAuth tokens exist in the DB (e.g. after a database wipe).
+            // This keeps the Drive API functional until the admin
+            // re-authenticates via the browser OAuth flow.
+            $credentials = config('services.google_drive.credentials');
+            if (!empty($credentials['private_key'])) {
+                $this->client->setAuthConfig($credentials);
+            }
         }
 
         $this->driveService = new Drive($this->client);

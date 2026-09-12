@@ -5,7 +5,7 @@ A Next.js frontend application for a BSCpE OJT e-portfolio. The application feat
 
 ## 2. Current State (Replace entirely on update)
 
-**Status**: The student profile page (`frontend/app/profile/page.tsx`) has been refined and modernized, the Admin Checklist page (`frontend/app/admin/checklist/page.tsx`) has robust print support, and the application has undergone a full security and production-readiness audit alongside mobile layout fixes and notification/auth bug fixes. Several Priority 1 and Priority 3 UX bugs were resolved on the `dev` branch.
+**Status**: All prior features remain intact. A Drive reconciliation system has been added to recover from database wipes by reconstructing `documents` table records from files already present in Google Drive. The `GoogleDriveService` now falls back to service-account auth when no OAuth tokens exist in the DB (e.g. after a wipe). No existing logic was changed — this is purely additive.
 - The Required Documents section was successfully converted from a horizontal tab bar into a single-open accordion. The During OJT accordion body retains the complex week navigation, schedule card, and uploads grid functionality perfectly.
 - The Week Schedule date picker issue (dates bleeding between weeks when submitted mid-week) was resolved by implementing state-based tracking using a `weekDates` object bound to `localStorage`.
 - Admin panel loading states were enhanced. `StudentPreviewModal.tsx` now handles async API status explicitly to prevent empty UI flashing.
@@ -252,3 +252,12 @@ A Next.js frontend application for a BSCpE OJT e-portfolio. The application feat
   - Hardcoded the default password to `bscpe2-1` for all newly created student accounts, and forced `must_change_password` to `true`.
   - Updated the frontend UI in `ManageUsersSection.tsx` to remove the "Resend Setup Email" action and updated the success creation toast to reflect the new default password behavior.
 - **Branch:** `dev`
+
+### 2026-09-12 - Drive Reconciliation & Service Account Fallback
+- **Agent:** Antigravity
+- **Summary of Changes:**
+  - **GoogleDriveService.php**: Added a service-account auth fallback in the constructor. When no OAuth tokens exist in the `google_oauth_tokens` table (e.g., after a database wipe), the service automatically falls back to the service account credentials from env vars (`GOOGLE_DRIVE_*`). The existing OAuth flow is completely untouched — this is an additive `else` branch only.
+  - **New: DriveReconciliationService.php**: A new service that scans all student folders under the root Google Drive folder, parses filenames (format: `{document_type}[-week-{N}]-{YmdHis}.{ext}`), matches folder names (`{email} - {name}`) to User records, and creates `documents` table rows for any Drive files not already tracked by `file_id`. All reconstructed records are set to `status = 'pending'` so teachers must re-review them. The service is idempotent — safe to run multiple times; files already in the DB are skipped.
+  - **New: ReconcileDriveDocuments.php (artisan command)**: `php artisan drive:reconcile [--dry-run]`. Supports a `--dry-run` flag to preview what would be reconstructed. Outputs detailed summary tables: folders scanned/matched/unmatched, files found/tracked/reconstructed, and unparseable filenames.
+  - **No existing logic was changed**: DocumentController, DocumentService upload/review flow, Document model, frontend files, API routes, and database migrations are all untouched.
+- **Branch:** `feature/drive-reconciliation`
